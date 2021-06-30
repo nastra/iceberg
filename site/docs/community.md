@@ -68,3 +68,11 @@ Iceberg has four mailing lists:
     - [Archive](https://lists.apache.org/list.html?issues@iceberg.apache.org)
 * **Private**: <private@iceberg.apache.org> -- private list for the PMC to discuss sensitive issues related to the health of the project
     - [Archive](https://lists.apache.org/list.html?private@iceberg.apache.org)
+
+
+## Running Benchmarks
+Some PRs/changesets might require running benchmarks to determine whether they are affecting the baseline performance. Currently there is 
+no "push a single button to get a performance comparison" solution available, therefore one has to run JMH performance tests on their local machine and
+post the results on the PR.
+
+See [Benchmarks](benchmarks.md) for a summary of available benchmarks and how to run them.
