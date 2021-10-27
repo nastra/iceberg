@@ -1,0 +1,93 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+package org.apache.iceberg;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
+import org.apache.iceberg.util.JsonUtil;
+
+public class SnapshotReferenceParser {
+
+  private SnapshotReferenceParser() {
+  }
+
+  private static final String SNAPSHOT_ID = "snapshot-id";
+  private static final String NAME = "name";
+  private static final String TYPE = "type";
+  private static final String MIN_SNAPSHOTS_TO_KEEP = "min-snapshots-to-keep";
+  private static final String MAX_SNAPSHOT_AGE_MS = "max-snapshot-age-ms";
+
+  public static String toJson(SnapshotReference ref) {
+    return toJson(ref, false);
+  }
+
+  public static String toJson(SnapshotReference ref, boolean pretty) {
+    try {
+      StringWriter writer = new StringWriter();
+      JsonGenerator generator = JsonUtil.factory().createGenerator(writer);
+      if (pretty) {
+        generator.useDefaultPrettyPrinter();
+      }
+      toJson(ref, generator);
+      generator.flush();
+      return writer.toString();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  public static void toJson(SnapshotReference ref, JsonGenerator generator) throws IOException {
+    generator.writeStartObject();
+    generator.writeNumberField(SNAPSHOT_ID, ref.snapshotId());
+    generator.writeStringField(NAME, ref.snapshotName());
+    generator.writeStringField(TYPE, ref.type().name());
+    if (ref.type().equals(SnapshotReferenceType.BRANCH)) {
+      generator.writeNumberField(MIN_SNAPSHOTS_TO_KEEP, ref.minSnapshotsToKeep());
+    }
+    generator.writeNumberField(MAX_SNAPSHOT_AGE_MS, ref.maxSnapshotAgeMs());
+    generator.writeEndObject();
+  }
+
+  public static SnapshotReference fromJson(String json) {
+    try {
+      return fromJson(JsonUtil.mapper().readValue(json, JsonNode.class));
+    } catch (IOException e) {
+      throw new UncheckedIOException("Failed to parse snapshot ref: " + json, e);
+    }
+  }
+
+  public static SnapshotReference fromJson(JsonNode node) {
+    Preconditions.checkArgument(node.isObject(),
+        "Cannot parse snapshot reference from a non-object: %s", node);
+    long snapshotId = JsonUtil.getLong(SNAPSHOT_ID, node);
+    String name = JsonUtil.getString(NAME, node);
+    SnapshotReferenceType type = SnapshotReferenceType.valueOf(JsonUtil.getString(TYPE, node));
+    Integer minSnapshotsToKeep = JsonUtil.getIntOrNull(MIN_SNAPSHOTS_TO_KEEP, node);
+    long maxSnapshotAgeMs = JsonUtil.getLong(MAX_SNAPSHOT_AGE_MS, node);
+    return SnapshotReference.builderFor(snapshotId, name, type)
+        .withMinSnapshotsToKeep(minSnapshotsToKeep)
+        .withMaxSnapshotAgeMs(maxSnapshotAgeMs)
+        .build();
+  }
+}

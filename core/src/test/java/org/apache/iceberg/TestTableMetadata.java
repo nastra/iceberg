@@ -104,12 +104,17 @@ public class TestTableMetadata {
     Schema schema = new Schema(6,
         Types.NestedField.required(10, "x", Types.StringType.get()));
 
+    String currentBranch = "test";
+    SnapshotReference ref = SnapshotReference.builderFor(
+            currentSnapshotId, currentBranch, SnapshotReferenceType.BRANCH).build();
+
     TableMetadata expected = new TableMetadata(null, 2, UUID.randomUUID().toString(), TEST_LOCATION,
         SEQ_NO, System.currentTimeMillis(), 3,
         7, ImmutableList.of(TEST_SCHEMA, schema),
         5, ImmutableList.of(SPEC_5), SPEC_5.lastAssignedFieldId(),
         3, ImmutableList.of(SORT_ORDER_3), ImmutableMap.of("property", "value"), currentSnapshotId,
-        Arrays.asList(previousSnapshot, currentSnapshot), snapshotLog, ImmutableList.of());
+        Arrays.asList(previousSnapshot, currentSnapshot), snapshotLog, ImmutableList.of(),
+            ImmutableList.of(ref), currentBranch);
 
     String asJson = TableMetadataParser.toJson(expected);
     TableMetadata metadata = TableMetadataParser.fromJson(ops.io(), null,
@@ -161,6 +166,10 @@ public class TestTableMetadata {
         metadata.snapshot(previousSnapshotId).allManifests());
     Assert.assertNull("Previous snapshot's schema ID should be null",
         metadata.snapshot(previousSnapshotId).schemaId());
+    Assert.assertEquals("Refs should match",
+            expected.refs(), metadata.refs());
+    Assert.assertEquals("Current branch should match",
+            expected.currentBranch(), metadata.currentBranch());
   }
 
   @Test
@@ -182,7 +191,8 @@ public class TestTableMetadata {
         0, System.currentTimeMillis(), 3, TableMetadata.INITIAL_SCHEMA_ID,
         ImmutableList.of(schema), 6, ImmutableList.of(spec), spec.lastAssignedFieldId(),
         TableMetadata.INITIAL_SORT_ORDER_ID, ImmutableList.of(sortOrder), ImmutableMap.of("property", "value"),
-        currentSnapshotId, Arrays.asList(previousSnapshot, currentSnapshot), ImmutableList.of(), ImmutableList.of());
+        currentSnapshotId, Arrays.asList(previousSnapshot, currentSnapshot), ImmutableList.of(), ImmutableList.of(),
+        ImmutableList.of(), null);
 
     String asJson = toJsonWithoutSpecAndSchemaList(expected);
     TableMetadata metadata = TableMetadataParser
@@ -236,6 +246,10 @@ public class TestTableMetadata {
             expected.previousFiles(), metadata.previousFiles());
     Assert.assertNull("Previous snapshot's schema ID should be null",
         metadata.snapshot(previousSnapshotId).schemaId());
+    Assert.assertEquals("Refs should match",
+            expected.refs(), metadata.refs());
+    Assert.assertEquals("Current branch should match",
+            expected.currentBranch(), metadata.currentBranch());
   }
 
   private static String toJsonWithoutSpecAndSchemaList(TableMetadata metadata) {
@@ -305,7 +319,7 @@ public class TestTableMetadata {
         7, ImmutableList.of(TEST_SCHEMA), 5, ImmutableList.of(SPEC_5), SPEC_5.lastAssignedFieldId(),
         3, ImmutableList.of(SORT_ORDER_3), ImmutableMap.of("property", "value"), currentSnapshotId,
         Arrays.asList(previousSnapshot, currentSnapshot), reversedSnapshotLog,
-        ImmutableList.copyOf(previousMetadataLog));
+        ImmutableList.copyOf(previousMetadataLog), ImmutableList.of(), null);
 
     String asJson = TableMetadataParser.toJson(base);
     TableMetadata metadataFromJson = TableMetadataParser.fromJson(ops.io(), null,
@@ -341,7 +355,7 @@ public class TestTableMetadata {
         7, ImmutableList.of(TEST_SCHEMA), 5, ImmutableList.of(SPEC_5), SPEC_5.lastAssignedFieldId(),
         3, ImmutableList.of(SORT_ORDER_3), ImmutableMap.of("property", "value"), currentSnapshotId,
         Arrays.asList(previousSnapshot, currentSnapshot), reversedSnapshotLog,
-        ImmutableList.copyOf(previousMetadataLog));
+        ImmutableList.copyOf(previousMetadataLog), ImmutableList.of(), null);
 
     previousMetadataLog.add(latestPreviousMetadata);
 
@@ -388,7 +402,7 @@ public class TestTableMetadata {
         ImmutableList.of(SPEC_5), SPEC_5.lastAssignedFieldId(), 3, ImmutableList.of(SORT_ORDER_3),
         ImmutableMap.of("property", "value"), currentSnapshotId,
         Arrays.asList(previousSnapshot, currentSnapshot), reversedSnapshotLog,
-        ImmutableList.copyOf(previousMetadataLog));
+        ImmutableList.copyOf(previousMetadataLog), ImmutableList.of(), null);
 
     previousMetadataLog.add(latestPreviousMetadata);
 
@@ -440,7 +454,7 @@ public class TestTableMetadata {
         TableMetadata.INITIAL_SORT_ORDER_ID, ImmutableList.of(SortOrder.unsorted()),
         ImmutableMap.of("property", "value"), currentSnapshotId,
         Arrays.asList(previousSnapshot, currentSnapshot), reversedSnapshotLog,
-        ImmutableList.copyOf(previousMetadataLog));
+        ImmutableList.copyOf(previousMetadataLog), ImmutableList.of(), null);
 
     previousMetadataLog.add(latestPreviousMetadata);
 
@@ -466,7 +480,7 @@ public class TestTableMetadata {
             LAST_ASSIGNED_COLUMN_ID, 7, ImmutableList.of(TEST_SCHEMA),
             SPEC_5.specId(), ImmutableList.of(SPEC_5), SPEC_5.lastAssignedFieldId(),
             3, ImmutableList.of(SORT_ORDER_3), ImmutableMap.of(), -1L,
-            ImmutableList.of(), ImmutableList.of(), ImmutableList.of())
+            ImmutableList.of(), ImmutableList.of(), ImmutableList.of(), ImmutableList.of(), null)
     );
   }
 
@@ -479,7 +493,7 @@ public class TestTableMetadata {
             System.currentTimeMillis(), LAST_ASSIGNED_COLUMN_ID,
             7, ImmutableList.of(TEST_SCHEMA), SPEC_5.specId(), ImmutableList.of(SPEC_5),
             SPEC_5.lastAssignedFieldId(), 3, ImmutableList.of(SORT_ORDER_3), ImmutableMap.of(), -1L,
-            ImmutableList.of(), ImmutableList.of(), ImmutableList.of())
+            ImmutableList.of(), ImmutableList.of(), ImmutableList.of(), ImmutableList.of(), null)
     );
   }
 

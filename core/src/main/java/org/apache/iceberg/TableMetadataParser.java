@@ -44,6 +44,7 @@ import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.util.JsonUtil;
 
+@SuppressWarnings({"checkstyle:CyclomaticComplexity", "checkstyle:MethodLength"})
 public class TableMetadataParser {
 
   public enum Codec {
@@ -104,6 +105,8 @@ public class TableMetadataParser {
   static final String SNAPSHOT_LOG = "snapshot-log";
   static final String METADATA_FILE = "metadata-file";
   static final String METADATA_LOG = "metadata-log";
+  static final String REFS = "refs";
+  static final String CURRENT_BRANCH = "current-branch";
 
   public static void overwrite(TableMetadata metadata, OutputFile outputFile) {
     internalWrite(metadata, outputFile, true);
@@ -236,6 +239,14 @@ public class TableMetadataParser {
       generator.writeEndObject();
     }
     generator.writeEndArray();
+
+    generator.writeArrayFieldStart(REFS);
+    for (SnapshotReference ref : metadata.refs()) {
+      SnapshotReferenceParser.toJson(ref, generator);
+    }
+    generator.writeEndArray();
+
+    generator.writeStringField(CURRENT_BRANCH, metadata.currentBranch());
 
     generator.writeEndObject();
   }
@@ -395,9 +406,19 @@ public class TableMetadataParser {
       }
     }
 
+    ImmutableList.Builder<SnapshotReference> refs = ImmutableList.builder();
+    if (node.has(REFS)) {
+      Iterator<JsonNode> refIterator = node.get(REFS).elements();
+      while (refIterator.hasNext()) {
+        refs.add(SnapshotReferenceParser.fromJson(refIterator.next()));
+      }
+    }
+
+    String currentBranch = JsonUtil.getStringOrNull(CURRENT_BRANCH, node);
+
     return new TableMetadata(file, formatVersion, uuid, location,
         lastSequenceNumber, lastUpdatedMillis, lastAssignedColumnId, currentSchemaId, schemas, defaultSpecId, specs,
         lastAssignedPartitionId, defaultSortOrderId, sortOrders, properties, currentVersionId,
-        snapshots, entries.build(), metadataEntries.build());
+        snapshots, entries.build(), metadataEntries.build(), refs.build(), currentBranch);
   }
 }
