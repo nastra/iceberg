@@ -21,28 +21,42 @@ package org.apache.iceberg.catalog;
 
 import java.util.Arrays;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.base.Splitter;
 import org.apache.iceberg.relocated.com.google.common.collect.Iterables;
 
 /**
- * Identifies a table in iceberg catalog.
+ * Identifies a table in an iceberg catalog.
  */
 public class TableIdentifier {
 
   private static final Splitter DOT = Splitter.on('.');
+  private static final String AT = "@";
 
   private final Namespace namespace;
   private final String name;
 
+  @Nullable
+  private final String referenceName;
+
   public static TableIdentifier of(String... names) {
     Preconditions.checkArgument(names != null, "Cannot create table identifier from null array");
     Preconditions.checkArgument(names.length > 0, "Cannot create table identifier without a table name");
-    return new TableIdentifier(Namespace.of(Arrays.copyOf(names, names.length - 1)), names[names.length - 1]);
+    String simpleName = names[names.length - 1];
+    if (simpleName.contains(AT)) {
+      String[] split = simpleName.split(AT);
+      return new TableIdentifier(Namespace.of(Arrays.copyOf(names, names.length - 1)), split[0], split[1]);
+    }
+    return new TableIdentifier(Namespace.of(Arrays.copyOf(names, names.length - 1)), simpleName);
   }
 
   public static TableIdentifier of(Namespace namespace, String name) {
     return new TableIdentifier(namespace, name);
+  }
+
+  public static TableIdentifier of(Namespace namespace, String name, String referenceName) {
+    return new TableIdentifier(namespace, name, referenceName);
   }
 
   public static TableIdentifier parse(String identifier) {
@@ -56,6 +70,17 @@ public class TableIdentifier {
     Preconditions.checkArgument(namespace != null, "Invalid Namespace: null");
     this.namespace = namespace;
     this.name = name;
+    this.referenceName = null;
+  }
+
+  private TableIdentifier(Namespace namespace, String name, String referenceName) {
+    Preconditions.checkArgument(name != null && !name.isEmpty(), "Invalid table name: null or empty");
+    Preconditions.checkArgument(namespace != null, "Invalid Namespace: null");
+    Preconditions.checkArgument(
+        referenceName != null && !referenceName.isEmpty(), "Invalid reference name: null or empty");
+    this.namespace = namespace;
+    this.name = name;
+    this.referenceName = referenceName;
   }
 
   /**
@@ -74,10 +99,26 @@ public class TableIdentifier {
   }
 
   /**
+   * Whether the identifier has a reference name (which is either a Branch or a Tag).
+   * @return true if the table identifier has a reference name (which is either a Branch or a Tag).
+   */
+  public boolean hasReferenceName() {
+    return null != referenceName;
+  }
+
+  /**
    * Returns the identifier name.
    */
   public String name() {
     return name;
+  }
+
+  /**
+   * @return The reference name (which is either a Branch or a Tag) of the table identifier.
+   */
+  @Nullable
+  public String referenceName() {
+    return referenceName;
   }
 
   public TableIdentifier toLowerCase() {
@@ -85,34 +126,38 @@ public class TableIdentifier {
         .map(String::toLowerCase)
         .toArray(String[]::new);
     String newName = name().toLowerCase();
+    // the reference name needs to stay the same, so we won't apply 'toLowerCase' to it
+    if (hasReferenceName()) {
+      return TableIdentifier.of(Namespace.of(newLevels), newName, referenceName());
+    }
     return TableIdentifier.of(Namespace.of(newLevels), newName);
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (this == other) {
+  public boolean equals(Object o) {
+    if (this == o) {
       return true;
     }
-
-    if (other == null || getClass() != other.getClass()) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    TableIdentifier that = (TableIdentifier) other;
-    return namespace.equals(that.namespace) && name.equals(that.name);
+    TableIdentifier that = (TableIdentifier) o;
+    return Objects.equals(namespace, that.namespace) && Objects.equals(name, that.name) &&
+        Objects.equals(referenceName, that.referenceName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespace, name);
+    return Objects.hash(namespace, name, referenceName);
   }
 
   @Override
   public String toString() {
+    String tableWithRef = hasReferenceName() ? name + AT + referenceName : name;
     if (hasNamespace()) {
-      return namespace.toString() + "." + name;
+      return namespace.toString() + "." + tableWithRef;
     } else {
-      return name;
+      return tableWithRef;
     }
   }
 }

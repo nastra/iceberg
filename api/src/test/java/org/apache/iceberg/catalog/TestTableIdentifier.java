@@ -44,6 +44,27 @@ public class TestTableIdentifier {
   }
 
   @Test
+  public void testTableIdentifierParsingWithRef() {
+    TableIdentifier oneLevelIdentifier = TableIdentifier.parse("tbl@dev");
+    Assertions.assertThat(oneLevelIdentifier.hasNamespace()).isFalse();
+    Assertions.assertThat(oneLevelIdentifier.hasReferenceName()).isTrue();
+    Assertions.assertThat(oneLevelIdentifier.name()).isEqualTo("tbl");
+    Assertions.assertThat(oneLevelIdentifier.referenceName()).isEqualTo("dev");
+
+    TableIdentifier twoLevelIdentifier = TableIdentifier.parse("userdb.tbl@dev");
+    Assertions.assertThat(twoLevelIdentifier.namespace().toString()).isEqualTo("userdb");
+    Assertions.assertThat(twoLevelIdentifier.hasReferenceName()).isTrue();
+    Assertions.assertThat(twoLevelIdentifier.name()).isEqualTo("tbl");
+    Assertions.assertThat(twoLevelIdentifier.referenceName()).isEqualTo("dev");
+
+    TableIdentifier threeLevelIdentifier = TableIdentifier.parse("catalog.userdb.tbl@dev");
+    Assertions.assertThat(threeLevelIdentifier.namespace().toString()).isEqualTo("catalog.userdb");
+    Assertions.assertThat(threeLevelIdentifier.hasReferenceName()).isTrue();
+    Assertions.assertThat(threeLevelIdentifier.name()).isEqualTo("tbl");
+    Assertions.assertThat(threeLevelIdentifier.referenceName()).isEqualTo("dev");
+  }
+
+  @Test
   public void testToLowerCase() {
     Assert.assertEquals(
         TableIdentifier.of("Tbl").toLowerCase(),
@@ -54,6 +75,15 @@ public class TestTableIdentifier {
     Assert.assertEquals(
         TableIdentifier.of("Catalog", "dB", "TBL").toLowerCase(),
         TableIdentifier.of("catalog", "db", "tbl"));
+    Assert.assertEquals(
+        TableIdentifier.of("Tbl@DeV").toLowerCase(),
+        TableIdentifier.of("tbl@DeV"));
+    Assert.assertEquals(
+        TableIdentifier.of("dB", "TBL@DeV").toLowerCase(),
+        TableIdentifier.of("db", "tbl@DeV"));
+    Assert.assertEquals(
+        TableIdentifier.of("Catalog", "dB", "TBL@DeV").toLowerCase(),
+        TableIdentifier.of("catalog", "db", "tbl@DeV"));
   }
 
   @Test
@@ -65,6 +95,17 @@ public class TestTableIdentifier {
     Assertions.assertThatThrownBy(() -> TableIdentifier.of(Namespace.empty(), null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Invalid table name: null or empty");
+  }
+
+  @Test
+  public void testInvalidReferenceName() {
+    Assertions.assertThatThrownBy(() -> TableIdentifier.of(Namespace.empty(), "tbl", null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid reference name: null or empty");
+
+    Assertions.assertThatThrownBy(() -> TableIdentifier.of(Namespace.empty(), "tbl", ""))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid reference name: null or empty");
   }
 
   @Test
