@@ -29,24 +29,28 @@ import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
 
 public class TestCachingCatalog extends HadoopTableTestBase {
 
-  @Test
-  public void testInvalidateMetadataTablesIfBaseTableIsModified() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings = {"tbl", "tbl@DeV", "tbl@dev", "TBL", "TBL@DeV"})
+  public void testInvalidateMetadataTablesIfBaseTableIsModified(String tableName) throws Exception {
     Catalog catalog = CachingCatalog.wrap(hadoopCatalog());
-    TableIdentifier tableIdent = TableIdentifier.of("db", "ns1", "ns2", "tbl");
+    TableIdentifier tableIdent = TableIdentifier.of("db", "ns1", "ns2", tableName);
     Table table = catalog.createTable(tableIdent, SCHEMA, SPEC, ImmutableMap.of("key2", "value2"));
 
     table.newAppend().appendFile(FILE_A).commit();
 
     Snapshot oldSnapshot = table.currentSnapshot();
 
-    TableIdentifier filesMetaTableIdent = TableIdentifier.of("db", "ns1", "ns2", "tbl", "files");
+    TableIdentifier filesMetaTableIdent = TableIdentifier.of("db", "ns1", "ns2", tableName, "files");
     Table filesMetaTable = catalog.loadTable(filesMetaTableIdent);
 
-    TableIdentifier manifestsMetaTableIdent = TableIdentifier.of("db", "ns1", "ns2", "tbl", "manifests");
+    TableIdentifier manifestsMetaTableIdent = TableIdentifier.of("db", "ns1", "ns2", tableName, "manifests");
     Table manifestsMetaTable = catalog.loadTable(manifestsMetaTableIdent);
 
     table.newAppend().appendFile(FILE_B).commit();
@@ -66,12 +70,13 @@ public class TestCachingCatalog extends HadoopTableTestBase {
     Assert.assertEquals(manifestsMetaTable2.currentSnapshot(), table.currentSnapshot());
   }
 
-  @Test
-  public void testInvalidateMetadataTablesIfBaseTableIsDropped() throws IOException {
+  @ParameterizedTest
+  @ValueSource(strings = {"tbl", "tbl@DeV", "tbl@dev", "TBL", "TBL@DeV"})
+  public void testInvalidateMetadataTablesIfBaseTableIsDropped(String tableName) throws IOException {
     Catalog catalog = CachingCatalog.wrap(hadoopCatalog());
 
     // create the original table
-    TableIdentifier tableIdent = TableIdentifier.of("db", "ns1", "ns2", "tbl");
+    TableIdentifier tableIdent = TableIdentifier.of("db", "ns1", "ns2", tableName);
     Table table = catalog.createTable(tableIdent, SCHEMA, SPEC, ImmutableMap.of("key2", "value2"));
 
     table.newAppend().appendFile(FILE_A).commit();
