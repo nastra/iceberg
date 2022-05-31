@@ -733,11 +733,9 @@ public abstract class CatalogTests<C extends Catalog & SupportsNamespaces> {
     Assert.assertFalse(
         "Destination table should not exist before rename", catalog.tableExists(RENAMED_TABLE));
 
-    AssertHelpers.assertThrows(
-        "Should reject renaming a table that does not exist",
-        NoSuchTableException.class,
-        "Table does not exist",
-        () -> catalog.renameTable(TABLE, RENAMED_TABLE));
+    Assertions.assertThatThrownBy(() -> catalog.renameTable(TABLE, RENAMED_TABLE))
+        .isInstanceOf(NoSuchTableException.class)
+        .hasMessageContaining("does not exist");
 
     Assert.assertFalse(
         "Destination table should not exist after failed rename",
