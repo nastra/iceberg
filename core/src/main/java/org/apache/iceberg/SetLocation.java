@@ -19,9 +19,6 @@
 
 package org.apache.iceberg;
 
-import org.apache.iceberg.exceptions.CommitFailedException;
-import org.apache.iceberg.util.Tasks;
-
 import static org.apache.iceberg.TableProperties.COMMIT_MAX_RETRY_WAIT_MS;
 import static org.apache.iceberg.TableProperties.COMMIT_MAX_RETRY_WAIT_MS_DEFAULT;
 import static org.apache.iceberg.TableProperties.COMMIT_MIN_RETRY_WAIT_MS;
@@ -30,6 +27,9 @@ import static org.apache.iceberg.TableProperties.COMMIT_NUM_RETRIES;
 import static org.apache.iceberg.TableProperties.COMMIT_NUM_RETRIES_DEFAULT;
 import static org.apache.iceberg.TableProperties.COMMIT_TOTAL_RETRY_TIME_MS;
 import static org.apache.iceberg.TableProperties.COMMIT_TOTAL_RETRY_TIME_MS_DEFAULT;
+
+import org.apache.iceberg.exceptions.CommitFailedException;
+import org.apache.iceberg.util.Tasks;
 
 public class SetLocation implements UpdateLocation {
   private final TableOperations ops;

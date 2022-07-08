@@ -25,9 +25,9 @@ import org.apache.spark.sql.connector.catalog.Identifier;
 
 /**
  * A catalog API for working with stored procedures.
- * <p>
- * Implementations should implement this interface if they expose stored procedures that
- * can be called via CALL statements.
+ *
+ * <p>Implementations should implement this interface if they expose stored procedures that can be
+ * called via CALL statements.
  */
 public interface ProcedureCatalog extends CatalogPlugin {
   /**

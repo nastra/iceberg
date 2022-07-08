@@ -125,7 +125,8 @@ public class StructLikeSet extends AbstractSet<StructLike> implements Set<Struct
   @Override
   public boolean addAll(Collection<? extends StructLike> structs) {
     if (structs != null) {
-      return Iterables.addAll(wrapperSet,
+      return Iterables.addAll(
+          wrapperSet,
           Iterables.transform(structs, struct -> StructLikeWrapper.forType(type).set(struct)));
     }
     return false;

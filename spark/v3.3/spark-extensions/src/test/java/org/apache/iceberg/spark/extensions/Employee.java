@@ -25,8 +25,7 @@ public class Employee {
   private Integer id;
   private String dep;
 
-  public Employee() {
-  }
+  public Employee() {}
 
   public Employee(Integer id, String dep) {
     this.id = id;

@@ -24,9 +24,7 @@ import org.apache.iceberg.relocated.com.google.common.base.MoreObjects;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.rest.RESTRequest;
 
-/**
- * A REST request to rename a table.
- */
+/** A REST request to rename a table. */
 public class RenameTableRequest implements RESTRequest {
 
   private TableIdentifier source;
@@ -73,8 +71,7 @@ public class RenameTableRequest implements RESTRequest {
     private TableIdentifier source;
     private TableIdentifier destination;
 
-    private Builder() {
-    }
+    private Builder() {}
 
     public Builder withSource(TableIdentifier sourceTable) {
       Preconditions.checkNotNull(sourceTable, "Invalid source table identifier: null");

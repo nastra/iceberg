@@ -22,8 +22,8 @@ package org.apache.iceberg.io;
 import org.apache.iceberg.metrics.MetricsContext;
 
 /**
- * Extension of MetricsContext for use with FileIO to define standard metrics
- * that should be reported.
+ * Extension of MetricsContext for use with FileIO to define standard metrics that should be
+ * reported.
  */
 public interface FileIOMetricsContext extends MetricsContext {
   String READ_BYTES = "read.bytes";

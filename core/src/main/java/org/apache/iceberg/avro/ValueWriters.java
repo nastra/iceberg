@@ -38,8 +38,7 @@ import org.apache.iceberg.types.TypeUtil;
 import org.apache.iceberg.util.DecimalUtil;
 
 public class ValueWriters {
-  private ValueWriters() {
-  }
+  private ValueWriters() {}
 
   public static ValueWriter<Void> nulls() {
     return NullWriter.INSTANCE;
@@ -113,13 +112,13 @@ public class ValueWriters {
     return new CollectionWriter<>(elementWriter);
   }
 
-  public static <K, V> ValueWriter<Map<K, V>> arrayMap(ValueWriter<K> keyWriter,
-                                                       ValueWriter<V> valueWriter) {
+  public static <K, V> ValueWriter<Map<K, V>> arrayMap(
+      ValueWriter<K> keyWriter, ValueWriter<V> valueWriter) {
     return new ArrayMapWriter<>(keyWriter, valueWriter);
   }
 
-  public static <K, V> ValueWriter<Map<K, V>> map(ValueWriter<K> keyWriter,
-                                                  ValueWriter<V> valueWriter) {
+  public static <K, V> ValueWriter<Map<K, V>> map(
+      ValueWriter<K> keyWriter, ValueWriter<V> valueWriter) {
     return new MapWriter<>(keyWriter, valueWriter);
   }
 
@@ -130,8 +129,7 @@ public class ValueWriters {
   private static class NullWriter implements ValueWriter<Void> {
     private static final NullWriter INSTANCE = new NullWriter();
 
-    private NullWriter() {
-    }
+    private NullWriter() {}
 
     @Override
     public void write(Void ignored, Encoder encoder) throws IOException {
@@ -142,8 +140,7 @@ public class ValueWriters {
   private static class BooleanWriter implements ValueWriter<Boolean> {
     private static final BooleanWriter INSTANCE = new BooleanWriter();
 
-    private BooleanWriter() {
-    }
+    private BooleanWriter() {}
 
     @Override
     public void write(Boolean bool, Encoder encoder) throws IOException {
@@ -154,8 +151,7 @@ public class ValueWriters {
   private static class ByteToIntegerWriter implements ValueWriter<Byte> {
     private static final ByteToIntegerWriter INSTANCE = new ByteToIntegerWriter();
 
-    private ByteToIntegerWriter() {
-    }
+    private ByteToIntegerWriter() {}
 
     @Override
     public void write(Byte b, Encoder encoder) throws IOException {
@@ -166,8 +162,7 @@ public class ValueWriters {
   private static class ShortToIntegerWriter implements ValueWriter<Short> {
     private static final ShortToIntegerWriter INSTANCE = new ShortToIntegerWriter();
 
-    private ShortToIntegerWriter() {
-    }
+    private ShortToIntegerWriter() {}
 
     @Override
     public void write(Short s, Encoder encoder) throws IOException {
@@ -178,8 +173,7 @@ public class ValueWriters {
   private static class IntegerWriter implements ValueWriter<Integer> {
     private static final IntegerWriter INSTANCE = new IntegerWriter();
 
-    private IntegerWriter() {
-    }
+    private IntegerWriter() {}
 
     @Override
     public void write(Integer i, Encoder encoder) throws IOException {
@@ -190,8 +184,7 @@ public class ValueWriters {
   private static class LongWriter implements ValueWriter<Long> {
     private static final LongWriter INSTANCE = new LongWriter();
 
-    private LongWriter() {
-    }
+    private LongWriter() {}
 
     @Override
     public void write(Long l, Encoder encoder) throws IOException {
@@ -202,8 +195,7 @@ public class ValueWriters {
   private static class FloatWriter implements ValueWriter<Float> {
     private static final FloatWriter INSTANCE = new FloatWriter();
 
-    private FloatWriter() {
-    }
+    private FloatWriter() {}
 
     @Override
     public void write(Float f, Encoder encoder) throws IOException {
@@ -214,8 +206,7 @@ public class ValueWriters {
   private static class DoubleWriter implements ValueWriter<Double> {
     private static final DoubleWriter INSTANCE = new DoubleWriter();
 
-    private DoubleWriter() {
-    }
+    private DoubleWriter() {}
 
     @Override
     public void write(Double d, Encoder encoder) throws IOException {
@@ -226,8 +217,7 @@ public class ValueWriters {
   private static class StringWriter implements ValueWriter<Object> {
     private static final StringWriter INSTANCE = new StringWriter();
 
-    private StringWriter() {
-    }
+    private StringWriter() {}
 
     @Override
     public void write(Object s, Encoder encoder) throws IOException {
@@ -250,8 +240,7 @@ public class ValueWriters {
   private static class Utf8Writer implements ValueWriter<Utf8> {
     private static final Utf8Writer INSTANCE = new Utf8Writer();
 
-    private Utf8Writer() {
-    }
+    private Utf8Writer() {}
 
     @Override
     public void write(Utf8 s, Encoder encoder) throws IOException {
@@ -260,16 +249,17 @@ public class ValueWriters {
   }
 
   private static class UUIDWriter implements ValueWriter<UUID> {
-    private static final ThreadLocal<ByteBuffer> BUFFER = ThreadLocal.withInitial(() -> {
-      ByteBuffer buffer = ByteBuffer.allocate(16);
-      buffer.order(ByteOrder.BIG_ENDIAN);
-      return buffer;
-    });
+    private static final ThreadLocal<ByteBuffer> BUFFER =
+        ThreadLocal.withInitial(
+            () -> {
+              ByteBuffer buffer = ByteBuffer.allocate(16);
+              buffer.order(ByteOrder.BIG_ENDIAN);
+              return buffer;
+            });
 
     private static final UUIDWriter INSTANCE = new UUIDWriter();
 
-    private UUIDWriter() {
-    }
+    private UUIDWriter() {}
 
     @Override
     @SuppressWarnings("ByteBufferBackingArray")
@@ -292,8 +282,11 @@ public class ValueWriters {
 
     @Override
     public void write(byte[] bytes, Encoder encoder) throws IOException {
-      Preconditions.checkArgument(bytes.length == length,
-          "Cannot write byte array of length %s as fixed[%s]", bytes.length, length);
+      Preconditions.checkArgument(
+          bytes.length == length,
+          "Cannot write byte array of length %s as fixed[%s]",
+          bytes.length,
+          length);
       encoder.writeFixed(bytes);
     }
   }
@@ -307,8 +300,11 @@ public class ValueWriters {
 
     @Override
     public void write(GenericData.Fixed datum, Encoder encoder) throws IOException {
-      Preconditions.checkArgument(datum.bytes().length == length,
-          "Cannot write byte array of length %s as fixed[%s]", datum.bytes().length, length);
+      Preconditions.checkArgument(
+          datum.bytes().length == length,
+          "Cannot write byte array of length %s as fixed[%s]",
+          datum.bytes().length,
+          length);
       encoder.writeFixed(datum.bytes());
     }
   }
@@ -316,8 +312,7 @@ public class ValueWriters {
   private static class BytesWriter implements ValueWriter<byte[]> {
     private static final BytesWriter INSTANCE = new BytesWriter();
 
-    private BytesWriter() {
-    }
+    private BytesWriter() {}
 
     @Override
     public void write(byte[] bytes, Encoder encoder) throws IOException {
@@ -328,8 +323,7 @@ public class ValueWriters {
   private static class ByteBufferWriter implements ValueWriter<ByteBuffer> {
     private static final ByteBufferWriter INSTANCE = new ByteBufferWriter();
 
-    private ByteBufferWriter() {
-    }
+    private ByteBufferWriter() {}
 
     @Override
     public void write(ByteBuffer bytes, Encoder encoder) throws IOException {
@@ -345,12 +339,14 @@ public class ValueWriters {
     private DecimalWriter(int precision, int scale) {
       this.precision = precision;
       this.scale = scale;
-      this.bytes = ThreadLocal.withInitial(() -> new byte[TypeUtil.decimalRequiredBytes(precision)]);
+      this.bytes =
+          ThreadLocal.withInitial(() -> new byte[TypeUtil.decimalRequiredBytes(precision)]);
     }
 
     @Override
     public void write(BigDecimal decimal, Encoder encoder) throws IOException {
-      encoder.writeFixed(DecimalUtil.toReusedFixLengthBytes(precision, scale, decimal, bytes.get()));
+      encoder.writeFixed(
+          DecimalUtil.toReusedFixLengthBytes(precision, scale, decimal, bytes.get()));
     }
   }
 

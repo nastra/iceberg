@@ -43,8 +43,7 @@ public class RecordAndPosition<T> {
     this.recordOffset = recordOffset;
   }
 
-  public RecordAndPosition() {
-  }
+  public RecordAndPosition() {}
 
   // ------------------------------------------------------------------------
 
@@ -77,5 +76,4 @@ public class RecordAndPosition<T> {
   public String toString() {
     return String.format("%s @ %d + %d", record, fileOffset, recordOffset);
   }
-
 }

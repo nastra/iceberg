@@ -33,8 +33,10 @@ class OSSOutputFile extends BaseOSSFile implements OutputFile {
     super(client, uri, aliyunProperties, metrics);
   }
 
-  static OSSOutputFile fromLocation(OSS client, String location, AliyunProperties aliyunProperties) {
-    return new OSSOutputFile(client, new OSSURI(location), aliyunProperties, MetricsContext.nullMetrics());
+  static OSSOutputFile fromLocation(
+      OSS client, String location, AliyunProperties aliyunProperties) {
+    return new OSSOutputFile(
+        client, new OSSURI(location), aliyunProperties, MetricsContext.nullMetrics());
   }
 
   @Override

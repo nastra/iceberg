@@ -28,11 +28,9 @@ public class TestListeners {
     Listeners.register(TestListener.get()::event2, Event2.class);
   }
 
-  public static class Event1 {
-  }
+  public static class Event1 {}
 
-  public static class Event2 {
-  }
+  public static class Event2 {}
 
   public static class TestListener {
     private static final TestListener INSTANCE = new TestListener();

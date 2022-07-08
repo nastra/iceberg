@@ -21,8 +21,7 @@ package org.apache.iceberg.util;
 
 public class NaNUtil {
 
-  private NaNUtil() {
-  }
+  private NaNUtil() {}
 
   public static boolean isNaN(Object value) {
     if (value == null) {

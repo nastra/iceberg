@@ -25,8 +25,13 @@ import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 
 public class TestMergeOnReadMerge extends TestMerge {
 
-  public TestMergeOnReadMerge(String catalogName, String implementation, Map<String, String> config,
-                              String fileFormat, boolean vectorized, String distributionMode) {
+  public TestMergeOnReadMerge(
+      String catalogName,
+      String implementation,
+      Map<String, String> config,
+      String fileFormat,
+      boolean vectorized,
+      String distributionMode) {
     super(catalogName, implementation, config, fileFormat, vectorized, distributionMode);
   }
 
@@ -34,7 +39,6 @@ public class TestMergeOnReadMerge extends TestMerge {
   protected Map<String, String> extraTableProperties() {
     return ImmutableMap.of(
         TableProperties.FORMAT_VERSION, "2",
-        TableProperties.MERGE_MODE, "merge-on-read"
-    );
+        TableProperties.MERGE_MODE, "merge-on-read");
   }
 }

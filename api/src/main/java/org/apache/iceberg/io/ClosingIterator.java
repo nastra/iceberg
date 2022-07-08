@@ -24,8 +24,8 @@ import java.io.UncheckedIOException;
 import java.util.Iterator;
 
 /**
- * A convenience wrapper around {@link CloseableIterator}, providing auto-close
- * functionality when all of the elements in the iterator are consumed.
+ * A convenience wrapper around {@link CloseableIterator}, providing auto-close functionality when
+ * all of the elements in the iterator are consumed.
  */
 public class ClosingIterator<T> implements Iterator<T> {
   private final CloseableIterator<T> iterator;

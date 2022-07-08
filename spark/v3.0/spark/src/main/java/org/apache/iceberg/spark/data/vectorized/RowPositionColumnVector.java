@@ -37,8 +37,7 @@ public class RowPositionColumnVector extends ColumnVector {
   }
 
   @Override
-  public void close() {
-  }
+  public void close() {}
 
   @Override
   public boolean hasNull() {

@@ -31,31 +31,32 @@ public abstract class SparkCatalogTestBase extends SparkTestBaseWithCatalog {
   @Parameterized.Parameters(name = "catalogName = {0}, implementation = {1}, config = {2}")
   public static Object[][] parameters() {
     return new Object[][] {
-        {
-          SparkCatalogConfig.HIVE.catalogName(),
-          SparkCatalogConfig.HIVE.implementation(),
-          SparkCatalogConfig.HIVE.properties()
-        },
-        {
-          SparkCatalogConfig.HADOOP.catalogName(),
-          SparkCatalogConfig.HADOOP.implementation(),
-          SparkCatalogConfig.HADOOP.properties()
-        },
-        {
-          SparkCatalogConfig.SPARK.catalogName(),
-          SparkCatalogConfig.SPARK.implementation(),
-          SparkCatalogConfig.SPARK.properties()
-        }};
+      {
+        SparkCatalogConfig.HIVE.catalogName(),
+        SparkCatalogConfig.HIVE.implementation(),
+        SparkCatalogConfig.HIVE.properties()
+      },
+      {
+        SparkCatalogConfig.HADOOP.catalogName(),
+        SparkCatalogConfig.HADOOP.implementation(),
+        SparkCatalogConfig.HADOOP.properties()
+      },
+      {
+        SparkCatalogConfig.SPARK.catalogName(),
+        SparkCatalogConfig.SPARK.implementation(),
+        SparkCatalogConfig.SPARK.properties()
+      }
+    };
   }
 
-  @Rule
-  public TemporaryFolder temp = new TemporaryFolder();
+  @Rule public TemporaryFolder temp = new TemporaryFolder();
 
   public SparkCatalogTestBase(SparkCatalogConfig config) {
     super(config);
   }
 
-  public SparkCatalogTestBase(String catalogName, String implementation, Map<String, String> config) {
+  public SparkCatalogTestBase(
+      String catalogName, String implementation, Map<String, String> config) {
     super(catalogName, implementation, config);
   }
 }

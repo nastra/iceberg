@@ -23,8 +23,10 @@ import org.apache.iceberg.types.Types;
 
 /**
  * Represents an unbound expression node.
+ *
  * @param <T> the Java type of values produced by this node
- * @param <B> the Java type produced when this node is bound using {@link #bind(Types.StructType, boolean)}
+ * @param <B> the Java type produced when this node is bound using {@link #bind(Types.StructType,
+ *     boolean)}
  */
 public interface Unbound<T, B> {
   /**
@@ -36,8 +38,6 @@ public interface Unbound<T, B> {
    */
   B bind(Types.StructType struct, boolean caseSensitive);
 
-  /**
-   * Returns this expression's underlying reference.
-   */
+  /** Returns this expression's underlying reference. */
   NamedReference<?> ref();
 }

@@ -29,13 +29,13 @@ import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.util.StructLikeMap;
 
 /**
- * A writer capable of writing to multiple specs and partitions that keeps files for each
- * seen spec/partition pair open until this writer is closed.
- * <p>
- * As opposed to {@link ClusteredWriter}, this writer does not require the incoming records
- * to be clustered by partition spec and partition as all files are kept open. As a consequence,
- * this writer may potentially consume substantially more memory compared to {@link ClusteredWriter}.
- * Use this writer only when clustering by spec/partition is not possible (e.g. streaming).
+ * A writer capable of writing to multiple specs and partitions that keeps files for each seen
+ * spec/partition pair open until this writer is closed.
+ *
+ * <p>As opposed to {@link ClusteredWriter}, this writer does not require the incoming records to be
+ * clustered by partition spec and partition as all files are kept open. As a consequence, this
+ * writer may potentially consume substantially more memory compared to {@link ClusteredWriter}. Use
+ * this writer only when clustering by spec/partition is not possible (e.g. streaming).
  */
 abstract class FanoutWriter<T, R> implements PartitioningWriter<T, R> {
 
@@ -55,9 +55,8 @@ abstract class FanoutWriter<T, R> implements PartitioningWriter<T, R> {
   }
 
   private FileWriter<T, R> writer(PartitionSpec spec, StructLike partition) {
-    Map<StructLike, FileWriter<T, R>> specWriters = writers.computeIfAbsent(
-        spec.specId(),
-        id -> StructLikeMap.create(spec.partitionType()));
+    Map<StructLike, FileWriter<T, R>> specWriters =
+        writers.computeIfAbsent(spec.specId(), id -> StructLikeMap.create(spec.partitionType()));
     FileWriter<T, R> writer = specWriters.get(partition);
 
     if (writer == null) {
@@ -97,9 +96,13 @@ abstract class FanoutWriter<T, R> implements PartitioningWriter<T, R> {
     return aggregatedResult();
   }
 
-  protected EncryptedOutputFile newOutputFile(OutputFileFactory fileFactory, PartitionSpec spec, StructLike partition) {
-    Preconditions.checkArgument(spec.isUnpartitioned() || partition != null,
+  protected EncryptedOutputFile newOutputFile(
+      OutputFileFactory fileFactory, PartitionSpec spec, StructLike partition) {
+    Preconditions.checkArgument(
+        spec.isUnpartitioned() || partition != null,
         "Partition must not be null when creating output file for partitioned spec");
-    return partition == null ? fileFactory.newOutputFile() : fileFactory.newOutputFile(spec, partition);
+    return partition == null
+        ? fileFactory.newOutputFile()
+        : fileFactory.newOutputFile(spec, partition);
   }
 }

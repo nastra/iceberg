@@ -72,13 +72,15 @@ public abstract class BasePageIterator {
     this.hasNext = false;
   }
 
-  protected abstract void initDataReader(Encoding dataEncoding, ByteBufferInputStream in, int valueCount);
+  protected abstract void initDataReader(
+      Encoding dataEncoding, ByteBufferInputStream in, int valueCount);
 
-  protected abstract void initDefinitionLevelsReader(DataPageV1 dataPageV1, ColumnDescriptor descriptor,
-                                                     ByteBufferInputStream in, int count) throws IOException;
+  protected abstract void initDefinitionLevelsReader(
+      DataPageV1 dataPageV1, ColumnDescriptor descriptor, ByteBufferInputStream in, int count)
+      throws IOException;
 
-  protected abstract void initDefinitionLevelsReader(DataPageV2 dataPageV2, ColumnDescriptor descriptor)
-          throws IOException;
+  protected abstract void initDefinitionLevelsReader(
+      DataPageV2 dataPageV2, ColumnDescriptor descriptor) throws IOException;
 
   public int currentPageCount() {
     return triplesCount;
@@ -91,26 +93,28 @@ public abstract class BasePageIterator {
   public void setPage(DataPage page) {
     Preconditions.checkNotNull(page, "Cannot read from null page");
     this.page = page;
-    this.page.accept(new DataPage.Visitor<ValuesReader>() {
-      @Override
-      public ValuesReader visit(DataPageV1 dataPageV1) {
-        initFromPage(dataPageV1);
-        return null;
-      }
+    this.page.accept(
+        new DataPage.Visitor<ValuesReader>() {
+          @Override
+          public ValuesReader visit(DataPageV1 dataPageV1) {
+            initFromPage(dataPageV1);
+            return null;
+          }
 
-      @Override
-      public ValuesReader visit(DataPageV2 dataPageV2) {
-        initFromPage(dataPageV2);
-        return null;
-      }
-    });
+          @Override
+          public ValuesReader visit(DataPageV2 dataPageV2) {
+            initFromPage(dataPageV2);
+            return null;
+          }
+        });
     this.triplesRead = 0;
     this.hasNext = triplesRead < triplesCount;
   }
 
   protected void initFromPage(DataPageV1 initPage) {
     this.triplesCount = initPage.getValueCount();
-    ValuesReader rlReader = initPage.getRlEncoding().getValuesReader(desc, ValuesType.REPETITION_LEVEL);
+    ValuesReader rlReader =
+        initPage.getRlEncoding().getValuesReader(desc, ValuesType.REPETITION_LEVEL);
     this.repetitionLevels = new ValuesReaderIntIterator(rlReader);
     try {
       BytesInput bytes = initPage.getBytes();
@@ -129,7 +133,8 @@ public abstract class BasePageIterator {
 
   protected void initFromPage(DataPageV2 initPage) {
     this.triplesCount = initPage.getValueCount();
-    this.repetitionLevels = newRLEIterator(desc.getMaxRepetitionLevel(), initPage.getRepetitionLevels());
+    this.repetitionLevels =
+        newRLEIterator(desc.getMaxRepetitionLevel(), initPage.getRepetitionLevels());
     try {
       initDefinitionLevelsReader(initPage, desc);
       LOG.debug("page data size {} bytes and {} records", initPage.getData().size(), triplesCount);
@@ -167,8 +172,7 @@ public abstract class BasePageIterator {
       }
       return new RLEIntIterator(
           new RunLengthBitPackingHybridDecoder(
-              BytesUtils.getWidthFromMaxInt(maxLevel),
-              bytes.toInputStream()));
+              BytesUtils.getWidthFromMaxInt(maxLevel), bytes.toInputStream()));
     } catch (IOException e) {
       throw new ParquetDecodingException("could not read levels in page for col " + desc, e);
     }
@@ -197,5 +201,4 @@ public abstract class BasePageIterator {
       return 0;
     }
   }
-
 }

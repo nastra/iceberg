@@ -40,13 +40,24 @@ public class DataWriter<T> implements FileWriter<T, DataWriteResult> {
   private final SortOrder sortOrder;
   private DataFile dataFile = null;
 
-  public DataWriter(FileAppender<T> appender, FileFormat format, String location,
-                    PartitionSpec spec, StructLike partition, EncryptionKeyMetadata keyMetadata) {
+  public DataWriter(
+      FileAppender<T> appender,
+      FileFormat format,
+      String location,
+      PartitionSpec spec,
+      StructLike partition,
+      EncryptionKeyMetadata keyMetadata) {
     this(appender, format, location, spec, partition, keyMetadata, null);
   }
 
-  public DataWriter(FileAppender<T> appender, FileFormat format, String location,
-                    PartitionSpec spec, StructLike partition, EncryptionKeyMetadata keyMetadata, SortOrder sortOrder) {
+  public DataWriter(
+      FileAppender<T> appender,
+      FileFormat format,
+      String location,
+      PartitionSpec spec,
+      StructLike partition,
+      EncryptionKeyMetadata keyMetadata,
+      SortOrder sortOrder) {
     this.appender = appender;
     this.format = format;
     this.location = location;
@@ -80,16 +91,17 @@ public class DataWriter<T> implements FileWriter<T, DataWriteResult> {
   public void close() throws IOException {
     if (dataFile == null) {
       appender.close();
-      this.dataFile = DataFiles.builder(spec)
-          .withFormat(format)
-          .withPath(location)
-          .withPartition(partition)
-          .withEncryptionKeyMetadata(keyMetadata)
-          .withFileSizeInBytes(appender.length())
-          .withMetrics(appender.metrics())
-          .withSplitOffsets(appender.splitOffsets())
-          .withSortOrder(sortOrder)
-          .build();
+      this.dataFile =
+          DataFiles.builder(spec)
+              .withFormat(format)
+              .withPath(location)
+              .withPartition(partition)
+              .withEncryptionKeyMetadata(keyMetadata)
+              .withFileSizeInBytes(appender.length())
+              .withMetrics(appender.metrics())
+              .withSplitOffsets(appender.splitOffsets())
+              .withSortOrder(sortOrder)
+              .build();
     }
   }
 

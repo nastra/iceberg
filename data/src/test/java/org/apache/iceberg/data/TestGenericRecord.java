@@ -18,13 +18,13 @@
 
 package org.apache.iceberg.data;
 
+import static org.apache.iceberg.types.Types.NestedField.optional;
+
 import org.apache.iceberg.AssertHelpers;
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.types.Types;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static org.apache.iceberg.types.Types.NestedField.optional;
 
 public class TestGenericRecord {
 
@@ -54,7 +54,8 @@ public class TestGenericRecord {
     GenericRecord record = GenericRecord.create(schema);
     record.set(0, 10L);
 
-    AssertHelpers.assertThrows("Should fail on incorrect class instance",
+    AssertHelpers.assertThrows(
+        "Should fail on incorrect class instance",
         IllegalStateException.class,
         "Not an instance of java.lang.CharSequence: 10",
         () -> record.get(0, CharSequence.class));

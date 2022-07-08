@@ -23,16 +23,14 @@ import org.apache.flink.api.connector.source.SourceOutput;
 import org.apache.flink.connector.base.source.reader.RecordEmitter;
 import org.apache.iceberg.flink.source.split.IcebergSourceSplit;
 
-final class IcebergSourceRecordEmitter<T> implements RecordEmitter<RecordAndPosition<T>, T, IcebergSourceSplit> {
+final class IcebergSourceRecordEmitter<T>
+    implements RecordEmitter<RecordAndPosition<T>, T, IcebergSourceSplit> {
 
-  IcebergSourceRecordEmitter() {
-  }
+  IcebergSourceRecordEmitter() {}
 
   @Override
   public void emitRecord(
-      RecordAndPosition<T> element,
-      SourceOutput<T> output,
-      IcebergSourceSplit split) {
+      RecordAndPosition<T> element, SourceOutput<T> output, IcebergSourceSplit split) {
     output.collect(element.record());
     split.updatePosition(element.fileOffset(), element.recordOffset());
   }

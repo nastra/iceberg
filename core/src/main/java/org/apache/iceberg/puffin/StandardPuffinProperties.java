@@ -20,12 +20,11 @@
 package org.apache.iceberg.puffin;
 
 public final class StandardPuffinProperties {
-  private StandardPuffinProperties() {
-  }
+  private StandardPuffinProperties() {}
 
   /**
-   * human-readable identification of the application writing the file,
-   * along with its version. Example "Trino version 381".
+   * human-readable identification of the application writing the file, along with its version.
+   * Example "Trino version 381".
    */
   public static final String CREATED_BY_PROPERTY = "created-by";
 }

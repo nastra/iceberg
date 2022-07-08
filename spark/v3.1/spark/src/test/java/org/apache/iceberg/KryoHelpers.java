@@ -32,8 +32,7 @@ import org.apache.spark.serializer.KryoSerializer;
 
 public class KryoHelpers {
 
-  private KryoHelpers() {
-  }
+  private KryoHelpers() {}
 
   @SuppressWarnings("unchecked")
   public static <T> T roundTripSerialize(T obj) throws IOException {
@@ -45,7 +44,8 @@ public class KryoHelpers {
       kryo.writeClassAndObject(out, obj);
     }
 
-    try (Input in = new Input(new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray())))) {
+    try (Input in =
+        new Input(new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray())))) {
       return (T) kryo.readClassAndObject(in);
     }
   }

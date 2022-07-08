@@ -29,7 +29,8 @@ import org.apache.iceberg.avro.AvroWithPartnerByStructureVisitor;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.util.Pair;
 
-public abstract class AvroWithFlinkSchemaVisitor<T> extends AvroWithPartnerByStructureVisitor<LogicalType, T> {
+public abstract class AvroWithFlinkSchemaVisitor<T>
+    extends AvroWithPartnerByStructureVisitor<LogicalType, T> {
 
   @Override
   protected boolean isStringType(LogicalType logicalType) {
@@ -43,7 +44,8 @@ public abstract class AvroWithFlinkSchemaVisitor<T> extends AvroWithPartnerByStr
 
   @Override
   protected LogicalType arrayElementType(LogicalType arrayType) {
-    Preconditions.checkArgument(arrayType instanceof ArrayType, "Invalid array: %s is not an array", arrayType);
+    Preconditions.checkArgument(
+        arrayType instanceof ArrayType, "Invalid array: %s is not an array", arrayType);
     return ((ArrayType) arrayType).getElementType();
   }
 
@@ -61,7 +63,8 @@ public abstract class AvroWithFlinkSchemaVisitor<T> extends AvroWithPartnerByStr
 
   @Override
   protected Pair<String, LogicalType> fieldNameAndType(LogicalType structType, int pos) {
-    Preconditions.checkArgument(structType instanceof RowType, "Invalid struct: %s is not a struct", structType);
+    Preconditions.checkArgument(
+        structType instanceof RowType, "Invalid struct: %s is not a struct", structType);
     RowType.RowField field = ((RowType) structType).getFields().get(pos);
     return Pair.of(field.getName(), field.getType());
   }

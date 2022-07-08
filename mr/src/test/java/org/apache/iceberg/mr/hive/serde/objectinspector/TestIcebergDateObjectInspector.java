@@ -61,5 +61,4 @@ public class TestIcebergDateObjectInspector {
 
     Assert.assertFalse(oi.preferWritable());
   }
-
 }

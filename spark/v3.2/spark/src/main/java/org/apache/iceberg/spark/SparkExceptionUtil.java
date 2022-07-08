@@ -29,8 +29,7 @@ import org.apache.spark.sql.AnalysisException;
 
 public class SparkExceptionUtil {
 
-  private SparkExceptionUtil() {
-  }
+  private SparkExceptionUtil() {}
 
   /**
    * Converts checked exceptions to unchecked exceptions.
@@ -41,8 +40,8 @@ public class SparkExceptionUtil {
    * @return unchecked exception.
    */
   @FormatMethod
-  public static RuntimeException toUncheckedException(final Throwable cause, final String message,
-                                                      final Object... args) {
+  public static RuntimeException toUncheckedException(
+      final Throwable cause, final String message, final Object... args) {
     // Parameters are required to be final to help @FormatMethod do static analysis
     if (cause instanceof RuntimeException) {
       return (RuntimeException) cause;

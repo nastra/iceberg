@@ -41,11 +41,16 @@ public class TestFlinkAppenderFactory extends TestAppenderFactory<RowData> {
   }
 
   @Override
-  protected FileAppenderFactory<RowData> createAppenderFactory(List<Integer> equalityFieldIds,
-                                                               Schema eqDeleteSchema,
-                                                               Schema posDeleteRowSchema) {
-    return new FlinkAppenderFactory(table.schema(), rowType, table.properties(), table.spec(),
-        ArrayUtil.toIntArray(equalityFieldIds), eqDeleteSchema, posDeleteRowSchema);
+  protected FileAppenderFactory<RowData> createAppenderFactory(
+      List<Integer> equalityFieldIds, Schema eqDeleteSchema, Schema posDeleteRowSchema) {
+    return new FlinkAppenderFactory(
+        table.schema(),
+        rowType,
+        table.properties(),
+        table.spec(),
+        ArrayUtil.toIntArray(equalityFieldIds),
+        eqDeleteSchema,
+        posDeleteRowSchema);
   }
 
   @Override

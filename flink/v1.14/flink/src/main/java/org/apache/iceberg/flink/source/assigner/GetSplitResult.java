@@ -27,18 +27,15 @@ import org.apache.iceberg.flink.source.split.IcebergSourceSplit;
 public class GetSplitResult {
 
   public enum Status {
-
     AVAILABLE,
 
     /**
-     * There are pending splits. But they can't be assigned
-     * due to constraints (like event time alignment)
+     * There are pending splits. But they can't be assigned due to constraints (like event time
+     * alignment)
      */
     CONSTRAINED,
 
-    /**
-     * Assigner doesn't have pending splits.
-     */
+    /** Assigner doesn't have pending splits. */
     UNAVAILABLE
   }
 

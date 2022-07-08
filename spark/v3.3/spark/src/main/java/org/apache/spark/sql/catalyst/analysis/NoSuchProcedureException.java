@@ -25,7 +25,13 @@ import scala.Option;
 
 public class NoSuchProcedureException extends AnalysisException {
   public NoSuchProcedureException(Identifier ident) {
-    super("Procedure " + ident + " not found", Option.empty(), Option.empty(), Option.empty(),
-        Option.empty(), Option.empty(), new String[0]);
+    super(
+        "Procedure " + ident + " not found",
+        Option.empty(),
+        Option.empty(),
+        Option.empty(),
+        Option.empty(),
+        Option.empty(),
+        new String[0]);
   }
 }

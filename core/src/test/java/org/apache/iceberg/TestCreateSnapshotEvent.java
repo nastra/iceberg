@@ -61,25 +61,33 @@ public class TestCreateSnapshotEvent extends TableTestBase {
 
     table.newAppend().appendFile(FILE_A).commit();
     Assert.assertNotNull(currentEvent);
-    Assert.assertEquals("Added records in the table should be 1",
-            "1", currentEvent.summary().get("added-records"));
-    Assert.assertEquals("Added files in the table should be 1",
-            "1", currentEvent.summary().get("added-data-files"));
-    Assert.assertEquals("Total records in the table should be 1",
-            "1", currentEvent.summary().get("total-records"));
-    Assert.assertEquals("Total data files in the table should be 1",
-            "1", currentEvent.summary().get("total-data-files"));
+    Assert.assertEquals(
+        "Added records in the table should be 1", "1", currentEvent.summary().get("added-records"));
+    Assert.assertEquals(
+        "Added files in the table should be 1",
+        "1",
+        currentEvent.summary().get("added-data-files"));
+    Assert.assertEquals(
+        "Total records in the table should be 1", "1", currentEvent.summary().get("total-records"));
+    Assert.assertEquals(
+        "Total data files in the table should be 1",
+        "1",
+        currentEvent.summary().get("total-data-files"));
 
     table.newAppend().appendFile(FILE_A).commit();
     Assert.assertNotNull(currentEvent);
-    Assert.assertEquals("Added records in the table should be 1",
-            "1", currentEvent.summary().get("added-records"));
-    Assert.assertEquals("Added files in the table should be 1",
-            "1", currentEvent.summary().get("added-data-files"));
-    Assert.assertEquals("Total records in the table should be 2",
-            "2", currentEvent.summary().get("total-records"));
-    Assert.assertEquals("Total data files in the table should be 2",
-            "2", currentEvent.summary().get("total-data-files"));
+    Assert.assertEquals(
+        "Added records in the table should be 1", "1", currentEvent.summary().get("added-records"));
+    Assert.assertEquals(
+        "Added files in the table should be 1",
+        "1",
+        currentEvent.summary().get("added-data-files"));
+    Assert.assertEquals(
+        "Total records in the table should be 2", "2", currentEvent.summary().get("total-records"));
+    Assert.assertEquals(
+        "Total data files in the table should be 2",
+        "2",
+        currentEvent.summary().get("total-data-files"));
   }
 
   @Test
@@ -88,25 +96,35 @@ public class TestCreateSnapshotEvent extends TableTestBase {
 
     table.newAppend().appendFile(FILE_A).appendFile(FILE_B).commit();
     Assert.assertNotNull(currentEvent);
-    Assert.assertEquals("Added records in the table should be 2",
-            "2", currentEvent.summary().get("added-records"));
-    Assert.assertEquals("Added files in the table should be 2",
-            "2", currentEvent.summary().get("added-data-files"));
-    Assert.assertEquals("Total records in the table should be 2",
-            "2", currentEvent.summary().get("total-records"));
-    Assert.assertEquals("Total data files in the table should be 2",
-            "2", currentEvent.summary().get("total-data-files"));
+    Assert.assertEquals(
+        "Added records in the table should be 2", "2", currentEvent.summary().get("added-records"));
+    Assert.assertEquals(
+        "Added files in the table should be 2",
+        "2",
+        currentEvent.summary().get("added-data-files"));
+    Assert.assertEquals(
+        "Total records in the table should be 2", "2", currentEvent.summary().get("total-records"));
+    Assert.assertEquals(
+        "Total data files in the table should be 2",
+        "2",
+        currentEvent.summary().get("total-data-files"));
 
     table.newDelete().deleteFile(FILE_A).commit();
     Assert.assertNotNull(currentEvent);
-    Assert.assertEquals("Deleted records in the table should be 1",
-            "1", currentEvent.summary().get("deleted-records"));
-    Assert.assertEquals("Deleted files in the table should be 1",
-            "1", currentEvent.summary().get("deleted-data-files"));
-    Assert.assertEquals("Total records in the table should be 1",
-            "1", currentEvent.summary().get("total-records"));
-    Assert.assertEquals("Total data files in the table should be 1",
-            "1", currentEvent.summary().get("total-data-files"));
+    Assert.assertEquals(
+        "Deleted records in the table should be 1",
+        "1",
+        currentEvent.summary().get("deleted-records"));
+    Assert.assertEquals(
+        "Deleted files in the table should be 1",
+        "1",
+        currentEvent.summary().get("deleted-data-files"));
+    Assert.assertEquals(
+        "Total records in the table should be 1", "1", currentEvent.summary().get("total-records"));
+    Assert.assertEquals(
+        "Total data files in the table should be 1",
+        "1",
+        currentEvent.summary().get("total-data-files"));
   }
 
   class MyListener implements Listener<CreateSnapshotEvent> {
@@ -115,5 +133,4 @@ public class TestCreateSnapshotEvent extends TableTestBase {
       currentEvent = event;
     }
   }
-
 }

@@ -20,7 +20,8 @@
 package org.apache.iceberg;
 
 public enum NullOrder {
-  NULLS_FIRST, NULLS_LAST;
+  NULLS_FIRST,
+  NULLS_LAST;
 
   @Override
   public String toString() {

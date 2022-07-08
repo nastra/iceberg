@@ -27,8 +27,7 @@ import org.junit.rules.ExpectedException;
 
 public class TableMetadataParserCodecTest {
 
-  @Rule
-  public ExpectedException exceptionRule = ExpectedException.none();
+  @Rule public ExpectedException exceptionRule = ExpectedException.none();
 
   @Test
   public void testCompressionCodec() {

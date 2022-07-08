@@ -68,8 +68,10 @@ public class TestInternalRowWrapper extends RecordWrapperTest {
       StructLike recordStructLike = recordWrapper.wrap(actual.next());
       StructLike rowStructLike = rowWrapper.wrap(expected.next());
 
-      assertMethod.assertEquals("Should have expected StructLike values",
-          actualWrapper.set(recordStructLike), expectedWrapper.set(rowStructLike));
+      assertMethod.assertEquals(
+          "Should have expected StructLike values",
+          actualWrapper.set(recordStructLike),
+          expectedWrapper.set(rowStructLike));
     }
 
     Assert.assertFalse("Shouldn't have more record", actual.hasNext());

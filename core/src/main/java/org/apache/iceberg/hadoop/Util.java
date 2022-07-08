@@ -43,8 +43,7 @@ public class Util {
 
   private static final Logger LOG = LoggerFactory.getLogger(Util.class);
 
-  private Util() {
-  }
+  private Util() {}
 
   public static FileSystem getFs(Path path, Configuration conf) {
     try {
@@ -76,7 +75,8 @@ public class Util {
     for (FileScanTask f : task.files()) {
       InputFile in = io.newInputFile(f.file().path().toString());
       if (in instanceof HadoopInputFile) {
-        Collections.addAll(locations, ((HadoopInputFile) in).getBlockLocations(f.start(), f.length()));
+        Collections.addAll(
+            locations, ((HadoopInputFile) in).getBlockLocations(f.start(), f.length()));
       }
     }
 
@@ -86,10 +86,9 @@ public class Util {
   /**
    * From Apache Spark
    *
-   * Convert URI to String.
-   * Since URI.toString does not decode the uri, e.g. change '%25' to '%'.
-   * Here we create a hadoop Path with the given URI, and rely on Path.toString
-   * to decode the uri
+   * <p>Convert URI to String. Since URI.toString does not decode the uri, e.g. change '%25' to '%'.
+   * Here we create a hadoop Path with the given URI, and rely on Path.toString to decode the uri
+   *
    * @param uri the URI of the path
    * @return the String of the path
    */

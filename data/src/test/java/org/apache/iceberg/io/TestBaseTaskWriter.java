@@ -56,11 +56,7 @@ public class TestBaseTaskWriter extends TableTestBase {
 
   @Parameterized.Parameters(name = "FileFormat = {0}")
   public static Object[][] parameters() {
-    return new Object[][] {
-        {"avro"},
-        {"orc"},
-        {"parquet"}
-    };
+    return new Object[][] {{"avro"}, {"orc"}, {"parquet"}};
   }
 
   public TestBaseTaskWriter(String fileFormat) {
@@ -81,12 +77,15 @@ public class TestBaseTaskWriter extends TableTestBase {
 
     int firstFieldId = table.schema().findField("id").fieldId();
     int secondFieldId = table.schema().findField("data").fieldId();
-    this.appenderFactory = new GenericAppenderFactory(table.schema(), table.spec(),
-        new int[] {firstFieldId, secondFieldId}, table.schema(), null);
+    this.appenderFactory =
+        new GenericAppenderFactory(
+            table.schema(),
+            table.spec(),
+            new int[] {firstFieldId, secondFieldId},
+            table.schema(),
+            null);
 
-    table.updateProperties()
-        .defaultFormat(format)
-        .commit();
+    table.updateProperties().defaultFormat(format).commit();
   }
 
   private Record createRecord(Integer id, String data) {
@@ -127,9 +126,10 @@ public class TestBaseTaskWriter extends TableTestBase {
       taskWriter.close();
 
       // Assert the current data file count.
-      files = Files.list(Paths.get(tableDir.getPath(), "data"))
-          .filter(p -> !p.toString().endsWith(".crc"))
-          .collect(Collectors.toList());
+      files =
+          Files.list(Paths.get(tableDir.getPath(), "data"))
+              .filter(p -> !p.toString().endsWith(".crc"))
+              .collect(Collectors.toList());
       Assert.assertEquals("Should have 4 files but the files are: " + files, 4, files.size());
 
       // Abort to clean all delete files and data files.
@@ -189,7 +189,8 @@ public class TestBaseTaskWriter extends TableTestBase {
     Arrays.stream(result.deleteFiles()).forEach(rowDelta::addDeletes);
     rowDelta.commit();
 
-    Assert.assertEquals("Should have expected records", expectedRowSet(expected), actualRowSet("*"));
+    Assert.assertEquals(
+        "Should have expected records", expectedRowSet(expected), actualRowSet("*"));
   }
 
   private StructLikeSet expectedRowSet(Iterable<Record> records) {
@@ -207,7 +208,8 @@ public class TestBaseTaskWriter extends TableTestBase {
   }
 
   private TestTaskWriter createTaskWriter(long targetFileSize) {
-    return new TestTaskWriter(table.spec(), format, appenderFactory, fileFactory, table.io(), targetFileSize);
+    return new TestTaskWriter(
+        table.spec(), format, appenderFactory, fileFactory, table.io(), targetFileSize);
   }
 
   private static class TestTaskWriter extends BaseTaskWriter<Record> {
@@ -215,10 +217,13 @@ public class TestBaseTaskWriter extends TableTestBase {
     private RollingFileWriter dataWriter;
     private RollingEqDeleteWriter deleteWriter;
 
-    private TestTaskWriter(PartitionSpec spec, FileFormat format,
-                           FileAppenderFactory<Record> appenderFactory,
-                           OutputFileFactory fileFactory, FileIO io,
-                           long targetFileSize) {
+    private TestTaskWriter(
+        PartitionSpec spec,
+        FileFormat format,
+        FileAppenderFactory<Record> appenderFactory,
+        OutputFileFactory fileFactory,
+        FileIO io,
+        long targetFileSize) {
       super(spec, format, appenderFactory, fileFactory, io, targetFileSize);
       this.dataWriter = new RollingFileWriter(null);
       this.deleteWriter = new RollingEqDeleteWriter(null);

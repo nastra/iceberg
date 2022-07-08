@@ -19,17 +19,17 @@
 
 package org.apache.iceberg.puffin;
 
+import static org.apache.iceberg.puffin.PuffinFormat.readIntegerLittleEndian;
+import static org.apache.iceberg.puffin.PuffinFormat.writeIntegerLittleEndian;
+import static org.apache.iceberg.relocated.com.google.common.base.Preconditions.checkArgument;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.junit.Test;
-
-import static org.apache.iceberg.puffin.PuffinFormat.readIntegerLittleEndian;
-import static org.apache.iceberg.puffin.PuffinFormat.writeIntegerLittleEndian;
-import static org.apache.iceberg.relocated.com.google.common.base.Preconditions.checkArgument;
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestPuffinFormat {
   @Test
@@ -66,9 +66,10 @@ public class TestPuffinFormat {
   private void testReadIntegerLittleEndian(byte[] input, int offset, int expected) {
     // Sanity check: validate the expectation
     Preconditions.checkArgument(
-        expected == ByteBuffer.wrap(input.clone(), offset, input.length - offset)
-            .order(ByteOrder.LITTLE_ENDIAN)
-            .getInt(),
+        expected
+            == ByteBuffer.wrap(input.clone(), offset, input.length - offset)
+                .order(ByteOrder.LITTLE_ENDIAN)
+                .getInt(),
         "Invalid expected value");
     // actual test
     assertThat(readIntegerLittleEndian(input, offset)).isEqualTo(expected);

@@ -38,7 +38,12 @@ public class OSSInputFile extends BaseOSSFile implements InputFile {
     super(client, uri, aliyunProperties, metrics);
   }
 
-  OSSInputFile(OSS client, OSSURI uri, AliyunProperties aliyunProperties, long length, MetricsContext metrics) {
+  OSSInputFile(
+      OSS client,
+      OSSURI uri,
+      AliyunProperties aliyunProperties,
+      long length,
+      MetricsContext metrics) {
     super(client, uri, aliyunProperties, metrics);
     ValidationException.check(length >= 0, "Invalid file length: %s", length);
     this.length = length;

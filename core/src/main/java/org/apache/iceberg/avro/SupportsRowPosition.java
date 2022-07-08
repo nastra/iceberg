@@ -22,7 +22,8 @@ package org.apache.iceberg.avro;
 import java.util.function.Supplier;
 
 /**
- * Interface for readers that accept a callback to determine the starting row position of an Avro split.
+ * Interface for readers that accept a callback to determine the starting row position of an Avro
+ * split.
  */
 public interface SupportsRowPosition {
   void setRowPositionSupplier(Supplier<Long> posSupplier);

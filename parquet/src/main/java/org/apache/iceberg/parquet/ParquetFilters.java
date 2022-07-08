@@ -38,11 +38,11 @@ import org.apache.parquet.io.api.Binary;
 
 class ParquetFilters {
 
-  private ParquetFilters() {
-  }
+  private ParquetFilters() {}
 
   static FilterCompat.Filter convert(Schema schema, Expression expr, boolean caseSensitive) {
-    FilterPredicate pred = ExpressionVisitors.visit(expr, new ConvertFilterToParquet(schema, caseSensitive));
+    FilterPredicate pred =
+        ExpressionVisitors.visit(expr, new ConvertFilterToParquet(schema, caseSensitive));
     // TODO: handle AlwaysFalse.INSTANCE
     if (pred != null && pred != AlwaysTrue.INSTANCE) {
       // FilterCompat will apply LogicalInverseRewriter
@@ -112,7 +112,8 @@ class ParquetFilters {
     @Override
     public <T> FilterPredicate predicate(BoundPredicate<T> pred) {
       if (!(pred.term() instanceof BoundReference)) {
-        throw new UnsupportedOperationException("Cannot convert non-reference to Parquet filter: " + pred.term());
+        throw new UnsupportedOperationException(
+            "Cannot convert non-reference to Parquet filter: " + pred.term());
       }
 
       Operation op = pred.op();

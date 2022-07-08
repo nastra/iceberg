@@ -21,9 +21,7 @@ package org.apache.spark.sql.connector.iceberg.catalog;
 
 import org.apache.spark.sql.types.DataType;
 
-/**
- * An input parameter of a {@link Procedure stored procedure}.
- */
+/** An input parameter of a {@link Procedure stored procedure}. */
 public interface ProcedureParameter {
 
   /**
@@ -48,18 +46,12 @@ public interface ProcedureParameter {
     return new ProcedureParameterImpl(name, dataType, false);
   }
 
-  /**
-   * Returns the name of this parameter.
-   */
+  /** Returns the name of this parameter. */
   String name();
 
-  /**
-   * Returns the type of this parameter.
-   */
+  /** Returns the type of this parameter. */
   DataType dataType();
 
-  /**
-   * Returns true if this parameter is required.
-   */
+  /** Returns true if this parameter is required. */
   boolean required();
 }

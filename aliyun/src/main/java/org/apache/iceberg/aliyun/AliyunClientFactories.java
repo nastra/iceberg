@@ -28,35 +28,41 @@ import org.apache.iceberg.util.PropertyUtil;
 
 public class AliyunClientFactories {
 
-  private static final AliyunClientFactory ALIYUN_CLIENT_FACTORY_DEFAULT = new DefaultAliyunClientFactory();
+  private static final AliyunClientFactory ALIYUN_CLIENT_FACTORY_DEFAULT =
+      new DefaultAliyunClientFactory();
 
-  private AliyunClientFactories() {
-  }
+  private AliyunClientFactories() {}
 
   public static AliyunClientFactory defaultFactory() {
     return ALIYUN_CLIENT_FACTORY_DEFAULT;
   }
 
   public static AliyunClientFactory from(Map<String, String> properties) {
-    String factoryImpl = PropertyUtil.propertyAsString(
-        properties, AliyunProperties.CLIENT_FACTORY, DefaultAliyunClientFactory.class.getName());
+    String factoryImpl =
+        PropertyUtil.propertyAsString(
+            properties,
+            AliyunProperties.CLIENT_FACTORY,
+            DefaultAliyunClientFactory.class.getName());
     return loadClientFactory(factoryImpl, properties);
   }
 
   /**
    * Load an implemented {@link AliyunClientFactory} based on the class name, and initialize it.
    *
-   * @param impl       the class name.
+   * @param impl the class name.
    * @param properties to initialize the factory.
    * @return an initialized {@link AliyunClientFactory}.
    */
-  private static AliyunClientFactory loadClientFactory(String impl, Map<String, String> properties) {
+  private static AliyunClientFactory loadClientFactory(
+      String impl, Map<String, String> properties) {
     DynConstructors.Ctor<AliyunClientFactory> ctor;
     try {
       ctor = DynConstructors.builder(AliyunClientFactory.class).hiddenImpl(impl).buildChecked();
     } catch (NoSuchMethodException e) {
-      throw new IllegalArgumentException(String.format(
-          "Cannot initialize AliyunClientFactory, missing no-arg constructor: %s", impl), e);
+      throw new IllegalArgumentException(
+          String.format(
+              "Cannot initialize AliyunClientFactory, missing no-arg constructor: %s", impl),
+          e);
     }
 
     AliyunClientFactory factory;
@@ -64,7 +70,10 @@ public class AliyunClientFactories {
       factory = ctor.newInstance();
     } catch (ClassCastException e) {
       throw new IllegalArgumentException(
-          String.format("Cannot initialize AliyunClientFactory, %s does not implement AliyunClientFactory.", impl), e);
+          String.format(
+              "Cannot initialize AliyunClientFactory, %s does not implement AliyunClientFactory.",
+              impl),
+          e);
     }
 
     factory.initialize(properties);
@@ -74,16 +83,19 @@ public class AliyunClientFactories {
   static class DefaultAliyunClientFactory implements AliyunClientFactory {
     private AliyunProperties aliyunProperties;
 
-    DefaultAliyunClientFactory() {
-    }
+    DefaultAliyunClientFactory() {}
 
     @Override
     public OSS newOSSClient() {
       Preconditions.checkNotNull(
-          aliyunProperties, "Cannot create aliyun oss client before initializing the AliyunClientFactory.");
+          aliyunProperties,
+          "Cannot create aliyun oss client before initializing the AliyunClientFactory.");
 
-      return new OSSClientBuilder().build(
-          aliyunProperties.ossEndpoint(), aliyunProperties.accessKeyId(), aliyunProperties.accessKeySecret());
+      return new OSSClientBuilder()
+          .build(
+              aliyunProperties.ossEndpoint(),
+              aliyunProperties.accessKeyId(),
+              aliyunProperties.accessKeySecret());
     }
 
     @Override

@@ -47,8 +47,6 @@ public class BaseCombinedScanTask implements CombinedScanTask {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("tasks", Joiner.on(", ").join(tasks))
-        .toString();
+    return MoreObjects.toStringHelper(this).add("tasks", Joiner.on(", ").join(tasks)).toString();
   }
 }

@@ -61,24 +61,29 @@ public class MappedFields implements Serializable {
 
   private static Map<String, Integer> indexIds(List<MappedField> fields) {
     ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
-    fields.forEach(field ->
-        field.names().forEach(name -> {
-          Integer id = field.id();
-          if (id != null) {
-            builder.put(name, id);
-          }
-        }));
+    fields.forEach(
+        field ->
+            field
+                .names()
+                .forEach(
+                    name -> {
+                      Integer id = field.id();
+                      if (id != null) {
+                        builder.put(name, id);
+                      }
+                    }));
     return builder.build();
   }
 
   private static Map<Integer, MappedField> indexFields(List<MappedField> fields) {
     ImmutableMap.Builder<Integer, MappedField> builder = ImmutableMap.builder();
-    fields.forEach(field -> {
-      Integer id = field.id();
-      if (id != null) {
-        builder.put(id, field);
-      }
-    });
+    fields.forEach(
+        field -> {
+          Integer id = field.id();
+          if (id != null) {
+            builder.put(id, field);
+          }
+        });
     return builder.build();
   }
 

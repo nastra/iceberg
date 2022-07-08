@@ -23,9 +23,7 @@ import java.io.Serializable;
 import java.util.Objects;
 import org.apache.iceberg.transforms.Transform;
 
-/**
- * A field in a {@link SortOrder}.
- */
+/** A field in a {@link SortOrder}. */
 public class SortField implements Serializable {
 
   private final Transform<?, ?> transform;
@@ -52,23 +50,17 @@ public class SortField implements Serializable {
     return (Transform<S, T>) transform;
   }
 
-  /**
-   * Returns the field id of the source field in the {@link SortOrder sort order's} table schema
-   */
+  /** Returns the field id of the source field in the {@link SortOrder sort order's} table schema */
   public int sourceId() {
     return sourceId;
   }
 
-  /**
-   * Returns the sort direction
-   */
+  /** Returns the sort direction */
   public SortDirection direction() {
     return direction;
   }
 
-  /**
-   * Returns the null order
-   */
+  /** Returns the null order */
   public NullOrder nullOrder() {
     return nullOrder;
   }
@@ -82,7 +74,9 @@ public class SortField implements Serializable {
   public boolean satisfies(SortField other) {
     if (Objects.equals(this, other)) {
       return true;
-    } else if (sourceId != other.sourceId || direction != other.direction || nullOrder != other.nullOrder) {
+    } else if (sourceId != other.sourceId
+        || direction != other.direction
+        || nullOrder != other.nullOrder) {
       return false;
     }
 
@@ -103,10 +97,10 @@ public class SortField implements Serializable {
     }
 
     SortField that = (SortField) other;
-    return transform.equals(that.transform) &&
-        sourceId == that.sourceId &&
-        direction == that.direction &&
-        nullOrder == that.nullOrder;
+    return transform.equals(that.transform)
+        && sourceId == that.sourceId
+        && direction == that.direction
+        && nullOrder == that.nullOrder;
   }
 
   @Override

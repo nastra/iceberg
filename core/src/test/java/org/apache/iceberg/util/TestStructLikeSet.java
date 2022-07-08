@@ -28,10 +28,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class TestStructLikeSet {
-  private static final Types.StructType STRUCT_TYPE = Types.StructType.of(
-      Types.NestedField.required(1, "id", Types.IntegerType.get()),
-      Types.NestedField.optional(2, "data", Types.LongType.get())
-  );
+  private static final Types.StructType STRUCT_TYPE =
+      Types.StructType.of(
+          Types.NestedField.required(1, "id", Types.IntegerType.get()),
+          Types.NestedField.optional(2, "data", Types.LongType.get()));
 
   @Test
   public void testNullElements() {

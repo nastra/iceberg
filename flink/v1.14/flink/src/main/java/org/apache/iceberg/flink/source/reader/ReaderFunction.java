@@ -26,6 +26,7 @@ import org.apache.iceberg.flink.source.split.IcebergSourceSplit;
 import org.apache.iceberg.io.CloseableIterator;
 
 @FunctionalInterface
-public interface ReaderFunction<T> extends Serializable,
-    Function<IcebergSourceSplit, CloseableIterator<RecordsWithSplitIds<RecordAndPosition<T>>>> {
-}
+public interface ReaderFunction<T>
+    extends Serializable,
+        Function<
+            IcebergSourceSplit, CloseableIterator<RecordsWithSplitIds<RecordAndPosition<T>>>> {}

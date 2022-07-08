@@ -32,10 +32,12 @@ public class EncryptedFiles {
 
   public static EncryptedInputFile encryptedInput(
       InputFile encryptedInputFile, ByteBuffer keyMetadata) {
-    return encryptedInput(encryptedInputFile, BaseEncryptionKeyMetadata.fromKeyMetadata(keyMetadata));
+    return encryptedInput(
+        encryptedInputFile, BaseEncryptionKeyMetadata.fromKeyMetadata(keyMetadata));
   }
 
-  public static EncryptedInputFile encryptedInput(InputFile encryptedInputFile, byte[] keyMetadata) {
+  public static EncryptedInputFile encryptedInput(
+      InputFile encryptedInputFile, byte[] keyMetadata) {
     return encryptedInput(encryptedInputFile, BaseEncryptionKeyMetadata.fromByteArray(keyMetadata));
   }
 
@@ -46,13 +48,15 @@ public class EncryptedFiles {
 
   public static EncryptedOutputFile encryptedOutput(
       OutputFile encryptingOutputFile, ByteBuffer keyMetadata) {
-    return encryptedOutput(encryptingOutputFile, BaseEncryptionKeyMetadata.fromKeyMetadata(keyMetadata));
+    return encryptedOutput(
+        encryptingOutputFile, BaseEncryptionKeyMetadata.fromKeyMetadata(keyMetadata));
   }
 
-  public static EncryptedOutputFile encryptedOutput(OutputFile encryptedOutputFile, byte[] keyMetadata) {
-    return encryptedOutput(encryptedOutputFile, BaseEncryptionKeyMetadata.fromByteArray(keyMetadata));
+  public static EncryptedOutputFile encryptedOutput(
+      OutputFile encryptedOutputFile, byte[] keyMetadata) {
+    return encryptedOutput(
+        encryptedOutputFile, BaseEncryptionKeyMetadata.fromByteArray(keyMetadata));
   }
 
-  private EncryptedFiles() {
-  }
+  private EncryptedFiles() {}
 }

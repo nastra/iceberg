@@ -50,8 +50,7 @@ public class RowDataConverter {
   private static final OffsetDateTime EPOCH = Instant.ofEpochSecond(0).atOffset(ZoneOffset.UTC);
   private static final LocalDate EPOCH_DAY = EPOCH.toLocalDate();
 
-  private RowDataConverter() {
-  }
+  private RowDataConverter() {}
 
   public static RowData convert(Schema iSchema, Record record) {
     return convert(iSchema.asStruct(), record);
@@ -104,11 +103,14 @@ public class RowDataConverter {
         return bb.array();
       case BINARY:
         ByteBuffer buffer = (ByteBuffer) object;
-        return Arrays.copyOfRange(buffer.array(), buffer.arrayOffset() + buffer.position(),
+        return Arrays.copyOfRange(
+            buffer.array(),
+            buffer.arrayOffset() + buffer.position(),
             buffer.arrayOffset() + buffer.remaining());
       case DECIMAL:
         Types.DecimalType decimalType = (Types.DecimalType) type;
-        return DecimalData.fromBigDecimal((BigDecimal) object, decimalType.precision(), decimalType.scale());
+        return DecimalData.fromBigDecimal(
+            (BigDecimal) object, decimalType.precision(), decimalType.scale());
       case STRUCT:
         return convert(type.asStructType(), (Record) object);
       case LIST:
@@ -124,8 +126,7 @@ public class RowDataConverter {
         for (Map.Entry<?, ?> entry : map.entrySet()) {
           convertedMap.put(
               convert(type.asMapType().keyType(), entry.getKey()),
-              convert(type.asMapType().valueType(), entry.getValue())
-          );
+              convert(type.asMapType().valueType(), entry.getValue()));
         }
         return new GenericMapData(convertedMap);
       default:

@@ -34,8 +34,7 @@ import org.apache.iceberg.io.SeekableInputStream;
 
 public class Files {
 
-  private Files() {
-  }
+  private Files() {}
 
   public static OutputFile localOutput(File file) {
     return new LocalOutputFile(file);
@@ -60,8 +59,7 @@ public class Files {
 
       if (!file.getParentFile().isDirectory() && !file.getParentFile().mkdirs()) {
         throw new RuntimeIOException(
-                "Failed to create the file's directory at %s.",
-                file.getParentFile().getAbsolutePath());
+            "Failed to create the file's directory at %s.", file.getParentFile().getAbsolutePath());
       }
 
       try {

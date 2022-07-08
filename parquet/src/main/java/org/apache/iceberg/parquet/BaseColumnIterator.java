@@ -71,5 +71,4 @@ public abstract class BaseColumnIterator {
   public boolean hasNext() {
     return triplesRead < triplesCount;
   }
-
 }

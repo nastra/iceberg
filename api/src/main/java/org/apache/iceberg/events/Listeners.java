@@ -25,17 +25,15 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 
-/**
- * Static registration and notification for listeners.
- */
+/** Static registration and notification for listeners. */
 public class Listeners {
-  private Listeners() {
-  }
+  private Listeners() {}
 
   private static final Map<Class<?>, Queue<Listener<?>>> listeners = Maps.newConcurrentMap();
 
   public static <E> void register(Listener<E> listener, Class<E> eventType) {
-    Queue<Listener<?>> list = listeners.computeIfAbsent(eventType, k -> new ConcurrentLinkedQueue<>());
+    Queue<Listener<?>> list =
+        listeners.computeIfAbsent(eventType, k -> new ConcurrentLinkedQueue<>());
     list.add(listener);
   }
 

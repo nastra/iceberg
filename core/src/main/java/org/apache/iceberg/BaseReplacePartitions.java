@@ -24,8 +24,8 @@ import org.apache.iceberg.exceptions.ValidationException;
 import org.apache.iceberg.expressions.Expressions;
 import org.apache.iceberg.util.PartitionSet;
 
-public class BaseReplacePartitions
-    extends MergingSnapshotProducer<ReplacePartitions> implements ReplacePartitions {
+public class BaseReplacePartitions extends MergingSnapshotProducer<ReplacePartitions>
+    implements ReplacePartitions {
 
   private final PartitionSet replacedPartitions;
   private Long startingSnapshotId;

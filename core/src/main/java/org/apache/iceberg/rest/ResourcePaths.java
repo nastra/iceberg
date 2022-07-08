@@ -64,7 +64,11 @@ public class ResourcePaths {
 
   public String table(TableIdentifier ident) {
     return SLASH.join(
-        "v1", prefix, "namespaces", RESTUtil.encodeNamespace(ident.namespace()), "tables",
+        "v1",
+        prefix,
+        "namespaces",
+        RESTUtil.encodeNamespace(ident.namespace()),
+        "tables",
         RESTUtil.encodeString(ident.name()));
   }
 

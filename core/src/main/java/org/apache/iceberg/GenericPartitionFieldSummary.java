@@ -46,16 +46,12 @@ public class GenericPartitionFieldSummary
   private byte[] lowerBound = null;
   private byte[] upperBound = null;
 
-  /**
-   * Used by Avro reflection to instantiate this class when reading manifest files.
-   */
+  /** Used by Avro reflection to instantiate this class when reading manifest files. */
   public GenericPartitionFieldSummary(Schema avroSchema) {
     this.avroSchema = avroSchema;
 
-    List<Types.NestedField> fields = AvroSchemaUtil.convert(avroSchema)
-        .asNestedType()
-        .asStructType()
-        .fields();
+    List<Types.NestedField> fields =
+        AvroSchemaUtil.convert(avroSchema).asNestedType().asStructType().fields();
     List<Types.NestedField> allFields = PartitionFieldSummary.getType().fields();
 
     this.fromProjectionPos = new int[fields.size()];
@@ -74,8 +70,8 @@ public class GenericPartitionFieldSummary
     }
   }
 
-  public GenericPartitionFieldSummary(boolean containsNull, boolean containsNaN, ByteBuffer lowerBound,
-                                      ByteBuffer upperBound) {
+  public GenericPartitionFieldSummary(
+      boolean containsNull, boolean containsNaN, ByteBuffer lowerBound, ByteBuffer upperBound) {
     this.avroSchema = AVRO_SCHEMA;
     this.containsNull = containsNull;
     this.containsNaN = containsNaN;
@@ -103,16 +99,19 @@ public class GenericPartitionFieldSummary
     this.avroSchema = toCopy.avroSchema;
     this.containsNull = toCopy.containsNull;
     this.containsNaN = toCopy.containsNaN;
-    this.lowerBound = toCopy.lowerBound == null ? null : Arrays.copyOf(toCopy.lowerBound, toCopy.lowerBound.length);
-    this.upperBound = toCopy.upperBound == null ? null : Arrays.copyOf(toCopy.upperBound, toCopy.upperBound.length);
+    this.lowerBound =
+        toCopy.lowerBound == null
+            ? null
+            : Arrays.copyOf(toCopy.lowerBound, toCopy.lowerBound.length);
+    this.upperBound =
+        toCopy.upperBound == null
+            ? null
+            : Arrays.copyOf(toCopy.upperBound, toCopy.upperBound.length);
     this.fromProjectionPos = toCopy.fromProjectionPos;
   }
 
-  /**
-   * Constructor for Java serialization.
-   */
-  GenericPartitionFieldSummary() {
-  }
+  /** Constructor for Java serialization. */
+  GenericPartitionFieldSummary() {}
 
   @Override
   public boolean containsNull() {

@@ -46,8 +46,7 @@ public class ObjectId implements Comparable<ObjectId> {
     }
 
     ObjectId objectId = (ObjectId) o;
-    return Objects.equal(bucket, objectId.bucket) &&
-        Objects.equal(name, objectId.name);
+    return Objects.equal(bucket, objectId.bucket) && Objects.equal(name, objectId.name);
   }
 
   @Override
@@ -57,10 +56,7 @@ public class ObjectId implements Comparable<ObjectId> {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("bucket", bucket)
-        .add("name", name)
-        .toString();
+    return MoreObjects.toStringHelper(this).add("bucket", bucket).add("name", name).toString();
   }
 
   @Override

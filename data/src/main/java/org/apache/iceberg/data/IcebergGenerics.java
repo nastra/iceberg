@@ -27,8 +27,7 @@ import org.apache.iceberg.io.CloseableIterable;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 
 public class IcebergGenerics {
-  private IcebergGenerics() {
-  }
+  private IcebergGenerics() {}
 
   /**
    * Returns a builder to configure a read of the given table that produces generic records.
@@ -94,10 +93,7 @@ public class IcebergGenerics {
     }
 
     public CloseableIterable<Record> build() {
-      return new TableScanIterable(
-          tableScan,
-          reuseContainers
-      );
+      return new TableScanIterable(tableScan, reuseContainers);
     }
   }
 }

@@ -44,8 +44,7 @@ import org.apache.iceberg.types.Types;
 
 public class FlinkValueReaders {
 
-  private FlinkValueReaders() {
-  }
+  private FlinkValueReaders() {}
 
   static ValueReader<StringData> strings() {
     return StringReader.INSTANCE;
@@ -71,7 +70,8 @@ public class FlinkValueReaders {
     return TimestampMicrosReader.INSTANCE;
   }
 
-  static ValueReader<DecimalData> decimal(ValueReader<byte[]> unscaledReader, int precision, int scale) {
+  static ValueReader<DecimalData> decimal(
+      ValueReader<byte[]> unscaledReader, int precision, int scale) {
     return new DecimalReader(unscaledReader, precision, scale);
   }
 
@@ -79,8 +79,7 @@ public class FlinkValueReaders {
     return new ArrayReader(elementReader);
   }
 
-  static ValueReader<MapData> arrayMap(ValueReader<?> keyReader,
-                                       ValueReader<?> valueReader) {
+  static ValueReader<MapData> arrayMap(ValueReader<?> keyReader, ValueReader<?> valueReader) {
     return new ArrayMapReader(keyReader, valueReader);
   }
 
@@ -88,16 +87,15 @@ public class FlinkValueReaders {
     return new MapReader(keyReader, valueReader);
   }
 
-  static ValueReader<RowData> struct(List<ValueReader<?>> readers, Types.StructType struct,
-                                     Map<Integer, ?> idToConstant) {
+  static ValueReader<RowData> struct(
+      List<ValueReader<?>> readers, Types.StructType struct, Map<Integer, ?> idToConstant) {
     return new StructReader(readers, struct, idToConstant);
   }
 
   private static class StringReader implements ValueReader<StringData> {
     private static final StringReader INSTANCE = new StringReader();
 
-    private StringReader() {
-    }
+    private StringReader() {}
 
     @Override
     public StringData read(Decoder decoder, Object reuse) throws IOException {
@@ -143,7 +141,8 @@ public class FlinkValueReaders {
     @Override
     public DecimalData read(Decoder decoder, Object reuse) throws IOException {
       byte[] bytes = bytesReader.read(decoder, null);
-      return DecimalData.fromBigDecimal(new BigDecimal(new BigInteger(bytes), scale), precision, scale);
+      return DecimalData.fromBigDecimal(
+          new BigDecimal(new BigInteger(bytes), scale), precision, scale);
     }
   }
 
@@ -287,7 +286,8 @@ public class FlinkValueReaders {
   private static class StructReader extends ValueReaders.StructReader<RowData> {
     private final int numFields;
 
-    private StructReader(List<ValueReader<?>> readers, Types.StructType struct, Map<Integer, ?> idToConstant) {
+    private StructReader(
+        List<ValueReader<?>> readers, Types.StructType struct, Map<Integer, ?> idToConstant) {
       super(readers, struct, idToConstant);
       this.numFields = readers.size();
     }

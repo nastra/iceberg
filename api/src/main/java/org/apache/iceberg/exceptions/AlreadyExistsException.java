@@ -21,9 +21,7 @@ package org.apache.iceberg.exceptions;
 
 import com.google.errorprone.annotations.FormatMethod;
 
-/**
- * Exception raised when attempting to create a table that already exists.
- */
+/** Exception raised when attempting to create a table that already exists. */
 public class AlreadyExistsException extends RuntimeException {
   @FormatMethod
   public AlreadyExistsException(String message, Object... args) {

@@ -98,8 +98,9 @@ public class ColumnVectorWithFilter extends IcebergArrowColumnVector {
   }
 
   public static ColumnVector forHolder(VectorHolder holder, int[] rowIdMapping, int numRows) {
-    return holder.isDummy() ?
-        new ConstantColumnVector(Types.IntegerType.get(), numRows, ((ConstantVectorHolder) holder).getConstant()) :
-        new ColumnVectorWithFilter(holder, rowIdMapping);
+    return holder.isDummy()
+        ? new ConstantColumnVector(
+            Types.IntegerType.get(), numRows, ((ConstantVectorHolder) holder).getConstant())
+        : new ColumnVectorWithFilter(holder, rowIdMapping);
   }
 }

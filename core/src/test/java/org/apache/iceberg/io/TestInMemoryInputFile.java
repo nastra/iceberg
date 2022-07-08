@@ -29,11 +29,11 @@ import org.junit.Test;
 public class TestInMemoryInputFile {
   @Test
   public void testReadAfterClose() throws IOException {
-    InMemoryInputFile inputFile = new InMemoryInputFile("abc".getBytes(StandardCharsets.ISO_8859_1));
+    InMemoryInputFile inputFile =
+        new InMemoryInputFile("abc".getBytes(StandardCharsets.ISO_8859_1));
     InputStream inputStream = inputFile.newStream();
     Assert.assertEquals('a', inputStream.read());
     inputStream.close();
-    Assertions.assertThatThrownBy(inputStream::read)
-        .hasMessage("Stream is closed");
+    Assertions.assertThatThrownBy(inputStream::read).hasMessage("Stream is closed");
   }
 }

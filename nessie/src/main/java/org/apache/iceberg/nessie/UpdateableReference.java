@@ -31,8 +31,8 @@ class UpdateableReference {
   private final boolean mutable;
 
   /**
-   * Construct a new {@link UpdateableReference} using a Nessie reference object and a flag
-   * whether an explicit hash was used to create the reference object.
+   * Construct a new {@link UpdateableReference} using a Nessie reference object and a flag whether
+   * an explicit hash was used to create the reference object.
    */
   UpdateableReference(Reference reference, boolean hashReference) {
     this.reference = reference;
@@ -73,7 +73,8 @@ class UpdateableReference {
   }
 
   public void checkMutable() {
-    Preconditions.checkArgument(mutable, "You can only mutate tables when using a branch without a hash or timestamp.");
+    Preconditions.checkArgument(
+        mutable, "You can only mutate tables when using a branch without a hash or timestamp.");
   }
 
   public String getName() {

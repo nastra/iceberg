@@ -19,10 +19,7 @@
 
 package org.apache.iceberg.spark;
 
-/**
- * Captures information about the current job
- * which is used for displaying on the UI
- */
+/** Captures information about the current job which is used for displaying on the UI */
 public class JobGroupInfo {
   private String groupId;
   private String description;

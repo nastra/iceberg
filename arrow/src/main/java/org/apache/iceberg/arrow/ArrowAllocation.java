@@ -28,8 +28,7 @@ public class ArrowAllocation {
 
   private static final RootAllocator ROOT_ALLOCATOR;
 
-  private ArrowAllocation() {
-  }
+  private ArrowAllocation() {}
 
   public static RootAllocator rootAllocator() {
     return ROOT_ALLOCATOR;

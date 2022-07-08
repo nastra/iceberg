@@ -113,7 +113,8 @@ public class TestMetricsSerialization {
     assertEquals(expected.upperBounds(), actual.upperBounds());
   }
 
-  private static void assertEquals(Map<Integer, ByteBuffer> expected, Map<Integer, ByteBuffer> actual) {
+  private static void assertEquals(
+      Map<Integer, ByteBuffer> expected, Map<Integer, ByteBuffer> actual) {
     if (expected == null) {
       Assert.assertNull(actual);
     } else {

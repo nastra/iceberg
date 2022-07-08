@@ -42,7 +42,8 @@ public class TestHadoopMetricsContextSerialization {
   }
 
   @Test(expected = Test.None.class)
-  public void testHadoopMetricsContextJavaSerialization() throws IOException, ClassNotFoundException {
+  public void testHadoopMetricsContextJavaSerialization()
+      throws IOException, ClassNotFoundException {
     MetricsContext metricsContext = new HadoopMetricsContext("s3");
 
     metricsContext.initialize(Maps.newHashMap());

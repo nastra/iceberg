@@ -116,7 +116,8 @@ public class InMemoryOutputFile implements OutputFile {
     }
 
     private void checkOpen() {
-      // ByteArrayOutputStream can be used even after close, so for test purposes disallow such use explicitly
+      // ByteArrayOutputStream can be used even after close, so for test purposes disallow such use
+      // explicitly
       Preconditions.checkState(!closed, "Stream is closed");
     }
   }

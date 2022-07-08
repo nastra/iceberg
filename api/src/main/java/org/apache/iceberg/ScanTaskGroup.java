@@ -27,9 +27,7 @@ import java.util.Collection;
  * @param <T> the type of scan tasks
  */
 public interface ScanTaskGroup<T extends ScanTask> extends ScanTask {
-  /**
-   * Returns scan tasks in this group.
-   */
+  /** Returns scan tasks in this group. */
   Collection<T> tasks();
 
   @Override

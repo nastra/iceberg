@@ -49,10 +49,12 @@ public class FlinkAvroReader implements DatumReader<RowData>, SupportsRowPositio
   }
 
   @SuppressWarnings("unchecked")
-  public FlinkAvroReader(org.apache.iceberg.Schema expectedSchema, Schema readSchema, Map<Integer, ?> constants) {
+  public FlinkAvroReader(
+      org.apache.iceberg.Schema expectedSchema, Schema readSchema, Map<Integer, ?> constants) {
     this.readSchema = readSchema;
-    this.reader = (ValueReader<RowData>) AvroSchemaWithTypeVisitor
-        .visit(expectedSchema, readSchema, new ReadBuilder(constants));
+    this.reader =
+        (ValueReader<RowData>)
+            AvroSchemaWithTypeVisitor.visit(expectedSchema, readSchema, new ReadBuilder(constants));
   }
 
   @Override
@@ -80,8 +82,8 @@ public class FlinkAvroReader implements DatumReader<RowData>, SupportsRowPositio
     }
 
     @Override
-    public ValueReader<?> record(Types.StructType expected, Schema record, List<String> names,
-                                 List<ValueReader<?>> fields) {
+    public ValueReader<?> record(
+        Types.StructType expected, Schema record, List<String> names, List<ValueReader<?>> fields) {
       return FlinkValueReaders.struct(fields, expected.asStructType(), idToConstant);
     }
 
@@ -91,13 +93,14 @@ public class FlinkAvroReader implements DatumReader<RowData>, SupportsRowPositio
     }
 
     @Override
-    public ValueReader<?> array(Types.ListType expected, Schema array, ValueReader<?> elementReader) {
+    public ValueReader<?> array(
+        Types.ListType expected, Schema array, ValueReader<?> elementReader) {
       return FlinkValueReaders.array(elementReader);
     }
 
     @Override
-    public ValueReader<?> map(Types.MapType expected, Schema map,
-                              ValueReader<?> keyReader, ValueReader<?> valueReader) {
+    public ValueReader<?> map(
+        Types.MapType expected, Schema map, ValueReader<?> keyReader, ValueReader<?> valueReader) {
       return FlinkValueReaders.arrayMap(keyReader, valueReader);
     }
 

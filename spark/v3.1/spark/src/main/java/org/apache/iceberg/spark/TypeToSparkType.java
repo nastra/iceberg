@@ -43,8 +43,7 @@ import org.apache.spark.sql.types.StructType$;
 import org.apache.spark.sql.types.TimestampType$;
 
 class TypeToSparkType extends TypeUtil.SchemaVisitor<DataType> {
-  TypeToSparkType() {
-  }
+  TypeToSparkType() {}
 
   @Override
   public DataType schema(Schema schema, DataType structType) {
@@ -59,8 +58,8 @@ class TypeToSparkType extends TypeUtil.SchemaVisitor<DataType> {
     for (int i = 0; i < fields.size(); i += 1) {
       Types.NestedField field = fields.get(i);
       DataType type = fieldResults.get(i);
-      StructField sparkField = StructField.apply(
-          field.name(), type, field.isOptional(), Metadata.empty());
+      StructField sparkField =
+          StructField.apply(field.name(), type, field.isOptional(), Metadata.empty());
       if (field.doc() != null) {
         sparkField = sparkField.withComment(field.doc());
       }
@@ -101,8 +100,7 @@ class TypeToSparkType extends TypeUtil.SchemaVisitor<DataType> {
       case DATE:
         return DateType$.MODULE$;
       case TIME:
-        throw new UnsupportedOperationException(
-            "Spark does not support time fields");
+        throw new UnsupportedOperationException("Spark does not support time fields");
       case TIMESTAMP:
         return TimestampType$.MODULE$;
       case STRING:

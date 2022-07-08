@@ -55,11 +55,8 @@ class SerializableByteBufferMap implements Map<Integer, ByteBuffer>, Serializabl
     private int[] keys = null;
     private byte[][] values = null;
 
-    /**
-     * Constructor for Java serialization.
-     */
-    MapSerializationProxy() {
-    }
+    /** Constructor for Java serialization. */
+    MapSerializationProxy() {}
 
     MapSerializationProxy(int[] keys, byte[][] values) {
       this.keys = keys;

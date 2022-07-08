@@ -31,11 +31,15 @@ public class TestErrorResponseParser {
     String message = "The given namespace does not exist";
     String type = "NoSuchNamespaceException";
     Integer code = 404;
-    String errorModelJson = String.format("{\"message\":\"%s\",\"type\":\"%s\",\"code\":%d}", message, type, code);
+    String errorModelJson =
+        String.format("{\"message\":\"%s\",\"type\":\"%s\",\"code\":%d}", message, type, code);
     String json = "{\"error\":" + errorModelJson + "}";
-    ErrorResponse response = ErrorResponse.builder().withMessage(message).withType(type).responseCode(code).build();
-    Assert.assertEquals("Should be able to serialize an error response as json",
-        ErrorResponseParser.toJson(response), json);
+    ErrorResponse response =
+        ErrorResponse.builder().withMessage(message).withType(type).responseCode(code).build();
+    Assert.assertEquals(
+        "Should be able to serialize an error response as json",
+        ErrorResponseParser.toJson(response),
+        json);
   }
 
   @Test
@@ -44,17 +48,22 @@ public class TestErrorResponseParser {
     String type = "NoSuchNamespaceException";
     Integer code = 404;
     List<String> stack = Arrays.asList("a", "b");
-    String errorModelJson = String.format(
-        "{\"message\":\"%s\",\"type\":\"%s\",\"code\":%d,\"stack\":[\"a\",\"b\"]}", message, type, code);
+    String errorModelJson =
+        String.format(
+            "{\"message\":\"%s\",\"type\":\"%s\",\"code\":%d,\"stack\":[\"a\",\"b\"]}",
+            message, type, code);
     String json = "{\"error\":" + errorModelJson + "}";
-    ErrorResponse response = ErrorResponse.builder()
-        .withMessage(message)
-        .withType(type)
-        .responseCode(code)
-        .withStackTrace(stack)
-        .build();
-    Assert.assertEquals("Should be able to serialize an error response as json",
-        json, ErrorResponseParser.toJson(response));
+    ErrorResponse response =
+        ErrorResponse.builder()
+            .withMessage(message)
+            .withType(type)
+            .responseCode(code)
+            .withStackTrace(stack)
+            .build();
+    Assert.assertEquals(
+        "Should be able to serialize an error response as json",
+        json,
+        ErrorResponseParser.toJson(response));
   }
 
   @Test
@@ -62,10 +71,12 @@ public class TestErrorResponseParser {
     String message = "The given namespace does not exist";
     String type = "NoSuchNamespaceException";
     Integer code = 404;
-    String errorModelJson = String.format("{\"message\":\"%s\",\"type\":\"%s\",\"code\":%d}", message, type, code);
+    String errorModelJson =
+        String.format("{\"message\":\"%s\",\"type\":\"%s\",\"code\":%d}", message, type, code);
     String json = "{\"error\":" + errorModelJson + "}";
 
-    ErrorResponse expected = ErrorResponse.builder().withMessage(message).withType(type).responseCode(code).build();
+    ErrorResponse expected =
+        ErrorResponse.builder().withMessage(message).withType(type).responseCode(code).build();
     assertEquals(expected, ErrorResponseParser.fromJson(json));
   }
 
@@ -75,16 +86,19 @@ public class TestErrorResponseParser {
     String type = "NoSuchNamespaceException";
     Integer code = 404;
     List<String> stack = Arrays.asList("a", "b");
-    String errorModelJson = String.format(
-        "{\"message\":\"%s\",\"type\":\"%s\",\"code\":%d,\"stack\":[\"a\",\"b\"]}", message, type, code);
+    String errorModelJson =
+        String.format(
+            "{\"message\":\"%s\",\"type\":\"%s\",\"code\":%d,\"stack\":[\"a\",\"b\"]}",
+            message, type, code);
     String json = "{\"error\":" + errorModelJson + "}";
 
-    ErrorResponse expected = ErrorResponse.builder()
-        .withMessage(message)
-        .withType(type)
-        .responseCode(code)
-        .withStackTrace(stack)
-        .build();
+    ErrorResponse expected =
+        ErrorResponse.builder()
+            .withMessage(message)
+            .withType(type)
+            .responseCode(code)
+            .withStackTrace(stack)
+            .build();
     assertEquals(expected, ErrorResponseParser.fromJson(json));
   }
 
@@ -94,16 +108,18 @@ public class TestErrorResponseParser {
     String type = "NoSuchNamespaceException";
     Integer code = 404;
     List<String> stack = null;
-    String errorModelJson = String.format(
-        "{\"message\":\"%s\",\"type\":\"%s\",\"code\":%d,\"stack\":null}", message, type, code);
+    String errorModelJson =
+        String.format(
+            "{\"message\":\"%s\",\"type\":\"%s\",\"code\":%d,\"stack\":null}", message, type, code);
     String json = "{\"error\":" + errorModelJson + "}";
 
-    ErrorResponse expected = ErrorResponse.builder()
-        .withMessage(message)
-        .withType(type)
-        .responseCode(code)
-        .withStackTrace(stack)
-        .build();
+    ErrorResponse expected =
+        ErrorResponse.builder()
+            .withMessage(message)
+            .withType(type)
+            .responseCode(code)
+            .withStackTrace(stack)
+            .build();
     assertEquals(expected, ErrorResponseParser.fromJson(json));
   }
 

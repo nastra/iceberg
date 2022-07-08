@@ -35,7 +35,8 @@ public class ManualSource implements TableProvider, DataSourceRegister {
   private static final Map<String, Table> tableMap = Maps.newHashMap();
 
   public static void setTable(String name, Table table) {
-    Preconditions.checkArgument(!tableMap.containsKey(name), "Cannot set " + name + ". It is already set");
+    Preconditions.checkArgument(
+        !tableMap.containsKey(name), "Cannot set " + name + ". It is already set");
     tableMap.put(name, table);
   }
 
@@ -61,7 +62,8 @@ public class ManualSource implements TableProvider, DataSourceRegister {
   @Override
   public org.apache.spark.sql.connector.catalog.Table getTable(
       StructType schema, Transform[] partitioning, Map<String, String> properties) {
-    Preconditions.checkArgument(properties.containsKey(TABLE_NAME), "Missing property " + TABLE_NAME);
+    Preconditions.checkArgument(
+        properties.containsKey(TABLE_NAME), "Missing property " + TABLE_NAME);
     String tableName = properties.get(TABLE_NAME);
     Preconditions.checkArgument(tableMap.containsKey(tableName), "Table missing " + tableName);
     return tableMap.get(tableName);

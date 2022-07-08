@@ -26,8 +26,13 @@ import org.apache.iceberg.relocated.com.google.common.collect.Sets;
 import org.apache.iceberg.types.Type;
 
 public class BoundLiteralPredicate<T> extends BoundPredicate<T> {
-  private static final Set<Type.TypeID> INTEGRAL_TYPES = Sets.newHashSet(
-      Type.TypeID.INTEGER, Type.TypeID.LONG, Type.TypeID.DATE, Type.TypeID.TIME, Type.TypeID.TIMESTAMP);
+  private static final Set<Type.TypeID> INTEGRAL_TYPES =
+      Sets.newHashSet(
+          Type.TypeID.INTEGER,
+          Type.TypeID.LONG,
+          Type.TypeID.DATE,
+          Type.TypeID.TIME,
+          Type.TypeID.TIMESTAMP);
 
   private static long toLong(Literal<?> lit) {
     return ((Number) lit.value()).longValue();
@@ -37,8 +42,10 @@ public class BoundLiteralPredicate<T> extends BoundPredicate<T> {
 
   BoundLiteralPredicate(Operation op, BoundTerm<T> term, Literal<T> lit) {
     super(op, term);
-    Preconditions.checkArgument(op != Operation.IN && op != Operation.NOT_IN,
-        "Bound literal predicate does not support operation: %s", op);
+    Preconditions.checkArgument(
+        op != Operation.IN && op != Operation.NOT_IN,
+        "Bound literal predicate does not support operation: %s",
+        op);
     this.literal = lit;
   }
 

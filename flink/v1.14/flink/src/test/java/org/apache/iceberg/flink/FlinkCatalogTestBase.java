@@ -74,8 +74,7 @@ public abstract class FlinkCatalogTestBase extends FlinkTestBase {
     return Lists.newArrayList(
         new Object[] {"testhive", Namespace.empty()},
         new Object[] {"testhadoop", Namespace.empty()},
-        new Object[] {"testhadoop_basenamespace", Namespace.of("l0", "l1")}
-    );
+        new Object[] {"testhadoop_basenamespace", Namespace.of("l0", "l1")});
   }
 
   protected final String catalogName;
@@ -92,9 +91,10 @@ public abstract class FlinkCatalogTestBase extends FlinkTestBase {
     this.catalogName = catalogName;
     this.baseNamespace = baseNamespace;
     this.isHadoopCatalog = catalogName.startsWith("testhadoop");
-    this.validationCatalog = isHadoopCatalog ?
-        new HadoopCatalog(hiveConf, "file:" + hadoopWarehouse.getRoot()) :
-        catalog;
+    this.validationCatalog =
+        isHadoopCatalog
+            ? new HadoopCatalog(hiveConf, "file:" + hadoopWarehouse.getRoot())
+            : catalog;
     this.validationNamespaceCatalog = (SupportsNamespaces) validationCatalog;
 
     config.put("type", "iceberg");
@@ -110,7 +110,8 @@ public abstract class FlinkCatalogTestBase extends FlinkTestBase {
     config.put(CatalogProperties.WAREHOUSE_LOCATION, String.format("file://%s", warehouseRoot()));
 
     this.flinkDatabase = catalogName + "." + DATABASE;
-    this.icebergNamespace = Namespace.of(ArrayUtils.concat(baseNamespace.levels(), new String[] {DATABASE}));
+    this.icebergNamespace =
+        Namespace.of(ArrayUtils.concat(baseNamespace.levels(), new String[] {DATABASE}));
   }
 
   protected String warehouseRoot() {
@@ -139,8 +140,14 @@ public abstract class FlinkCatalogTestBase extends FlinkTestBase {
       if (propCount > 0) {
         builder.append(",");
       }
-      builder.append("'").append(entry.getKey()).append("'").append("=")
-          .append("'").append(entry.getValue()).append("'");
+      builder
+          .append("'")
+          .append(entry.getKey())
+          .append("'")
+          .append("=")
+          .append("'")
+          .append(entry.getValue())
+          .append("'");
       propCount++;
     }
     builder.append(")");

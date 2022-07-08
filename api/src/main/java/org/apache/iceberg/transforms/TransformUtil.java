@@ -30,8 +30,7 @@ import java.util.Base64;
 
 class TransformUtil {
 
-  private TransformUtil() {
-  }
+  private TransformUtil() {}
 
   private static final OffsetDateTime EPOCH = Instant.ofEpochSecond(0).atOffset(ZoneOffset.UTC);
   private static final int EPOCH_YEAR = EPOCH.getYear();
@@ -41,14 +40,15 @@ class TransformUtil {
   }
 
   static String humanMonth(int monthOrdinal) {
-    return String.format("%04d-%02d",
+    return String.format(
+        "%04d-%02d",
         EPOCH_YEAR + Math.floorDiv(monthOrdinal, 12), 1 + Math.floorMod(monthOrdinal, 12));
   }
 
   static String humanDay(int dayOrdinal) {
     OffsetDateTime day = EPOCH.plusDays(dayOrdinal);
-    return String.format("%04d-%02d-%02d",
-        day.getYear(), day.getMonth().getValue(), day.getDayOfMonth());
+    return String.format(
+        "%04d-%02d-%02d", day.getYear(), day.getMonth().getValue(), day.getDayOfMonth());
   }
 
   static String humanTime(Long microsFromMidnight) {
@@ -65,7 +65,8 @@ class TransformUtil {
 
   static String humanHour(int hourOrdinal) {
     OffsetDateTime time = EPOCH.plusHours(hourOrdinal);
-    return String.format("%04d-%02d-%02d-%02d",
+    return String.format(
+        "%04d-%02d-%02d-%02d",
         time.getYear(), time.getMonth().getValue(), time.getDayOfMonth(), time.getHour());
   }
 

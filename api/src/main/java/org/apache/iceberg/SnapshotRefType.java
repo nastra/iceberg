@@ -20,6 +20,6 @@
 package org.apache.iceberg;
 
 enum SnapshotRefType {
-    BRANCH,
-    TAG
+  BRANCH,
+  TAG
 }

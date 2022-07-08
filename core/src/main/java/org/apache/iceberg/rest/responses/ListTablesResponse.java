@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.apache.iceberg.rest.responses;
 
 import java.util.Collection;
@@ -28,9 +27,7 @@ import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.rest.RESTResponse;
 
-/**
- * A list of table identifiers in a given namespace.
- */
+/** A list of table identifiers in a given namespace. */
 public class ListTablesResponse implements RESTResponse {
 
   private List<TableIdentifier> identifiers;
@@ -55,9 +52,7 @@ public class ListTablesResponse implements RESTResponse {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("identifiers", identifiers)
-        .toString();
+    return MoreObjects.toStringHelper(this).add("identifiers", identifiers).toString();
   }
 
   public static Builder builder() {
@@ -67,8 +62,7 @@ public class ListTablesResponse implements RESTResponse {
   public static class Builder {
     private final ImmutableList.Builder<TableIdentifier> identifiers = ImmutableList.builder();
 
-    private Builder() {
-    }
+    private Builder() {}
 
     public Builder add(TableIdentifier toAdd) {
       Preconditions.checkNotNull(toAdd, "Invalid table identifier: null");
@@ -88,4 +82,3 @@ public class ListTablesResponse implements RESTResponse {
     }
   }
 }
-

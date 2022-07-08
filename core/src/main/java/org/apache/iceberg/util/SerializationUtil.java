@@ -34,12 +34,12 @@ import org.apache.iceberg.hadoop.SerializableConfiguration;
 
 public class SerializationUtil {
 
-  private SerializationUtil() {
-  }
+  private SerializationUtil() {}
 
   /**
-   * Serialize an object to bytes. If the object implements {@link HadoopConfigurable}, its Hadoop configuration will
-   * be serialized into a {@link SerializableConfiguration}.
+   * Serialize an object to bytes. If the object implements {@link HadoopConfigurable}, its Hadoop
+   * configuration will be serialized into a {@link SerializableConfiguration}.
+   *
    * @param obj object to serialize
    * @return serialized bytes
    */
@@ -48,20 +48,21 @@ public class SerializationUtil {
   }
 
   /**
-   * Serialize an object to bytes. If the object implements {@link HadoopConfigurable}, the confSerializer will be used
-   * to serialize Hadoop configuration used by the object.
+   * Serialize an object to bytes. If the object implements {@link HadoopConfigurable}, the
+   * confSerializer will be used to serialize Hadoop configuration used by the object.
+   *
    * @param obj object to serialize
    * @param confSerializer serializer for the Hadoop configuration
    * @return serialized bytes
    */
-  public static byte[] serializeToBytes(Object obj,
-                                        Function<Configuration, SerializableSupplier<Configuration>> confSerializer) {
+  public static byte[] serializeToBytes(
+      Object obj, Function<Configuration, SerializableSupplier<Configuration>> confSerializer) {
     if (obj instanceof HadoopConfigurable) {
       ((HadoopConfigurable) obj).serializeConfWith(confSerializer);
     }
 
     try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-         ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+        ObjectOutputStream oos = new ObjectOutputStream(baos)) {
       oos.writeObject(obj);
       return baos.toByteArray();
     } catch (IOException e) {
@@ -76,7 +77,7 @@ public class SerializationUtil {
     }
 
     try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-         ObjectInputStream ois = new ObjectInputStream(bais)) {
+        ObjectInputStream ois = new ObjectInputStream(bais)) {
       return (T) ois.readObject();
     } catch (IOException e) {
       throw new UncheckedIOException("Failed to deserialize object", e);

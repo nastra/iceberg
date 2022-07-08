@@ -28,13 +28,10 @@ import org.apache.parquet.schema.MessageType;
 
 public class VectorizedSparkParquetReaders {
 
-  private VectorizedSparkParquetReaders() {
-  }
+  private VectorizedSparkParquetReaders() {}
 
   public static ColumnarBatchReader buildReader(
-      Schema expectedSchema,
-      MessageType fileSchema,
-      boolean setArrowValidityVector) {
+      Schema expectedSchema, MessageType fileSchema, boolean setArrowValidityVector) {
     return buildReader(expectedSchema, fileSchema, setArrowValidityVector, Maps.newHashMap());
   }
 
@@ -44,9 +41,14 @@ public class VectorizedSparkParquetReaders {
       boolean setArrowValidityVector,
       Map<Integer, ?> idToConstant) {
     return (ColumnarBatchReader)
-        TypeWithSchemaVisitor.visit(expectedSchema.asStruct(), fileSchema,
+        TypeWithSchemaVisitor.visit(
+            expectedSchema.asStruct(),
+            fileSchema,
             new VectorizedReaderBuilder(
-                expectedSchema, fileSchema, setArrowValidityVector,
-                idToConstant, ColumnarBatchReader::new));
+                expectedSchema,
+                fileSchema,
+                setArrowValidityVector,
+                idToConstant,
+                ColumnarBatchReader::new));
   }
 }

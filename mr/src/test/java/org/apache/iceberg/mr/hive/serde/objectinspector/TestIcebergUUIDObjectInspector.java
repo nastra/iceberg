@@ -34,7 +34,8 @@ public class TestIcebergUUIDObjectInspector {
     IcebergUUIDObjectInspector oi = IcebergUUIDObjectInspector.get();
 
     Assert.assertEquals(ObjectInspector.Category.PRIMITIVE, oi.getCategory());
-    Assert.assertEquals(PrimitiveObjectInspector.PrimitiveCategory.STRING, oi.getPrimitiveCategory());
+    Assert.assertEquals(
+        PrimitiveObjectInspector.PrimitiveCategory.STRING, oi.getPrimitiveCategory());
 
     Assert.assertEquals(TypeInfoFactory.stringTypeInfo, oi.getTypeInfo());
     Assert.assertEquals(TypeInfoFactory.stringTypeInfo.getTypeName(), oi.getTypeName());

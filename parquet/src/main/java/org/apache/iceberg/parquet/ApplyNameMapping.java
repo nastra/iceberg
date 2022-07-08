@@ -64,14 +64,13 @@ class ApplyNameMapping extends ParquetTypeVisitor<Type> {
 
   @Override
   public Type list(GroupType list, Type elementType) {
-    Preconditions.checkArgument(elementType != null,
-        "List type must have element field");
+    Preconditions.checkArgument(elementType != null, "List type must have element field");
 
     Type listElement = ParquetSchemaUtil.determineListElementType(list);
     MappedField field = nameMapping.find(currentPath());
 
-    Types.GroupBuilder<GroupType> listBuilder = Types.buildGroup(list.getRepetition())
-        .as(LogicalTypeAnnotation.listType());
+    Types.GroupBuilder<GroupType> listBuilder =
+        Types.buildGroup(list.getRepetition()).as(LogicalTypeAnnotation.listType());
     if (listElement.isRepetition(Type.Repetition.REPEATED)) {
       listBuilder.addFields(elementType);
     } else {
@@ -84,14 +83,17 @@ class ApplyNameMapping extends ParquetTypeVisitor<Type> {
 
   @Override
   public Type map(GroupType map, Type keyType, Type valueType) {
-    Preconditions.checkArgument(keyType != null && valueType != null,
-        "Map type must have both key field and value field");
+    Preconditions.checkArgument(
+        keyType != null && valueType != null, "Map type must have both key field and value field");
 
     MappedField field = nameMapping.find(currentPath());
-    Type mapType = Types.buildGroup(map.getRepetition())
-        .as(LogicalTypeAnnotation.mapType())
-        .repeatedGroup().addFields(keyType, valueType).named(map.getFieldName(0))
-        .named(map.getName());
+    Type mapType =
+        Types.buildGroup(map.getRepetition())
+            .as(LogicalTypeAnnotation.mapType())
+            .repeatedGroup()
+            .addFields(keyType, valueType)
+            .named(map.getFieldName(0))
+            .named(map.getName());
 
     return field == null ? mapType : mapType.withId(field.id());
   }
@@ -114,7 +116,8 @@ class ApplyNameMapping extends ParquetTypeVisitor<Type> {
 
   @Override
   public void beforeElementField(Type element) {
-    // normalize the name to "element" so that the mapping will match structures with alternative names
+    // normalize the name to "element" so that the mapping will match structures with alternative
+    // names
     fieldNames.push(LIST_ELEMENT_NAME);
   }
 
@@ -126,7 +129,8 @@ class ApplyNameMapping extends ParquetTypeVisitor<Type> {
 
   @Override
   public void beforeValueField(Type key) {
-    // normalize the name to "value" so that the mapping will match structures with alternative names
+    // normalize the name to "value" so that the mapping will match structures with alternative
+    // names
     fieldNames.push(MAP_VALUE_NAME);
   }
 

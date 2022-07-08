@@ -36,14 +36,15 @@ import org.slf4j.LoggerFactory;
 
 /**
  * FileIO implementation backed by OSS.
- * <p>
- * Locations used must follow the conventions for OSS URIs (e.g. oss://bucket/path...).
- * URIs with scheme https are also treated as oss file paths.
- * Using this FileIO with other schemes with result in {@link org.apache.iceberg.exceptions.ValidationException}
+ *
+ * <p>Locations used must follow the conventions for OSS URIs (e.g. oss://bucket/path...). URIs with
+ * scheme https are also treated as oss file paths. Using this FileIO with other schemes with result
+ * in {@link org.apache.iceberg.exceptions.ValidationException}
  */
 public class OSSFileIO implements FileIO {
   private static final Logger LOG = LoggerFactory.getLogger(OSSFileIO.class);
-  private static final String DEFAULT_METRICS_IMPL = "org.apache.iceberg.hadoop.HadoopMetricsContext";
+  private static final String DEFAULT_METRICS_IMPL =
+      "org.apache.iceberg.hadoop.HadoopMetricsContext";
 
   private SerializableSupplier<OSS> oss;
   private AliyunProperties aliyunProperties;
@@ -53,16 +54,16 @@ public class OSSFileIO implements FileIO {
 
   /**
    * No-arg constructor to load the FileIO dynamically.
-   * <p>
-   * All fields are initialized by calling {@link OSSFileIO#initialize(Map)} later.
+   *
+   * <p>All fields are initialized by calling {@link OSSFileIO#initialize(Map)} later.
    */
-  public OSSFileIO() {
-  }
+  public OSSFileIO() {}
 
   /**
    * Constructor with custom oss supplier and default aliyun properties.
-   * <p>
-   * Calling {@link OSSFileIO#initialize(Map)} will overwrite information set in this constructor.
+   *
+   * <p>Calling {@link OSSFileIO#initialize(Map)} will overwrite information set in this
+   * constructor.
    *
    * @param oss oss supplier
    */
@@ -107,12 +108,17 @@ public class OSSFileIO implements FileIO {
     // Report Hadoop metrics if Hadoop is available
     try {
       DynConstructors.Ctor<MetricsContext> ctor =
-          DynConstructors.builder(MetricsContext.class).hiddenImpl(DEFAULT_METRICS_IMPL, String.class).buildChecked();
+          DynConstructors.builder(MetricsContext.class)
+              .hiddenImpl(DEFAULT_METRICS_IMPL, String.class)
+              .buildChecked();
       MetricsContext context = ctor.newInstance("oss");
       context.initialize(properties);
       this.metrics = context;
     } catch (NoClassDefFoundError | NoSuchMethodException | ClassCastException e) {
-      LOG.warn("Unable to load metrics class: '{}', falling back to null metrics", DEFAULT_METRICS_IMPL, e);
+      LOG.warn(
+          "Unable to load metrics class: '{}', falling back to null metrics",
+          DEFAULT_METRICS_IMPL,
+          e);
     }
   }
 

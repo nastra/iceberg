@@ -19,6 +19,10 @@
 
 package org.apache.iceberg.gcp.gcs;
 
+import static java.lang.String.format;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
+
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.contrib.nio.testing.LocalStorageHelper;
@@ -33,10 +37,6 @@ import org.apache.iceberg.io.InputFile;
 import org.apache.iceberg.io.OutputFile;
 import org.junit.Before;
 import org.junit.Test;
-
-import static java.lang.String.format;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertFalse;
 
 public class GCSFileIOTest {
   private static final String TEST_BUCKET = "TEST_BUCKET";
@@ -53,7 +53,7 @@ public class GCSFileIOTest {
   @Test
   public void newInputFile() throws IOException {
     String location = format("gs://%s/path/to/file.txt", TEST_BUCKET);
-    byte [] expected = new byte[1024 * 1024];
+    byte[] expected = new byte[1024 * 1024];
     random.nextBytes(expected);
 
     InputFile in = io.newInputFile(location);
@@ -65,7 +65,7 @@ public class GCSFileIOTest {
     }
 
     assertThat(in.exists()).isTrue();
-    byte [] actual = new byte[1024 * 1024];
+    byte[] actual = new byte[1024 * 1024];
 
     try (InputStream is = in.newStream()) {
       IOUtils.readFully(is, actual);
@@ -84,13 +84,17 @@ public class GCSFileIOTest {
     storage.create(BlobInfo.newBuilder(TEST_BUCKET, path).build());
 
     // There should be one blob in the bucket
-    assertThat(StreamSupport.stream(storage.list(TEST_BUCKET).iterateAll().spliterator(), false).count())
+    assertThat(
+            StreamSupport.stream(storage.list(TEST_BUCKET).iterateAll().spliterator(), false)
+                .count())
         .isEqualTo(1);
 
     io.deleteFile(format("gs://%s/%s", TEST_BUCKET, path));
 
     // The bucket should now be empty
-    assertThat(StreamSupport.stream(storage.list(TEST_BUCKET).iterateAll().spliterator(), false).count())
+    assertThat(
+            StreamSupport.stream(storage.list(TEST_BUCKET).iterateAll().spliterator(), false)
+                .count())
         .isZero();
   }
 }

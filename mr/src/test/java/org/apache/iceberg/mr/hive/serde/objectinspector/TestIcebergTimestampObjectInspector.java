@@ -35,7 +35,8 @@ public class TestIcebergTimestampObjectInspector {
     IcebergTimestampObjectInspector oi = IcebergTimestampObjectInspector.get();
 
     Assert.assertEquals(ObjectInspector.Category.PRIMITIVE, oi.getCategory());
-    Assert.assertEquals(PrimitiveObjectInspector.PrimitiveCategory.TIMESTAMP, oi.getPrimitiveCategory());
+    Assert.assertEquals(
+        PrimitiveObjectInspector.PrimitiveCategory.TIMESTAMP, oi.getPrimitiveCategory());
 
     Assert.assertEquals(TypeInfoFactory.timestampTypeInfo, oi.getTypeInfo());
     Assert.assertEquals(TypeInfoFactory.timestampTypeInfo.getTypeName(), oi.getTypeName());
@@ -63,5 +64,4 @@ public class TestIcebergTimestampObjectInspector {
 
     Assert.assertEquals(local, oi.convert(ts));
   }
-
 }

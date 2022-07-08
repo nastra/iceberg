@@ -24,8 +24,8 @@ import org.apache.iceberg.parquet.VectorizedReader;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 
 /**
- * A collection of vectorized readers per column (in the expected read schema) and Arrow Vector holders. This class owns
- * the Arrow vectors and is responsible for closing the Arrow vectors.
+ * A collection of vectorized readers per column (in the expected read schema) and Arrow Vector
+ * holders. This class owns the Arrow vectors and is responsible for closing the Arrow vectors.
  */
 class ArrowBatchReader extends BaseBatchReader<ColumnarBatch> {
 
@@ -35,7 +35,8 @@ class ArrowBatchReader extends BaseBatchReader<ColumnarBatch> {
 
   @Override
   public final ColumnarBatch read(ColumnarBatch reuse, int numRowsToRead) {
-    Preconditions.checkArgument(numRowsToRead > 0, "Invalid number of rows to read: %s", numRowsToRead);
+    Preconditions.checkArgument(
+        numRowsToRead > 0, "Invalid number of rows to read: %s", numRowsToRead);
 
     if (reuse == null) {
       closeVectors();
@@ -47,7 +48,8 @@ class ArrowBatchReader extends BaseBatchReader<ColumnarBatch> {
       int numRowsInVector = vectorHolders[i].numValues();
       Preconditions.checkState(
           numRowsInVector == numRowsToRead,
-          "Number of rows in the vector %s didn't match expected %s ", numRowsInVector,
+          "Number of rows in the vector %s didn't match expected %s ",
+          numRowsInVector,
           numRowsToRead);
       // Handle null vector for constant case
       columnVectors[i] = new ColumnVector(vectorHolders[i]);

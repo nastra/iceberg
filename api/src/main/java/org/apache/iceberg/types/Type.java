@@ -132,5 +132,4 @@ public interface Type extends Serializable {
 
     public abstract Types.NestedField field(int id);
   }
-
 }

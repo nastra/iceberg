@@ -21,9 +21,7 @@ package org.apache.iceberg;
 
 import org.apache.iceberg.io.CloseableIterable;
 
-/**
- * A {@link Table} implementation that exposes a table's delete files as rows.
- */
+/** A {@link Table} implementation that exposes a table's delete files as rows. */
 public class DeleteFilesTable extends BaseFilesTable {
 
   DeleteFilesTable(TableOperations ops, Table table) {
@@ -50,12 +48,14 @@ public class DeleteFilesTable extends BaseFilesTable {
       super(ops, table, schema, MetadataTableType.DELETE_FILES);
     }
 
-    DeleteFilesTableScan(TableOperations ops, Table table, Schema schema, TableScanContext context) {
+    DeleteFilesTableScan(
+        TableOperations ops, Table table, Schema schema, TableScanContext context) {
       super(ops, table, schema, MetadataTableType.DELETE_FILES, context);
     }
 
     @Override
-    protected TableScan newRefinedScan(TableOperations ops, Table table, Schema schema, TableScanContext context) {
+    protected TableScan newRefinedScan(
+        TableOperations ops, Table table, Schema schema, TableScanContext context) {
       return new DeleteFilesTableScan(ops, table, schema, context);
     }
 

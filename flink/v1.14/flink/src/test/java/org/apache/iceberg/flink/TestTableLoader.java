@@ -35,9 +35,7 @@ public class TestTableLoader implements TableLoader {
   }
 
   @Override
-  public void open() {
-
-  }
+  public void open() {}
 
   @Override
   public Table loadTable() {
@@ -45,7 +43,5 @@ public class TestTableLoader implements TableLoader {
   }
 
   @Override
-  public void close() {
-
-  }
+  public void close() {}
 }

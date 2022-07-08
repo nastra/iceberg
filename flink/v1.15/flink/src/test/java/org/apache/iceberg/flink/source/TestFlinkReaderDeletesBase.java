@@ -46,8 +46,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public abstract class TestFlinkReaderDeletesBase extends DeleteReadTests {
 
-  @ClassRule
-  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+  @ClassRule public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   protected static String databaseName = "default";
 
@@ -60,9 +59,9 @@ public abstract class TestFlinkReaderDeletesBase extends DeleteReadTests {
   @Parameterized.Parameters(name = "fileFormat={0}")
   public static Object[][] parameters() {
     return new Object[][] {
-        new Object[] { FileFormat.PARQUET },
-        new Object[] { FileFormat.AVRO },
-        new Object[] { FileFormat.ORC }
+      new Object[] {FileFormat.PARQUET},
+      new Object[] {FileFormat.AVRO},
+      new Object[] {FileFormat.ORC}
     };
   }
 
@@ -75,8 +74,10 @@ public abstract class TestFlinkReaderDeletesBase extends DeleteReadTests {
     metastore = new TestHiveMetastore();
     metastore.start();
     hiveConf = metastore.hiveConf();
-    catalog = (HiveCatalog)
-        CatalogUtil.loadCatalog(HiveCatalog.class.getName(), "hive", ImmutableMap.of(), hiveConf);
+    catalog =
+        (HiveCatalog)
+            CatalogUtil.loadCatalog(
+                HiveCatalog.class.getName(), "hive", ImmutableMap.of(), hiveConf);
   }
 
   @AfterClass

@@ -39,5 +39,4 @@ public class TestCachedClientPool extends HiveMetastoreTest {
     TimeUnit.MILLISECONDS.sleep(EVICTION_INTERVAL + TimeUnit.SECONDS.toMillis(5));
     Assert.assertNull(CachedClientPool.clientPoolCache().getIfPresent(metastoreUri));
   }
-
 }

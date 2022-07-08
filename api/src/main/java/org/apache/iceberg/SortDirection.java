@@ -20,5 +20,6 @@
 package org.apache.iceberg;
 
 public enum SortDirection {
-  ASC, DESC
+  ASC,
+  DESC
 }

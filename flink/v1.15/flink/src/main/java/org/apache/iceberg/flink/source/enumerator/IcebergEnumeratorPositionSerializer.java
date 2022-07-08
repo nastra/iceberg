@@ -24,9 +24,11 @@ import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.core.memory.DataInputDeserializer;
 import org.apache.flink.core.memory.DataOutputSerializer;
 
-class IcebergEnumeratorPositionSerializer implements SimpleVersionedSerializer<IcebergEnumeratorPosition> {
+class IcebergEnumeratorPositionSerializer
+    implements SimpleVersionedSerializer<IcebergEnumeratorPosition> {
 
-  public static final IcebergEnumeratorPositionSerializer INSTANCE = new IcebergEnumeratorPositionSerializer();
+  public static final IcebergEnumeratorPositionSerializer INSTANCE =
+      new IcebergEnumeratorPositionSerializer();
 
   private static final int VERSION = 1;
 

@@ -36,7 +36,8 @@ class DeltaManifests {
     this(dataManifest, deleteManifest, EMPTY_REF_DATA_FILES);
   }
 
-  DeltaManifests(ManifestFile dataManifest, ManifestFile deleteManifest, CharSequence[] referencedDataFiles) {
+  DeltaManifests(
+      ManifestFile dataManifest, ManifestFile deleteManifest, CharSequence[] referencedDataFiles) {
     Preconditions.checkNotNull(referencedDataFiles, "Referenced data files shouldn't be null.");
 
     this.dataManifest = dataManifest;

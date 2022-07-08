@@ -26,18 +26,17 @@ import org.apache.parquet.column.page.PageReadStore;
 import org.apache.parquet.hadoop.metadata.ColumnChunkMetaData;
 import org.apache.parquet.hadoop.metadata.ColumnPath;
 
-/**
- * A base BatchReader class that contains common functionality
- */
+/** A base BatchReader class that contains common functionality */
 @SuppressWarnings("checkstyle:VisibilityModifier")
 public abstract class BaseBatchReader<T> implements VectorizedReader<T> {
   protected final VectorizedArrowReader[] readers;
   protected final VectorHolder[] vectorHolders;
 
   protected BaseBatchReader(List<VectorizedReader<?>> readers) {
-    this.readers = readers.stream()
-        .map(VectorizedArrowReader.class::cast)
-        .toArray(VectorizedArrowReader[]::new);
+    this.readers =
+        readers.stream()
+            .map(VectorizedArrowReader.class::cast)
+            .toArray(VectorizedArrowReader[]::new);
     this.vectorHolders = new VectorHolder[readers.size()];
   }
 

@@ -137,7 +137,8 @@ class PruneColumns extends ParquetTypeVisitor<Type> {
     Integer keyId = getId(originalKey);
     Integer valueId = getId(originalValue);
 
-    if ((keyId != null && selectedIds.contains(keyId)) || (valueId != null && selectedIds.contains(valueId))) {
+    if ((keyId != null && selectedIds.contains(keyId))
+        || (valueId != null && selectedIds.contains(valueId))) {
       return map;
     } else if (value != null) {
       if (!Objects.equal(value, originalValue)) {
@@ -164,8 +165,8 @@ class PruneColumns extends ParquetTypeVisitor<Type> {
     } else {
       GroupType groupType = field.asGroupType();
       LogicalTypeAnnotation logicalTypeAnnotation = groupType.getLogicalTypeAnnotation();
-      return !LogicalTypeAnnotation.mapType().equals(logicalTypeAnnotation) &&
-          !LogicalTypeAnnotation.listType().equals(logicalTypeAnnotation);
+      return !LogicalTypeAnnotation.mapType().equals(logicalTypeAnnotation)
+          && !LogicalTypeAnnotation.listType().equals(logicalTypeAnnotation);
     }
   }
 }

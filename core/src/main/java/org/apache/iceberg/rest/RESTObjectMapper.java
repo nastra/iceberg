@@ -31,8 +31,7 @@ class RESTObjectMapper {
   private static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
   private static volatile boolean isInitialized = false;
 
-  private RESTObjectMapper() {
-  }
+  private RESTObjectMapper() {}
 
   static ObjectMapper mapper() {
     if (!isInitialized) {

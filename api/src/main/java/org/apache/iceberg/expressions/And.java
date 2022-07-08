@@ -45,8 +45,8 @@ public class And implements Expression {
   public boolean isEquivalentTo(Expression expr) {
     if (expr.op() == Operation.AND) {
       And other = (And) expr;
-      return (left.isEquivalentTo(other.left()) && right.isEquivalentTo(other.right())) ||
-          (left.isEquivalentTo(other.right()) && right.isEquivalentTo(other.left()));
+      return (left.isEquivalentTo(other.left()) && right.isEquivalentTo(other.right()))
+          || (left.isEquivalentTo(other.right()) && right.isEquivalentTo(other.left()));
     }
 
     return false;

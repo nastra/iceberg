@@ -19,9 +19,7 @@
 
 package org.apache.iceberg;
 
-/**
- * API for configuring a scan for table changes.
- */
+/** API for configuring a scan for table changes. */
 public interface IncrementalChangelogScan
-    extends IncrementalScan<IncrementalChangelogScan, ChangelogScanTask, ScanTaskGroup<ChangelogScanTask>> {
-}
+    extends IncrementalScan<
+        IncrementalChangelogScan, ChangelogScanTask, ScanTaskGroup<ChangelogScanTask>> {}

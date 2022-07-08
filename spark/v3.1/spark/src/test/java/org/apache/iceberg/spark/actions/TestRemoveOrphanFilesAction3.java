@@ -54,9 +54,13 @@ public class TestRemoveOrphanFilesAction3 extends TestRemoveOrphanFilesAction {
     String location = table.table().location().replaceFirst("file:", "");
     new File(location + "/data/trashfile").createNewFile();
 
-    DeleteOrphanFiles.Result results = SparkActions.get().deleteOrphanFiles(table.table())
-        .olderThan(System.currentTimeMillis() + 1000).execute();
-    Assert.assertTrue("trash file should be removed",
+    DeleteOrphanFiles.Result results =
+        SparkActions.get()
+            .deleteOrphanFiles(table.table())
+            .olderThan(System.currentTimeMillis() + 1000)
+            .execute();
+    Assert.assertTrue(
+        "trash file should be removed",
         StreamSupport.stream(results.orphanFileLocations().spliterator(), false)
             .anyMatch(file -> file.contains("file:" + location + "/data/trashfile")));
   }
@@ -80,9 +84,13 @@ public class TestRemoveOrphanFilesAction3 extends TestRemoveOrphanFilesAction {
     String location = table.table().location().replaceFirst("file:", "");
     new File(location + "/data/trashfile").createNewFile();
 
-    DeleteOrphanFiles.Result results = SparkActions.get().deleteOrphanFiles(table.table())
-        .olderThan(System.currentTimeMillis() + 1000).execute();
-    Assert.assertTrue("trash file should be removed",
+    DeleteOrphanFiles.Result results =
+        SparkActions.get()
+            .deleteOrphanFiles(table.table())
+            .olderThan(System.currentTimeMillis() + 1000)
+            .execute();
+    Assert.assertTrue(
+        "trash file should be removed",
         StreamSupport.stream(results.orphanFileLocations().spliterator(), false)
             .anyMatch(file -> file.contains("file:" + location + "/data/trashfile")));
   }
@@ -106,19 +114,26 @@ public class TestRemoveOrphanFilesAction3 extends TestRemoveOrphanFilesAction {
     String location = table.table().location().replaceFirst("file:", "");
     new File(location + "/data/trashfile").createNewFile();
 
-    DeleteOrphanFiles.Result results = SparkActions.get().deleteOrphanFiles(table.table())
-        .olderThan(System.currentTimeMillis() + 1000).execute();
-    Assert.assertTrue("trash file should be removed",
+    DeleteOrphanFiles.Result results =
+        SparkActions.get()
+            .deleteOrphanFiles(table.table())
+            .olderThan(System.currentTimeMillis() + 1000)
+            .execute();
+    Assert.assertTrue(
+        "trash file should be removed",
         StreamSupport.stream(results.orphanFileLocations().spliterator(), false)
             .anyMatch(file -> file.contains("file:" + location + "/data/trashfile")));
   }
 
   @Test
   public void testSparkSessionCatalogHadoopTable() throws Exception {
-    spark.conf().set("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog");
+    spark
+        .conf()
+        .set("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog");
     spark.conf().set("spark.sql.catalog.spark_catalog.type", "hadoop");
     spark.conf().set("spark.sql.catalog.spark_catalog.warehouse", tableLocation);
-    SparkSessionCatalog cat = (SparkSessionCatalog) spark.sessionState().catalogManager().v2SessionCatalog();
+    SparkSessionCatalog cat =
+        (SparkSessionCatalog) spark.sessionState().catalogManager().v2SessionCatalog();
 
     String[] database = {"default"};
     Identifier id = Identifier.of(database, "table");
@@ -132,18 +147,25 @@ public class TestRemoveOrphanFilesAction3 extends TestRemoveOrphanFilesAction {
     String location = table.table().location().replaceFirst("file:", "");
     new File(location + "/data/trashfile").createNewFile();
 
-    DeleteOrphanFiles.Result results = SparkActions.get().deleteOrphanFiles(table.table())
-        .olderThan(System.currentTimeMillis() + 1000).execute();
-    Assert.assertTrue("trash file should be removed",
+    DeleteOrphanFiles.Result results =
+        SparkActions.get()
+            .deleteOrphanFiles(table.table())
+            .olderThan(System.currentTimeMillis() + 1000)
+            .execute();
+    Assert.assertTrue(
+        "trash file should be removed",
         StreamSupport.stream(results.orphanFileLocations().spliterator(), false)
             .anyMatch(file -> file.contains("file:" + location + "/data/trashfile")));
   }
 
   @Test
   public void testSparkSessionCatalogHiveTable() throws Exception {
-    spark.conf().set("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog");
+    spark
+        .conf()
+        .set("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog");
     spark.conf().set("spark.sql.catalog.spark_catalog.type", "hive");
-    SparkSessionCatalog cat = (SparkSessionCatalog) spark.sessionState().catalogManager().v2SessionCatalog();
+    SparkSessionCatalog cat =
+        (SparkSessionCatalog) spark.sessionState().catalogManager().v2SessionCatalog();
 
     String[] database = {"default"};
     Identifier id = Identifier.of(database, "sessioncattest");
@@ -158,9 +180,13 @@ public class TestRemoveOrphanFilesAction3 extends TestRemoveOrphanFilesAction {
     String location = table.table().location().replaceFirst("file:", "");
     new File(location + "/data/trashfile").createNewFile();
 
-    DeleteOrphanFiles.Result results = SparkActions.get().deleteOrphanFiles(table.table())
-        .olderThan(System.currentTimeMillis() + 1000).execute();
-    Assert.assertTrue("trash file should be removed",
+    DeleteOrphanFiles.Result results =
+        SparkActions.get()
+            .deleteOrphanFiles(table.table())
+            .olderThan(System.currentTimeMillis() + 1000)
+            .execute();
+    Assert.assertTrue(
+        "trash file should be removed",
         StreamSupport.stream(results.orphanFileLocations().spliterator(), false)
             .anyMatch(file -> file.contains("file:" + location + "/data/trashfile")));
   }
@@ -171,5 +197,4 @@ public class TestRemoveOrphanFilesAction3 extends TestRemoveOrphanFilesAction {
     spark.conf().unset("spark.sql.catalog.spark_catalog.type");
     spark.conf().unset("spark.sql.catalog.spark_catalog.warehouse");
   }
-
 }

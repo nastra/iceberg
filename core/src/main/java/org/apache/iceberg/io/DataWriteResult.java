@@ -25,9 +25,9 @@ import org.apache.iceberg.DataFile;
 
 /**
  * A result of writing data files.
- * <p>
- * Note that objects of this class are NOT meant to be serialized. Task or delta writers will wrap
- * these results into their own serializable results that can be sent back to query engines.
+ *
+ * <p>Note that objects of this class are NOT meant to be serialized. Task or delta writers will
+ * wrap these results into their own serializable results that can be sent back to query engines.
  */
 public class DataWriteResult {
   private final List<DataFile> dataFiles;

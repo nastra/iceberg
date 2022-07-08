@@ -19,5 +19,4 @@
 
 package org.apache.iceberg.parquet;
 
-public class ParquetAvroReader {
-}
+public class ParquetAvroReader {}

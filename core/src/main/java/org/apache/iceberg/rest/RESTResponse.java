@@ -19,8 +19,5 @@
 
 package org.apache.iceberg.rest;
 
-/**
- * Interface to mark a REST response
- */
-public interface RESTResponse extends RESTMessage {
-}
+/** Interface to mark a REST response */
+public interface RESTResponse extends RESTMessage {}

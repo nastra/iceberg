@@ -24,8 +24,7 @@ import java.io.IOException;
 import org.apache.iceberg.exceptions.RuntimeIOException;
 
 public class Exceptions {
-  private Exceptions() {
-  }
+  private Exceptions() {}
 
   public static void close(Closeable closeable, boolean suppressExceptions) {
     try {
@@ -47,7 +46,8 @@ public class Exceptions {
     return alreadyThrown;
   }
 
-  public static <E extends Exception> void suppressAndThrow(E alreadyThrown, Runnable run) throws E {
+  public static <E extends Exception> void suppressAndThrow(E alreadyThrown, Runnable run)
+      throws E {
     throw suppressExceptions(alreadyThrown, run);
   }
 }

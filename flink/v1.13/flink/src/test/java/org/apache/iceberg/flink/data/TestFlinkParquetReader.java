@@ -44,17 +44,19 @@ public class TestFlinkParquetReader extends DataTest {
     File testFile = temp.newFile();
     Assert.assertTrue("Delete should succeed", testFile.delete());
 
-    try (FileAppender<Record> writer = Parquet.write(Files.localOutput(testFile))
-        .schema(schema)
-        .createWriterFunc(GenericParquetWriter::buildWriter)
-        .build()) {
+    try (FileAppender<Record> writer =
+        Parquet.write(Files.localOutput(testFile))
+            .schema(schema)
+            .createWriterFunc(GenericParquetWriter::buildWriter)
+            .build()) {
       writer.addAll(iterable);
     }
 
-    try (CloseableIterable<RowData> reader = Parquet.read(Files.localInput(testFile))
-        .project(schema)
-        .createReaderFunc(type -> FlinkParquetReaders.buildReader(schema, type))
-        .build()) {
+    try (CloseableIterable<RowData> reader =
+        Parquet.read(Files.localInput(testFile))
+            .project(schema)
+            .createReaderFunc(type -> FlinkParquetReaders.buildReader(schema, type))
+            .build()) {
       Iterator<Record> expected = iterable.iterator();
       Iterator<RowData> rows = reader.iterator();
       LogicalType rowType = FlinkSchemaUtil.convert(schema);
@@ -69,7 +71,10 @@ public class TestFlinkParquetReader extends DataTest {
   @Override
   protected void writeAndValidate(Schema schema) throws IOException {
     writeAndValidate(RandomGenericData.generate(schema, NUM_RECORDS, 19981), schema);
-    writeAndValidate(RandomGenericData.generateDictionaryEncodableRecords(schema, NUM_RECORDS, 21124), schema);
-    writeAndValidate(RandomGenericData.generateFallbackRecords(schema, NUM_RECORDS, 21124, NUM_RECORDS / 20), schema);
+    writeAndValidate(
+        RandomGenericData.generateDictionaryEncodableRecords(schema, NUM_RECORDS, 21124), schema);
+    writeAndValidate(
+        RandomGenericData.generateFallbackRecords(schema, NUM_RECORDS, 21124, NUM_RECORDS / 20),
+        schema);
   }
 }

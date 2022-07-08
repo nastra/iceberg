@@ -48,8 +48,7 @@ public final class NessieUtil {
   public static final String NESSIE_CONFIG_PREFIX = "nessie.";
   static final String APPLICATION_TYPE = "application-type";
 
-  private NessieUtil() {
-  }
+  private NessieUtil() {}
 
   static TableIdentifier removeCatalogName(TableIdentifier to, String name) {
 
@@ -78,21 +77,23 @@ public final class NessieUtil {
     return catalogOptions(CommitMeta.builder().message(commitMsg), catalogOptions).build();
   }
 
-  static ImmutableCommitMeta.Builder catalogOptions(ImmutableCommitMeta.Builder commitMetaBuilder,
-      Map<String, String> catalogOptions) {
+  static ImmutableCommitMeta.Builder catalogOptions(
+      ImmutableCommitMeta.Builder commitMetaBuilder, Map<String, String> catalogOptions) {
     Preconditions.checkArgument(null != catalogOptions, "catalogOptions must not be null");
     commitMetaBuilder.author(NessieUtil.commitAuthor(catalogOptions));
     commitMetaBuilder.putProperties(APPLICATION_TYPE, "iceberg");
     if (catalogOptions.containsKey(CatalogProperties.APP_ID)) {
-      commitMetaBuilder.putProperties(CatalogProperties.APP_ID, catalogOptions.get(CatalogProperties.APP_ID));
+      commitMetaBuilder.putProperties(
+          CatalogProperties.APP_ID, catalogOptions.get(CatalogProperties.APP_ID));
     }
     return commitMetaBuilder;
   }
 
   /**
    * @param catalogOptions The options where to look for the <b>user</b>
-   * @return The author that can be used for a commit, which is either the <b>user</b> from the given
-   * <code>catalogOptions</code> or the logged in user as defined in the <b>user.name</b> JVM properties.
+   * @return The author that can be used for a commit, which is either the <b>user</b> from the
+   *     given <code>catalogOptions</code> or the logged in user as defined in the <b>user.name</b>
+   *     JVM properties.
    */
   @Nullable
   private static String commitAuthor(Map<String, String> catalogOptions) {
@@ -100,7 +101,8 @@ public final class NessieUtil {
         .orElseGet(() -> System.getProperty("user.name"));
   }
 
-  static TableMetadata tableMetadataFromIcebergTable(FileIO io, IcebergTable table, String metadataLocation) {
+  static TableMetadata tableMetadataFromIcebergTable(
+      FileIO io, IcebergTable table, String metadataLocation) {
     TableMetadata deserialized;
     if (table.getMetadata() != null) {
       String jsonString;

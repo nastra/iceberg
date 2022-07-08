@@ -47,8 +47,9 @@ public class FlinkAvroWriter implements MetricsAwareDatumWriter<RowData> {
   @Override
   @SuppressWarnings("unchecked")
   public void setSchema(Schema schema) {
-    this.writer = (ValueWriter<RowData>) AvroWithFlinkSchemaVisitor
-        .visit(rowType, schema, new WriteBuilder());
+    this.writer =
+        (ValueWriter<RowData>)
+            AvroWithFlinkSchemaVisitor.visit(rowType, schema, new WriteBuilder());
   }
 
   @Override
@@ -63,17 +64,23 @@ public class FlinkAvroWriter implements MetricsAwareDatumWriter<RowData> {
 
   private static class WriteBuilder extends AvroWithFlinkSchemaVisitor<ValueWriter<?>> {
     @Override
-    public ValueWriter<?> record(LogicalType struct, Schema record, List<String> names, List<ValueWriter<?>> fields) {
-      return FlinkValueWriters.row(fields, IntStream.range(0, names.size())
-          .mapToObj(i -> fieldNameAndType(struct, i).second()).collect(Collectors.toList()));
+    public ValueWriter<?> record(
+        LogicalType struct, Schema record, List<String> names, List<ValueWriter<?>> fields) {
+      return FlinkValueWriters.row(
+          fields,
+          IntStream.range(0, names.size())
+              .mapToObj(i -> fieldNameAndType(struct, i).second())
+              .collect(Collectors.toList()));
     }
 
     @Override
     public ValueWriter<?> union(LogicalType type, Schema union, List<ValueWriter<?>> options) {
-      Preconditions.checkArgument(options.contains(ValueWriters.nulls()),
-          "Cannot create writer for non-option union: %s", union);
-      Preconditions.checkArgument(options.size() == 2,
-          "Cannot create writer for non-option union: %s", union);
+      Preconditions.checkArgument(
+          options.contains(ValueWriters.nulls()),
+          "Cannot create writer for non-option union: %s",
+          union);
+      Preconditions.checkArgument(
+          options.size() == 2, "Cannot create writer for non-option union: %s", union);
       if (union.getTypes().get(0).getType() == Schema.Type.NULL) {
         return ValueWriters.option(0, options.get(1));
       } else {
@@ -88,12 +95,15 @@ public class FlinkAvroWriter implements MetricsAwareDatumWriter<RowData> {
 
     @Override
     public ValueWriter<?> map(LogicalType sMap, Schema map, ValueWriter<?> valueReader) {
-      return FlinkValueWriters.map(FlinkValueWriters.strings(), mapKeyType(sMap), valueReader, mapValueType(sMap));
+      return FlinkValueWriters.map(
+          FlinkValueWriters.strings(), mapKeyType(sMap), valueReader, mapValueType(sMap));
     }
 
     @Override
-    public ValueWriter<?> map(LogicalType sMap, Schema map, ValueWriter<?> keyWriter, ValueWriter<?> valueWriter) {
-      return FlinkValueWriters.arrayMap(keyWriter, mapKeyType(sMap), valueWriter, mapValueType(sMap));
+    public ValueWriter<?> map(
+        LogicalType sMap, Schema map, ValueWriter<?> keyWriter, ValueWriter<?> valueWriter) {
+      return FlinkValueWriters.arrayMap(
+          keyWriter, mapKeyType(sMap), valueWriter, mapValueType(sMap));
     }
 
     @Override

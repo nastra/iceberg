@@ -35,9 +35,7 @@ import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
 
-/**
- * Helper for appending {@link DataFile} to a table or appending {@link Record}s to a table.
- */
+/** Helper for appending {@link DataFile} to a table or appending {@link Record}s to a table. */
 public class GenericAppenderHelper {
 
   private static final String ORC_CONFIG_PREFIX = "^orc.*";
@@ -47,7 +45,8 @@ public class GenericAppenderHelper {
   private final TemporaryFolder tmp;
   private final Configuration conf;
 
-  public GenericAppenderHelper(Table table, FileFormat fileFormat, TemporaryFolder tmp, Configuration conf) {
+  public GenericAppenderHelper(
+      Table table, FileFormat fileFormat, TemporaryFolder tmp, Configuration conf) {
     this.table = table;
     this.fileFormat = fileFormat;
     this.tmp = tmp;
@@ -85,8 +84,13 @@ public class GenericAppenderHelper {
     return appendToLocalFile(table, file, fileFormat, partition, records, conf);
   }
 
-  private static DataFile appendToLocalFile(Table table, File file, FileFormat format, StructLike partition,
-      List<Record> records, Configuration conf)
+  private static DataFile appendToLocalFile(
+      Table table,
+      File file,
+      FileFormat format,
+      StructLike partition,
+      List<Record> records,
+      Configuration conf)
       throws IOException {
     GenericAppenderFactory appenderFactory = new GenericAppenderFactory(table.schema());
 
@@ -95,8 +99,7 @@ public class GenericAppenderHelper {
       appenderFactory.setAll(conf.getValByRegex(ORC_CONFIG_PREFIX));
     }
 
-    FileAppender<Record> appender = appenderFactory.newAppender(
-        Files.localOutput(file), format);
+    FileAppender<Record> appender = appenderFactory.newAppender(Files.localOutput(file), format);
     try (FileAppender<Record> fileAppender = appender) {
       fileAppender.addAll(records);
     }

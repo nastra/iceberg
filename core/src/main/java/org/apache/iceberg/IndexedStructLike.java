@@ -21,9 +21,7 @@ package org.apache.iceberg;
 
 import org.apache.avro.generic.IndexedRecord;
 
-/**
- * IndexedRecord implementation to wrap a StructLike for writing to Avro.
- */
+/** IndexedRecord implementation to wrap a StructLike for writing to Avro. */
 class IndexedStructLike implements StructLike, IndexedRecord {
   private final org.apache.avro.Schema avroSchema;
   private StructLike wrapped = null;

@@ -27,9 +27,8 @@ public class BaseExpireSnapshotsActionResult implements ExpireSnapshots.Result {
   private final long deletedManifestsCount;
   private final long deletedManifestListsCount;
 
-  public BaseExpireSnapshotsActionResult(long deletedDataFilesCount,
-                                         long deletedManifestsCount,
-                                         long deletedManifestListsCount) {
+  public BaseExpireSnapshotsActionResult(
+      long deletedDataFilesCount, long deletedManifestsCount, long deletedManifestListsCount) {
     this.deletedDataFilesCount = deletedDataFilesCount;
     this.deletedPosDeleteFilesCount = 0;
     this.deletedEqDeleteFilesCount = 0;
@@ -37,11 +36,12 @@ public class BaseExpireSnapshotsActionResult implements ExpireSnapshots.Result {
     this.deletedManifestListsCount = deletedManifestListsCount;
   }
 
-  public BaseExpireSnapshotsActionResult(long deletedDataFilesCount,
-                                         long deletedPosDeleteFilesCount,
-                                         long deletedEqDeleteFilesCount,
-                                         long deletedManifestsCount,
-                                         long deletedManifestListsCount) {
+  public BaseExpireSnapshotsActionResult(
+      long deletedDataFilesCount,
+      long deletedPosDeleteFilesCount,
+      long deletedEqDeleteFilesCount,
+      long deletedManifestsCount,
+      long deletedManifestListsCount) {
     this.deletedDataFilesCount = deletedDataFilesCount;
     this.deletedPosDeleteFilesCount = deletedPosDeleteFilesCount;
     this.deletedEqDeleteFilesCount = deletedEqDeleteFilesCount;

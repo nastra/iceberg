@@ -48,17 +48,12 @@ public class RemoveIds extends ParquetTypeVisitor<Type> {
 
   @Override
   public Type list(GroupType array, Type item) {
-    return Types.list(array.getRepetition())
-        .element(item)
-        .named(array.getName());
+    return Types.list(array.getRepetition()).element(item).named(array.getName());
   }
 
   @Override
   public Type map(GroupType map, Type key, Type value) {
-    return Types.map(map.getRepetition())
-        .key(key)
-        .value(value)
-        .named(map.getName());
+    return Types.map(map.getRepetition()).key(key).value(value).named(map.getName());
   }
 
   @Override
@@ -72,5 +67,4 @@ public class RemoveIds extends ParquetTypeVisitor<Type> {
   public static MessageType removeIds(MessageType type) {
     return (MessageType) ParquetTypeVisitor.visit(type, new RemoveIds());
   }
-
 }

@@ -42,8 +42,7 @@ import org.junit.rules.TemporaryFolder;
 public class TestFlinkParquetWriter extends DataTest {
   private static final int NUM_RECORDS = 100;
 
-  @Rule
-  public TemporaryFolder temp = new TemporaryFolder();
+  @Rule public TemporaryFolder temp = new TemporaryFolder();
 
   private void writeAndValidate(Iterable<RowData> iterable, Schema schema) throws IOException {
     File testFile = temp.newFile();
@@ -51,17 +50,19 @@ public class TestFlinkParquetWriter extends DataTest {
 
     LogicalType logicalType = FlinkSchemaUtil.convert(schema);
 
-    try (FileAppender<RowData> writer = Parquet.write(Files.localOutput(testFile))
-        .schema(schema)
-        .createWriterFunc(msgType -> FlinkParquetWriters.buildWriter(logicalType, msgType))
-        .build()) {
+    try (FileAppender<RowData> writer =
+        Parquet.write(Files.localOutput(testFile))
+            .schema(schema)
+            .createWriterFunc(msgType -> FlinkParquetWriters.buildWriter(logicalType, msgType))
+            .build()) {
       writer.addAll(iterable);
     }
 
-    try (CloseableIterable<Record> reader = Parquet.read(Files.localInput(testFile))
-        .project(schema)
-        .createReaderFunc(msgType -> GenericParquetReaders.buildReader(schema, msgType))
-        .build()) {
+    try (CloseableIterable<Record> reader =
+        Parquet.read(Files.localInput(testFile))
+            .project(schema)
+            .createReaderFunc(msgType -> GenericParquetReaders.buildReader(schema, msgType))
+            .build()) {
       Iterator<RowData> expected = iterable.iterator();
       Iterator<Record> actual = reader.iterator();
       LogicalType rowType = FlinkSchemaUtil.convert(schema);
@@ -75,15 +76,19 @@ public class TestFlinkParquetWriter extends DataTest {
 
   @Override
   protected void writeAndValidate(Schema schema) throws IOException {
-    writeAndValidate(
-        RandomRowData.generate(schema, NUM_RECORDS, 19981), schema);
+    writeAndValidate(RandomRowData.generate(schema, NUM_RECORDS, 19981), schema);
 
-    writeAndValidate(RandomRowData.convert(schema,
-        RandomGenericData.generateDictionaryEncodableRecords(schema, NUM_RECORDS, 21124)),
+    writeAndValidate(
+        RandomRowData.convert(
+            schema,
+            RandomGenericData.generateDictionaryEncodableRecords(schema, NUM_RECORDS, 21124)),
         schema);
 
-    writeAndValidate(RandomRowData.convert(schema,
-        RandomGenericData.generateFallbackRecords(schema, NUM_RECORDS, 21124, NUM_RECORDS / 20)),
+    writeAndValidate(
+        RandomRowData.convert(
+            schema,
+            RandomGenericData.generateFallbackRecords(
+                schema, NUM_RECORDS, 21124, NUM_RECORDS / 20)),
         schema);
   }
 }

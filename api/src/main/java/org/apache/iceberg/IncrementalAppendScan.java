@@ -17,11 +17,8 @@
  * under the License.
  */
 
-
 package org.apache.iceberg;
 
-/**
- * API for configuring an incremental table scan for appends only snapshots
- */
-public interface IncrementalAppendScan extends IncrementalScan<IncrementalAppendScan, FileScanTask, CombinedScanTask> {
-}
+/** API for configuring an incremental table scan for appends only snapshots */
+public interface IncrementalAppendScan
+    extends IncrementalScan<IncrementalAppendScan, FileScanTask, CombinedScanTask> {}

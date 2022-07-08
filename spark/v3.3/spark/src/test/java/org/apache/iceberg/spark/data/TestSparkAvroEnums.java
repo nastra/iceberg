@@ -42,20 +42,20 @@ import org.junit.rules.TemporaryFolder;
 
 public class TestSparkAvroEnums {
 
-  @Rule
-  public TemporaryFolder temp = new TemporaryFolder();
+  @Rule public TemporaryFolder temp = new TemporaryFolder();
 
   @Test
   public void writeAndValidateEnums() throws IOException {
-    org.apache.avro.Schema avroSchema = SchemaBuilder.record("root")
-        .fields()
-        .name("enumCol")
-        .type()
-        .nullable()
-        .enumeration("testEnum")
-        .symbols("SYMB1", "SYMB2")
-        .enumDefault("SYMB2")
-        .endRecord();
+    org.apache.avro.Schema avroSchema =
+        SchemaBuilder.record("root")
+            .fields()
+            .name("enumCol")
+            .type()
+            .nullable()
+            .enumeration("testEnum")
+            .symbols("SYMB1", "SYMB2")
+            .enumDefault("SYMB2")
+            .endRecord();
 
     org.apache.avro.Schema enumSchema = avroSchema.getField("enumCol").schema().getTypes().get(0);
     Record enumRecord1 = new GenericData.Record(avroSchema);
@@ -77,10 +77,11 @@ public class TestSparkAvroEnums {
 
     Schema schema = new Schema(AvroSchemaUtil.convert(avroSchema).asStructType().fields());
     List<InternalRow> rows;
-    try (AvroIterable<InternalRow> reader = Avro.read(Files.localInput(testFile))
-        .createReaderFunc(SparkAvroReader::new)
-        .project(schema)
-        .build()) {
+    try (AvroIterable<InternalRow> reader =
+        Avro.read(Files.localInput(testFile))
+            .createReaderFunc(SparkAvroReader::new)
+            .project(schema)
+            .build()) {
       rows = Lists.newArrayList(reader);
     }
 
@@ -88,7 +89,8 @@ public class TestSparkAvroEnums {
     for (int i = 0; i < expected.size(); i += 1) {
       String expectedEnumString =
           expected.get(i).get("enumCol") == null ? null : expected.get(i).get("enumCol").toString();
-      String sparkString = rows.get(i).getUTF8String(0) == null ? null : rows.get(i).getUTF8String(0).toString();
+      String sparkString =
+          rows.get(i).getUTF8String(0) == null ? null : rows.get(i).getUTF8String(0).toString();
       Assert.assertEquals(expectedEnumString, sparkString);
     }
   }

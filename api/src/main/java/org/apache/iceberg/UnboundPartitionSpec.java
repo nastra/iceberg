@@ -116,7 +116,8 @@ public class UnboundPartitionSpec {
       return name;
     }
 
-    private UnboundPartitionField(String transformAsString, int sourceId, Integer partitionId, String name) {
+    private UnboundPartitionField(
+        String transformAsString, int sourceId, Integer partitionId, String name) {
       this.transformAsString = transformAsString;
       this.sourceId = sourceId;
       this.partitionId = partitionId;

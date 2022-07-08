@@ -19,9 +19,7 @@
 
 package org.apache.iceberg.events;
 
-/**
- * A listener interface that can receive notifications.
- */
+/** A listener interface that can receive notifications. */
 public interface Listener<E> {
   void notify(E event);
 }

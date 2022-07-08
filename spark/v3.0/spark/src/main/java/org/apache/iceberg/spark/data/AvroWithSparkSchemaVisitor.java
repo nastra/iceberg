@@ -30,7 +30,8 @@ import org.apache.spark.sql.types.StringType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
-public abstract class AvroWithSparkSchemaVisitor<T> extends AvroWithPartnerByStructureVisitor<DataType, T> {
+public abstract class AvroWithSparkSchemaVisitor<T>
+    extends AvroWithPartnerByStructureVisitor<DataType, T> {
 
   @Override
   protected boolean isStringType(DataType dataType) {
@@ -44,7 +45,8 @@ public abstract class AvroWithSparkSchemaVisitor<T> extends AvroWithPartnerByStr
 
   @Override
   protected DataType arrayElementType(DataType arrayType) {
-    Preconditions.checkArgument(arrayType instanceof ArrayType, "Invalid array: %s is not an array", arrayType);
+    Preconditions.checkArgument(
+        arrayType instanceof ArrayType, "Invalid array: %s is not an array", arrayType);
     return ((ArrayType) arrayType).elementType();
   }
 
@@ -62,7 +64,8 @@ public abstract class AvroWithSparkSchemaVisitor<T> extends AvroWithPartnerByStr
 
   @Override
   protected Pair<String, DataType> fieldNameAndType(DataType structType, int pos) {
-    Preconditions.checkArgument(structType instanceof StructType, "Invalid struct: %s is not a struct", structType);
+    Preconditions.checkArgument(
+        structType instanceof StructType, "Invalid struct: %s is not a struct", structType);
     StructField field = ((StructType) structType).apply(pos);
     return Pair.of(field.name(), field.dataType());
   }

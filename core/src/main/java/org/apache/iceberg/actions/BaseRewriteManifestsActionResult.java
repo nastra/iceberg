@@ -27,8 +27,8 @@ public class BaseRewriteManifestsActionResult implements RewriteManifests.Result
   private final Iterable<ManifestFile> rewrittenManifests;
   private final Iterable<ManifestFile> addedManifests;
 
-  public BaseRewriteManifestsActionResult(Iterable<ManifestFile> rewrittenManifests,
-                                          Iterable<ManifestFile> addedManifests) {
+  public BaseRewriteManifestsActionResult(
+      Iterable<ManifestFile> rewrittenManifests, Iterable<ManifestFile> addedManifests) {
     this.rewrittenManifests = rewrittenManifests;
     this.addedManifests = addedManifests;
   }

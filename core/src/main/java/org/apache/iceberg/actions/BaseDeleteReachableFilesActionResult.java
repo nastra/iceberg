@@ -26,10 +26,11 @@ public class BaseDeleteReachableFilesActionResult implements DeleteReachableFile
   private final long deletedManifestListsCount;
   private final long deletedOtherFilesCount;
 
-  public BaseDeleteReachableFilesActionResult(long deletedDataFilesCount,
-                                              long deletedManifestsCount,
-                                              long deletedManifestListsCount,
-                                              long otherDeletedFilesCount) {
+  public BaseDeleteReachableFilesActionResult(
+      long deletedDataFilesCount,
+      long deletedManifestsCount,
+      long deletedManifestListsCount,
+      long otherDeletedFilesCount) {
     this.deletedDataFilesCount = deletedDataFilesCount;
     this.deletedManifestsCount = deletedManifestsCount;
     this.deletedManifestListsCount = deletedManifestListsCount;

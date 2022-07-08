@@ -49,9 +49,15 @@ public abstract class HiveMetastoreTest {
     String dbPath = metastore.getDatabasePath(DB_NAME);
     Database db = new Database(DB_NAME, "description", dbPath, Maps.newHashMap());
     metastoreClient.createDatabase(db);
-    HiveMetastoreTest.catalog = (HiveCatalog)
-        CatalogUtil.loadCatalog(HiveCatalog.class.getName(), CatalogUtil.ICEBERG_CATALOG_TYPE_HIVE, ImmutableMap.of(
-                CatalogProperties.CLIENT_POOL_CACHE_EVICTION_INTERVAL_MS, String.valueOf(EVICTION_INTERVAL)), hiveConf);
+    HiveMetastoreTest.catalog =
+        (HiveCatalog)
+            CatalogUtil.loadCatalog(
+                HiveCatalog.class.getName(),
+                CatalogUtil.ICEBERG_CATALOG_TYPE_HIVE,
+                ImmutableMap.of(
+                    CatalogProperties.CLIENT_POOL_CACHE_EVICTION_INTERVAL_MS,
+                    String.valueOf(EVICTION_INTERVAL)),
+                hiveConf);
   }
 
   @AfterClass

@@ -40,8 +40,7 @@ import org.apache.iceberg.util.RandomUtil;
 
 public class RandomAvroData {
 
-  private RandomAvroData() {
-  }
+  private RandomAvroData() {}
 
   public static List<Record> generate(Schema schema, int numRecords, long seed) {
     RandomDataGenerator generator = new RandomDataGenerator(schema, seed);
@@ -147,8 +146,7 @@ public class RandomAvroData {
         case STRING:
           return new Utf8((String) result);
         case FIXED:
-          return new GenericData.Fixed(typeToSchema.get(primitive),
-              (byte[]) result);
+          return new GenericData.Fixed(typeToSchema.get(primitive), (byte[]) result);
         case BINARY:
           return ByteBuffer.wrap((byte[]) result);
         case UUID:

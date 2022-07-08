@@ -62,9 +62,7 @@ class IcebergEnumeratorPosition {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(
-        snapshotId,
-        snapshotTimestampMs);
+    return Objects.hashCode(snapshotId, snapshotTimestampMs);
   }
 
   @Override
@@ -76,7 +74,7 @@ class IcebergEnumeratorPosition {
       return false;
     }
     IcebergEnumeratorPosition other = (IcebergEnumeratorPosition) o;
-    return Objects.equal(snapshotId, other.snapshotId()) &&
-        Objects.equal(snapshotTimestampMs, other.snapshotTimestampMs());
+    return Objects.equal(snapshotId, other.snapshotId())
+        && Objects.equal(snapshotTimestampMs, other.snapshotTimestampMs());
   }
 }

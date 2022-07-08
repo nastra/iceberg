@@ -31,8 +31,7 @@ import org.apache.parquet.io.api.Binary;
 import org.apache.parquet.schema.PrimitiveType;
 
 class ParquetConversions {
-  private ParquetConversions() {
-  }
+  private ParquetConversions() {}
 
   @SuppressWarnings("unchecked")
   static <T> Literal<T> fromParquetPrimitive(Type type, PrimitiveType parquetType, Object value) {
@@ -68,14 +67,15 @@ class ParquetConversions {
     }
   }
 
-  static Function<Object, Object> converterFromParquet(PrimitiveType parquetType, Type icebergType) {
+  static Function<Object, Object> converterFromParquet(
+      PrimitiveType parquetType, Type icebergType) {
     Function<Object, Object> fromParquet = converterFromParquet(parquetType);
     if (icebergType != null) {
-      if (icebergType.typeId() == Type.TypeID.LONG &&
-          parquetType.getPrimitiveTypeName() == PrimitiveType.PrimitiveTypeName.INT32) {
+      if (icebergType.typeId() == Type.TypeID.LONG
+          && parquetType.getPrimitiveTypeName() == PrimitiveType.PrimitiveTypeName.INT32) {
         return value -> ((Integer) fromParquet.apply(value)).longValue();
-      } else if (icebergType.typeId() == Type.TypeID.DOUBLE &&
-          parquetType.getPrimitiveTypeName() == PrimitiveType.PrimitiveTypeName.FLOAT) {
+      } else if (icebergType.typeId() == Type.TypeID.DOUBLE
+          && parquetType.getPrimitiveTypeName() == PrimitiveType.PrimitiveTypeName.FLOAT) {
         return value -> ((Float) fromParquet.apply(value)).doubleValue();
       }
     }

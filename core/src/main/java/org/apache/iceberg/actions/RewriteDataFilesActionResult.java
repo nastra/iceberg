@@ -31,7 +31,8 @@ public class RewriteDataFilesActionResult {
   private List<DataFile> deletedDataFiles;
   private List<DataFile> addedDataFiles;
 
-  public RewriteDataFilesActionResult(List<DataFile> deletedDataFiles, List<DataFile> addedDataFiles) {
+  public RewriteDataFilesActionResult(
+      List<DataFile> deletedDataFiles, List<DataFile> addedDataFiles) {
     this.deletedDataFiles = deletedDataFiles;
     this.addedDataFiles = addedDataFiles;
   }

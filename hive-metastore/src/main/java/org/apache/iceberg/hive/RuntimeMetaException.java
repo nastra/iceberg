@@ -22,9 +22,7 @@ package org.apache.iceberg.hive;
 import com.google.errorprone.annotations.FormatMethod;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 
-/**
- * Exception used to wrap {@link MetaException} as a {@link RuntimeException} and add context.
- */
+/** Exception used to wrap {@link MetaException} as a {@link RuntimeException} and add context. */
 public class RuntimeMetaException extends RuntimeException {
   public RuntimeMetaException(MetaException cause) {
     super(cause);

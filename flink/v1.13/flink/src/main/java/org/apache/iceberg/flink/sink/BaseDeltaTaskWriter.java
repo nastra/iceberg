@@ -47,22 +47,24 @@ abstract class BaseDeltaTaskWriter extends BaseTaskWriter<RowData> {
   private final RowDataProjection keyProjection;
   private final boolean upsert;
 
-  BaseDeltaTaskWriter(PartitionSpec spec,
-                      FileFormat format,
-                      FileAppenderFactory<RowData> appenderFactory,
-                      OutputFileFactory fileFactory,
-                      FileIO io,
-                      long targetFileSize,
-                      Schema schema,
-                      RowType flinkSchema,
-                      List<Integer> equalityFieldIds,
-                      boolean upsert) {
+  BaseDeltaTaskWriter(
+      PartitionSpec spec,
+      FileFormat format,
+      FileAppenderFactory<RowData> appenderFactory,
+      OutputFileFactory fileFactory,
+      FileIO io,
+      long targetFileSize,
+      Schema schema,
+      RowType flinkSchema,
+      List<Integer> equalityFieldIds,
+      boolean upsert) {
     super(spec, format, appenderFactory, fileFactory, io, targetFileSize);
     this.schema = schema;
     this.deleteSchema = TypeUtil.select(schema, Sets.newHashSet(equalityFieldIds));
     this.wrapper = new RowDataWrapper(flinkSchema, schema.asStruct());
     this.upsert = upsert;
-    this.keyWrapper =  new RowDataWrapper(FlinkSchemaUtil.convert(deleteSchema), deleteSchema.asStruct());
+    this.keyWrapper =
+        new RowDataWrapper(FlinkSchemaUtil.convert(deleteSchema), deleteSchema.asStruct());
     this.keyProjection = RowDataProjection.create(schema, deleteSchema);
   }
 
@@ -87,7 +89,8 @@ abstract class BaseDeltaTaskWriter extends BaseTaskWriter<RowData> {
 
       case UPDATE_BEFORE:
         if (upsert) {
-          break;  // UPDATE_BEFORE is not necessary for UPSERT, we do nothing to prevent delete one row twice
+          break; // UPDATE_BEFORE is not necessary for UPSERT, we do nothing to prevent delete one
+          // row twice
         }
         writer.delete(row);
         break;

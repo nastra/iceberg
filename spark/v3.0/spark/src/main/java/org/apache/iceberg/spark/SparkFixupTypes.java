@@ -25,8 +25,8 @@ import org.apache.iceberg.types.Type;
 import org.apache.iceberg.types.TypeUtil;
 
 /**
- * Some types, like binary and fixed, are converted to the same Spark type. Conversion back
- * can produce only one, which may not be correct.
+ * Some types, like binary and fixed, are converted to the same Spark type. Conversion back can
+ * produce only one, which may not be correct.
  */
 class SparkFixupTypes extends FixupTypes {
 
@@ -35,8 +35,8 @@ class SparkFixupTypes extends FixupTypes {
   }
 
   static Schema fixup(Schema schema, Schema referenceSchema) {
-    return new Schema(TypeUtil.visit(schema,
-        new SparkFixupTypes(referenceSchema)).asStructType().fields());
+    return new Schema(
+        TypeUtil.visit(schema, new SparkFixupTypes(referenceSchema)).asStructType().fields());
   }
 
   @Override

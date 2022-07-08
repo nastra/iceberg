@@ -35,7 +35,8 @@ public class TestIcebergBinaryObjectInspector {
     BinaryObjectInspector oi = IcebergBinaryObjectInspector.get();
 
     Assert.assertEquals(ObjectInspector.Category.PRIMITIVE, oi.getCategory());
-    Assert.assertEquals(PrimitiveObjectInspector.PrimitiveCategory.BINARY, oi.getPrimitiveCategory());
+    Assert.assertEquals(
+        PrimitiveObjectInspector.PrimitiveCategory.BINARY, oi.getPrimitiveCategory());
 
     Assert.assertEquals(TypeInfoFactory.binaryTypeInfo, oi.getTypeInfo());
     Assert.assertEquals(TypeInfoFactory.binaryTypeInfo.getTypeName(), oi.getTypeName());
@@ -68,5 +69,4 @@ public class TestIcebergBinaryObjectInspector {
 
     Assert.assertFalse(oi.preferWritable());
   }
-
 }

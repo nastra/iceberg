@@ -29,20 +29,17 @@ import org.apache.iceberg.types.Type;
  * @param <T> the Java type of values produced by this term
  */
 public interface BoundTerm<T> extends Bound<T>, Term {
-  /**
-   * Returns the type produced by this expression.
-   */
+  /** Returns the type produced by this expression. */
   Type type();
 
-  /**
-   * Returns a {@link Comparator} for values produced by this term.
-   */
+  /** Returns a {@link Comparator} for values produced by this term. */
   default Comparator<T> comparator() {
     return Comparators.forType(type().asPrimitiveType());
   }
 
   /**
    * Returns whether this term is equivalent to another.
+   *
    * @param other a term
    * @return true if this term returns the same values as the other, false otherwise
    */

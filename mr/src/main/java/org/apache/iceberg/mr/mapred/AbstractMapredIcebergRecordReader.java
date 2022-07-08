@@ -31,8 +31,12 @@ public abstract class AbstractMapredIcebergRecordReader<T> implements RecordRead
 
   protected final org.apache.hadoop.mapreduce.RecordReader<Void, ?> innerReader;
 
-  public AbstractMapredIcebergRecordReader(org.apache.iceberg.mr.mapreduce.IcebergInputFormat<?> mapreduceInputFormat,
-                                           IcebergSplit split, JobConf job, Reporter reporter) throws IOException {
+  public AbstractMapredIcebergRecordReader(
+      org.apache.iceberg.mr.mapreduce.IcebergInputFormat<?> mapreduceInputFormat,
+      IcebergSplit split,
+      JobConf job,
+      Reporter reporter)
+      throws IOException {
     TaskAttemptContext context = MapredIcebergInputFormat.newTaskAttemptContext(job, reporter);
 
     try {
@@ -42,7 +46,6 @@ public abstract class AbstractMapredIcebergRecordReader<T> implements RecordRead
       Thread.currentThread().interrupt();
       throw new RuntimeException(e);
     }
-
   }
 
   @Override
@@ -66,5 +69,4 @@ public abstract class AbstractMapredIcebergRecordReader<T> implements RecordRead
       innerReader.close();
     }
   }
-
 }

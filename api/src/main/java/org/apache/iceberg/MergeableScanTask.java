@@ -35,8 +35,8 @@ public interface MergeableScanTask<ThisT> extends ScanTask {
 
   /**
    * Merges this task with a given task.
-   * <p>
-   * Note this method will be called only if {@link #canMerge(ScanTask)} returns true.
+   *
+   * <p>Note this method will be called only if {@link #canMerge(ScanTask)} returns true.
    *
    * @param other another task
    * @return a new merged task

@@ -21,14 +21,10 @@ package org.apache.iceberg.orc;
 
 import org.apache.orc.storage.ql.exec.vector.VectorizedRowBatch;
 
-/**
- * Used for implementing ORC row readers.
- */
+/** Used for implementing ORC row readers. */
 public interface OrcRowReader<T> {
 
-  /**
-   * Reads a row.
-   */
+  /** Reads a row. */
   T read(VectorizedRowBatch batch, int row);
 
   void setBatchContext(long batchOffsetInFile);

@@ -40,5 +40,4 @@ public class TestIcebergSource extends IcebergSource {
   public String extractCatalog(CaseInsensitiveStringMap options) {
     return SparkSession.active().sessionState().catalogManager().currentCatalog().name();
   }
-
 }

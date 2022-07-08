@@ -30,8 +30,7 @@ public class PositionDelete<R> implements StructLike {
   private long pos;
   private R row;
 
-  private PositionDelete() {
-  }
+  private PositionDelete() {}
 
   public PositionDelete<R> set(CharSequence newPath, long newPos, R newRow) {
     this.path = newPath;

@@ -29,14 +29,10 @@ import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.base.Throwables;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 
-
-/**
- * Copied from parquet-common
- */
+/** Copied from parquet-common */
 public class DynConstructors {
 
-  private DynConstructors() {
-  }
+  private DynConstructors() {}
 
   public static class Ctor<C> extends DynMethods.UnboundMethod {
     private final Constructor<C> ctor;
@@ -80,16 +76,16 @@ public class DynConstructors {
     @Override
     @SuppressWarnings("unchecked")
     public <R> R invoke(Object target, Object... args) {
-      Preconditions.checkArgument(target == null,
-          "Invalid call to constructor: target must be null");
+      Preconditions.checkArgument(
+          target == null, "Invalid call to constructor: target must be null");
       return (R) newInstance(args);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <R> R invokeChecked(Object target, Object... args) throws Exception {
-      Preconditions.checkArgument(target == null,
-          "Invalid call to constructor: target must be null");
+      Preconditions.checkArgument(
+          target == null, "Invalid call to constructor: target must be null");
       return (R) newInstanceChecked(args);
     }
 
@@ -105,8 +101,7 @@ public class DynConstructors {
 
     @Override
     public String toString() {
-      return getClass().getSimpleName() +
-          "(constructor=" + ctor + ", class=" + constructed + ")";
+      return getClass().getSimpleName() + "(constructor=" + ctor + ", class=" + constructed + ")";
     }
   }
 
@@ -134,8 +129,8 @@ public class DynConstructors {
 
     /**
      * Set the {@link ClassLoader} used to lookup classes by name.
-     * <p>
-     * If not set, the current thread's ClassLoader is used.
+     *
+     * <p>If not set, the current thread's ClassLoader is used.
      *
      * @param newLoader a ClassLoader
      * @return this Builder for method chaining
@@ -249,16 +244,20 @@ public class DynConstructors {
     }
   }
 
-  private static NoSuchMethodException buildCheckedException(Class<?> baseClass, Map<String, Throwable> problems) {
-    NoSuchMethodException exc = new NoSuchMethodException(
-        "Cannot find constructor for " + baseClass + "\n" + formatProblems(problems));
+  private static NoSuchMethodException buildCheckedException(
+      Class<?> baseClass, Map<String, Throwable> problems) {
+    NoSuchMethodException exc =
+        new NoSuchMethodException(
+            "Cannot find constructor for " + baseClass + "\n" + formatProblems(problems));
     problems.values().forEach(exc::addSuppressed);
     return exc;
   }
 
-  private static RuntimeException buildRuntimeException(Class<?> baseClass, Map<String, Throwable> problems) {
-    RuntimeException exc = new RuntimeException(
-        "Cannot find constructor for " + baseClass + "\n" + formatProblems(problems));
+  private static RuntimeException buildRuntimeException(
+      Class<?> baseClass, Map<String, Throwable> problems) {
+    RuntimeException exc =
+        new RuntimeException(
+            "Cannot find constructor for " + baseClass + "\n" + formatProblems(problems));
     problems.values().forEach(exc::addSuppressed);
     return exc;
   }
@@ -272,9 +271,13 @@ public class DynConstructors {
       } else {
         sb.append("\n");
       }
-      sb.append("\tMissing ").append(problem.getKey()).append(" [")
-          .append(problem.getValue().getClass().getName()).append(": ")
-          .append(problem.getValue().getMessage()).append("]");
+      sb.append("\tMissing ")
+          .append(problem.getKey())
+          .append(" [")
+          .append(problem.getValue().getClass().getName())
+          .append(": ")
+          .append(problem.getValue().getMessage())
+          .append("]");
     }
     return sb.toString();
   }

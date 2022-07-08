@@ -29,7 +29,11 @@ public final class CreateSnapshotEvent {
   private final Map<String, String> summary;
 
   public CreateSnapshotEvent(
-      String tableName, String operation, long snapshotId, long sequenceNumber, Map<String, String> summary) {
+      String tableName,
+      String operation,
+      long snapshotId,
+      long sequenceNumber,
+      Map<String, String> summary) {
     this.tableName = tableName;
     this.operation = operation;
     this.snapshotId = snapshotId;

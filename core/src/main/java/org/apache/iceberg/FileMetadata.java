@@ -31,8 +31,7 @@ import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.util.ByteBuffers;
 
 public class FileMetadata {
-  private FileMetadata() {
-  }
+  private FileMetadata() {}
 
   public static Builder deleteFileBuilder(PartitionSpec spec) {
     return new Builder(spec);
@@ -86,7 +85,8 @@ public class FileMetadata {
 
     public Builder copy(DeleteFile toCopy) {
       if (isPartitioned) {
-        Preconditions.checkState(specId == toCopy.specId(), "Cannot copy a DeleteFile with a different spec");
+        Preconditions.checkState(
+            specId == toCopy.specId(), "Cannot copy a DeleteFile with a different spec");
         this.partitionData = DataFiles.copyPartitionData(spec, toCopy.partition(), partitionData);
       }
       this.content = toCopy.content();
@@ -100,8 +100,8 @@ public class FileMetadata {
       this.nanValueCounts = toCopy.nanValueCounts();
       this.lowerBounds = toCopy.lowerBounds();
       this.upperBounds = toCopy.upperBounds();
-      this.keyMetadata = toCopy.keyMetadata() == null ? null
-          : ByteBuffers.copy(toCopy.keyMetadata());
+      this.keyMetadata =
+          toCopy.keyMetadata() == null ? null : ByteBuffers.copy(toCopy.keyMetadata());
       this.sortOrderId = toCopy.sortOrderId();
       return this;
     }
@@ -171,7 +171,8 @@ public class FileMetadata {
     }
 
     public Builder withPartitionPath(String newPartitionPath) {
-      Preconditions.checkArgument(isPartitioned || newPartitionPath.isEmpty(),
+      Preconditions.checkArgument(
+          isPartitioned || newPartitionPath.isEmpty(),
           "Cannot add partition data for an unpartitioned table");
       if (!newPartitionPath.isEmpty()) {
         this.partitionData = DataFiles.fillFromPath(spec, newPartitionPath, partitionData);
@@ -219,8 +220,8 @@ public class FileMetadata {
 
       switch (content) {
         case POSITION_DELETES:
-          Preconditions.checkArgument(sortOrderId == null,
-              "Position delete file should not have sort order");
+          Preconditions.checkArgument(
+              sortOrderId == null, "Position delete file should not have sort order");
           break;
         case EQUALITY_DELETES:
           if (sortOrderId == null) {
@@ -232,10 +233,23 @@ public class FileMetadata {
       }
 
       return new GenericDeleteFile(
-          specId, content, filePath, format, isPartitioned ? DataFiles.copy(spec, partitionData) : null,
-          fileSizeInBytes, new Metrics(
-          recordCount, columnSizes, valueCounts, nullValueCounts, nanValueCounts, lowerBounds, upperBounds),
-          equalityFieldIds, sortOrderId, keyMetadata);
+          specId,
+          content,
+          filePath,
+          format,
+          isPartitioned ? DataFiles.copy(spec, partitionData) : null,
+          fileSizeInBytes,
+          new Metrics(
+              recordCount,
+              columnSizes,
+              valueCounts,
+              nullValueCounts,
+              nanValueCounts,
+              lowerBounds,
+              upperBounds),
+          equalityFieldIds,
+          sortOrderId,
+          keyMetadata);
     }
   }
 }

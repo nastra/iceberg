@@ -33,7 +33,8 @@ public class TestIcebergFixedObjectInspector {
     IcebergFixedObjectInspector oi = IcebergFixedObjectInspector.get();
 
     Assert.assertEquals(ObjectInspector.Category.PRIMITIVE, oi.getCategory());
-    Assert.assertEquals(PrimitiveObjectInspector.PrimitiveCategory.BINARY, oi.getPrimitiveCategory());
+    Assert.assertEquals(
+        PrimitiveObjectInspector.PrimitiveCategory.BINARY, oi.getPrimitiveCategory());
 
     Assert.assertEquals(TypeInfoFactory.binaryTypeInfo, oi.getTypeInfo());
     Assert.assertEquals(TypeInfoFactory.binaryTypeInfo.getTypeName(), oi.getTypeName());
@@ -46,7 +47,7 @@ public class TestIcebergFixedObjectInspector {
     Assert.assertNull(oi.getPrimitiveWritableObject(null));
     Assert.assertNull(oi.convert(null));
 
-    byte[] bytes = new byte[] { 0, 1 };
+    byte[] bytes = new byte[] {0, 1};
     BytesWritable bytesWritable = new BytesWritable(bytes);
 
     Assert.assertArrayEquals(bytes, oi.getPrimitiveJavaObject(bytes));
@@ -60,5 +61,4 @@ public class TestIcebergFixedObjectInspector {
 
     Assert.assertFalse(oi.preferWritable());
   }
-
 }

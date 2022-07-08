@@ -20,18 +20,16 @@
 package org.apache.iceberg.io;
 
 /**
- * This interface is intended as an extension for FileIO implementations
- * to provide additional prefix based operations that may be useful in
- * performing supporting operations.
+ * This interface is intended as an extension for FileIO implementations to provide additional
+ * prefix based operations that may be useful in performing supporting operations.
  */
 public interface SupportsPrefixOperations {
 
   /**
    * Return an iterable of all files under a prefix.
-   * <p>
-   * Hierarchical file systems (e.g. HDFS) may impose additional restrictions
-   * like the prefix must fully match a directory whereas key/value object
-   * stores may allow for arbitrary prefixes.
+   *
+   * <p>Hierarchical file systems (e.g. HDFS) may impose additional restrictions like the prefix
+   * must fully match a directory whereas key/value object stores may allow for arbitrary prefixes.
    *
    * @param prefix prefix to list
    * @return iterable of file information
@@ -40,10 +38,9 @@ public interface SupportsPrefixOperations {
 
   /**
    * Delete all files under a prefix.
-   * <p>
-   * Hierarchical file systems (e.g. HDFS) may impose additional restrictions
-   * like the prefix must fully match a directory whereas key/value object
-   * stores may allow for arbitrary prefixes.
+   *
+   * <p>Hierarchical file systems (e.g. HDFS) may impose additional restrictions like the prefix
+   * must fully match a directory whereas key/value object stores may allow for arbitrary prefixes.
    *
    * @param prefix prefix to delete
    */

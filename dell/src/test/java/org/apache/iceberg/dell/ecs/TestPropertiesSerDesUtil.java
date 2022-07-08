@@ -30,7 +30,8 @@ public class TestPropertiesSerDesUtil {
   public void testPropertiesSerDes() {
     Map<String, String> properties = ImmutableMap.of("a", "a", "b", "b");
     byte[] byteValue = PropertiesSerDesUtil.toBytes(properties);
-    Map<String, String> result = PropertiesSerDesUtil.read(byteValue, PropertiesSerDesUtil.currentVersion());
+    Map<String, String> result =
+        PropertiesSerDesUtil.read(byteValue, PropertiesSerDesUtil.currentVersion());
     Assert.assertEquals("Ser/Des will return the same content.", properties, result);
   }
 }

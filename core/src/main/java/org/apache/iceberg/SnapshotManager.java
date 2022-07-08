@@ -27,8 +27,10 @@ public class SnapshotManager implements ManageSnapshots {
   private UpdateSnapshotReferencesOperation updateSnapshotReferencesOperation;
 
   SnapshotManager(String tableName, TableOperations ops) {
-    Preconditions.checkState(ops.current() != null, "Cannot manage snapshots: table %s does not exist", tableName);
-    this.transaction = new BaseTransaction(tableName, ops, BaseTransaction.TransactionType.SIMPLE, ops.refresh());
+    Preconditions.checkState(
+        ops.current() != null, "Cannot manage snapshots: table %s does not exist", tableName);
+    this.transaction =
+        new BaseTransaction(tableName, ops, BaseTransaction.TransactionType.SIMPLE, ops.refresh());
   }
 
   @Override
@@ -102,13 +104,13 @@ public class SnapshotManager implements ManageSnapshots {
   }
 
   @Override
-  public ManageSnapshots replaceTag(String name, long snapshotId)  {
+  public ManageSnapshots replaceTag(String name, long snapshotId) {
     updateSnapshotReferencesOperation().replaceTag(name, snapshotId);
     return this;
   }
 
   @Override
-  public ManageSnapshots replaceBranch(String name, long snapshotId)  {
+  public ManageSnapshots replaceBranch(String name, long snapshotId) {
     updateSnapshotReferencesOperation().replaceBranch(name, snapshotId);
     return this;
   }

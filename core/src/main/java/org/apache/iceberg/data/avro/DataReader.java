@@ -39,12 +39,13 @@ import org.apache.iceberg.types.Types;
 
 public class DataReader<T> implements DatumReader<T>, SupportsRowPosition {
 
-  public static <D> DataReader<D> create(org.apache.iceberg.Schema expectedSchema, Schema readSchema) {
+  public static <D> DataReader<D> create(
+      org.apache.iceberg.Schema expectedSchema, Schema readSchema) {
     return create(expectedSchema, readSchema, ImmutableMap.of());
   }
 
-  public static <D> DataReader<D> create(org.apache.iceberg.Schema expectedSchema, Schema readSchema,
-                                         Map<Integer, ?> idToConstant) {
+  public static <D> DataReader<D> create(
+      org.apache.iceberg.Schema expectedSchema, Schema readSchema, Map<Integer, ?> idToConstant) {
     return new DataReader<>(expectedSchema, readSchema, idToConstant);
   }
 
@@ -53,10 +54,13 @@ public class DataReader<T> implements DatumReader<T>, SupportsRowPosition {
   private Schema fileSchema = null;
 
   @SuppressWarnings("unchecked")
-  protected DataReader(org.apache.iceberg.Schema expectedSchema, Schema readSchema, Map<Integer, ?> idToConstant) {
+  protected DataReader(
+      org.apache.iceberg.Schema expectedSchema, Schema readSchema, Map<Integer, ?> idToConstant) {
     this.readSchema = readSchema;
-    this.reader = (ValueReader<T>) AvroSchemaWithTypeVisitor
-        .visit(expectedSchema, readSchema, new ReadBuilder(idToConstant));
+    this.reader =
+        (ValueReader<T>)
+            AvroSchemaWithTypeVisitor.visit(
+                expectedSchema, readSchema, new ReadBuilder(idToConstant));
   }
 
   @Override
@@ -76,8 +80,8 @@ public class DataReader<T> implements DatumReader<T>, SupportsRowPosition {
     }
   }
 
-  protected ValueReader<?> createStructReader(Types.StructType struct,
-                                              List<ValueReader<?>> fields, Map<Integer, ?> idToConstant) {
+  protected ValueReader<?> createStructReader(
+      Types.StructType struct, List<ValueReader<?>> fields, Map<Integer, ?> idToConstant) {
     return GenericReaders.struct(struct, fields, idToConstant);
   }
 
@@ -89,8 +93,8 @@ public class DataReader<T> implements DatumReader<T>, SupportsRowPosition {
     }
 
     @Override
-    public ValueReader<?> record(Types.StructType struct, Schema record,
-                                 List<String> names, List<ValueReader<?>> fields) {
+    public ValueReader<?> record(
+        Types.StructType struct, Schema record, List<String> names, List<ValueReader<?>> fields) {
       return createStructReader(struct, fields, idToConstant);
     }
 
@@ -100,12 +104,14 @@ public class DataReader<T> implements DatumReader<T>, SupportsRowPosition {
     }
 
     @Override
-    public ValueReader<?> array(Types.ListType ignored, Schema array, ValueReader<?> elementReader) {
+    public ValueReader<?> array(
+        Types.ListType ignored, Schema array, ValueReader<?> elementReader) {
       return ValueReaders.array(elementReader);
     }
 
     @Override
-    public ValueReader<?> map(Types.MapType iMap, Schema map, ValueReader<?> keyReader, ValueReader<?> valueReader) {
+    public ValueReader<?> map(
+        Types.MapType iMap, Schema map, ValueReader<?> keyReader, ValueReader<?> valueReader) {
       return ValueReaders.arrayMap(keyReader, valueReader);
     }
 

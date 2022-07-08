@@ -19,15 +19,13 @@
 
 package org.apache.iceberg.rest;
 
-/**
- * Interface to mark both REST requests and responses.
- */
+/** Interface to mark both REST requests and responses. */
 public interface RESTMessage {
 
   /**
    * Ensures that a constructed instance of a REST message is valid according to the REST spec.
-   * <p>
-   * This is needed when parsing data that comes from external sources and the object might have
+   *
+   * <p>This is needed when parsing data that comes from external sources and the object might have
    * been constructed without all the required fields present.
    */
   void validate();

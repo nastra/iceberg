@@ -39,8 +39,6 @@ public interface AliyunClientFactory extends Serializable {
    */
   void initialize(Map<String, String> properties);
 
-  /**
-   * Returns an initialized {@link AliyunProperties}
-   */
+  /** Returns an initialized {@link AliyunProperties} */
   AliyunProperties aliyunProperties();
 }

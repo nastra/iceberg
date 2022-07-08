@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.apache.iceberg.rest.responses;
 
 import java.util.Collection;
@@ -46,16 +45,13 @@ public class ListNamespacesResponse implements RESTResponse {
     Preconditions.checkArgument(namespaces != null, "Invalid namespace: null");
   }
 
-
   public List<Namespace> namespaces() {
     return namespaces != null ? namespaces : ImmutableList.of();
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("namespaces", namespaces())
-        .toString();
+    return MoreObjects.toStringHelper(this).add("namespaces", namespaces()).toString();
   }
 
   public static Builder builder() {
@@ -65,8 +61,7 @@ public class ListNamespacesResponse implements RESTResponse {
   public static class Builder {
     private final ImmutableList.Builder<Namespace> namespaces = ImmutableList.builder();
 
-    private Builder() {
-    }
+    private Builder() {}
 
     public Builder add(Namespace toAdd) {
       Preconditions.checkNotNull(toAdd, "Invalid namespace: null");
@@ -86,4 +81,3 @@ public class ListNamespacesResponse implements RESTResponse {
     }
   }
 }
-

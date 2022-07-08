@@ -22,9 +22,7 @@ package org.apache.iceberg;
 import org.apache.iceberg.expressions.Expressions;
 import org.apache.iceberg.expressions.Term;
 
-/**
- * Methods for building a sort order.
- */
+/** Methods for building a sort order. */
 public interface SortOrderBuilder<R> {
 
   /**

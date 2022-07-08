@@ -30,8 +30,6 @@ import org.apache.spark.sql.connector.expressions.Expression;
  */
 @Experimental
 public interface ClusteredDistribution extends Distribution {
-  /**
-   * Returns clustering expressions.
-   */
+  /** Returns clustering expressions. */
   Expression[] clustering();
 }

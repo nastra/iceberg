@@ -24,22 +24,21 @@ import org.apache.iceberg.Schema;
 import org.apache.iceberg.types.Types;
 
 public class DeleteSchemaUtil {
-  private DeleteSchemaUtil() {
-  }
+  private DeleteSchemaUtil() {}
 
   private static Schema pathPosSchema(Schema rowSchema) {
     return new Schema(
         MetadataColumns.DELETE_FILE_PATH,
         MetadataColumns.DELETE_FILE_POS,
         Types.NestedField.required(
-            MetadataColumns.DELETE_FILE_ROW_FIELD_ID, "row", rowSchema.asStruct(),
+            MetadataColumns.DELETE_FILE_ROW_FIELD_ID,
+            "row",
+            rowSchema.asStruct(),
             MetadataColumns.DELETE_FILE_ROW_DOC));
   }
 
   public static Schema pathPosSchema() {
-    return new Schema(
-        MetadataColumns.DELETE_FILE_PATH,
-        MetadataColumns.DELETE_FILE_POS);
+    return new Schema(MetadataColumns.DELETE_FILE_PATH, MetadataColumns.DELETE_FILE_POS);
   }
 
   public static Schema posDeleteSchema(Schema rowSchema) {

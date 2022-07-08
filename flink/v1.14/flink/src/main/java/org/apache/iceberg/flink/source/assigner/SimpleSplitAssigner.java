@@ -31,8 +31,8 @@ import org.apache.iceberg.flink.source.split.IcebergSourceSplitState;
 import org.apache.iceberg.flink.source.split.IcebergSourceSplitStatus;
 
 /**
- * Since all methods are called in the source coordinator thread by enumerator,
- * there is no need for locking.
+ * Since all methods are called in the source coordinator thread by enumerator, there is no need for
+ * locking.
  */
 @Internal
 public class SimpleSplitAssigner implements SplitAssigner {
@@ -73,9 +73,7 @@ public class SimpleSplitAssigner implements SplitAssigner {
     completeAvailableFuturesIfNeeded();
   }
 
-  /**
-   * Simple assigner only tracks unassigned splits
-   */
+  /** Simple assigner only tracks unassigned splits */
   @Override
   public Collection<IcebergSourceSplitState> state() {
     return pendingSplits.stream()

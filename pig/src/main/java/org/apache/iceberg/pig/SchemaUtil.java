@@ -32,8 +32,7 @@ import org.apache.pig.impl.logicalLayer.FrontendException;
 
 public class SchemaUtil {
 
-  private SchemaUtil() {
-  }
+  private SchemaUtil() {}
 
   public static ResourceSchema convert(Schema icebergSchema) throws IOException {
     ResourceSchema result = new ResourceSchema();
@@ -60,7 +59,8 @@ public class SchemaUtil {
     return result;
   }
 
-  private static ResourceFieldSchema [] convertFields(List<Types.NestedField> fields) throws IOException {
+  private static ResourceFieldSchema[] convertFields(List<Types.NestedField> fields)
+      throws IOException {
     List<ResourceFieldSchema> result = Lists.newArrayList();
 
     for (Types.NestedField nf : fields) {
@@ -72,20 +72,34 @@ public class SchemaUtil {
 
   private static byte convertType(Type type) throws IOException {
     switch (type.typeId()) {
-      case BOOLEAN:   return DataType.BOOLEAN;
-      case INTEGER:   return DataType.INTEGER;
-      case LONG:      return DataType.LONG;
-      case FLOAT:     return DataType.FLOAT;
-      case DOUBLE:    return DataType.DOUBLE;
-      case TIMESTAMP: return DataType.CHARARRAY;
-      case DATE:      return DataType.CHARARRAY;
-      case STRING:    return DataType.CHARARRAY;
-      case FIXED:     return DataType.BYTEARRAY;
-      case BINARY:    return DataType.BYTEARRAY;
-      case DECIMAL:   return DataType.BIGDECIMAL;
-      case STRUCT:    return DataType.TUPLE;
-      case LIST:      return DataType.BAG;
-      case MAP:       return DataType.MAP;
+      case BOOLEAN:
+        return DataType.BOOLEAN;
+      case INTEGER:
+        return DataType.INTEGER;
+      case LONG:
+        return DataType.LONG;
+      case FLOAT:
+        return DataType.FLOAT;
+      case DOUBLE:
+        return DataType.DOUBLE;
+      case TIMESTAMP:
+        return DataType.CHARARRAY;
+      case DATE:
+        return DataType.CHARARRAY;
+      case STRING:
+        return DataType.CHARARRAY;
+      case FIXED:
+        return DataType.BYTEARRAY;
+      case BINARY:
+        return DataType.BYTEARRAY;
+      case DECIMAL:
+        return DataType.BIGDECIMAL;
+      case STRUCT:
+        return DataType.TUPLE;
+      case LIST:
+        return DataType.BAG;
+      case MAP:
+        return DataType.MAP;
       default:
         throw new FrontendException("Unsupported primitive type:" + type);
     }
@@ -110,7 +124,8 @@ public class SchemaUtil {
       case LIST:
         Types.ListType listType = type.asListType();
 
-        ResourceFieldSchema [] elementFieldSchemas = new ResourceFieldSchema[]{convert(listType.elementType())};
+        ResourceFieldSchema[] elementFieldSchemas =
+            new ResourceFieldSchema[] {convert(listType.elementType())};
 
         if (listType.elementType().isStructType()) {
           result.setFields(elementFieldSchemas);
@@ -123,7 +138,7 @@ public class SchemaUtil {
           tupleSchema.setType(DataType.TUPLE);
           tupleSchema.setSchema(elementSchema);
 
-          result.setFields(new ResourceFieldSchema[]{tupleSchema});
+          result.setFields(new ResourceFieldSchema[] {tupleSchema});
         }
 
         return result;
@@ -133,7 +148,7 @@ public class SchemaUtil {
         if (mapType.keyType().typeId() != Type.TypeID.STRING) {
           throw new FrontendException("Unsupported map key type: " + mapType.keyType());
         }
-        result.setFields(new ResourceFieldSchema[]{convert(mapType.valueType())});
+        result.setFields(new ResourceFieldSchema[] {convert(mapType.valueType())});
 
         return result;
       default:
@@ -150,5 +165,4 @@ public class SchemaUtil {
 
     return new Schema(columns);
   }
-
 }

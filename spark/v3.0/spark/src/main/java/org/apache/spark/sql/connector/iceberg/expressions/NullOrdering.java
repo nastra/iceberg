@@ -28,7 +28,8 @@ import org.apache.spark.annotation.Experimental;
  */
 @Experimental
 public enum NullOrdering {
-  NULLS_FIRST, NULLS_LAST;
+  NULLS_FIRST,
+  NULLS_LAST;
 
   @Override
   public String toString() {

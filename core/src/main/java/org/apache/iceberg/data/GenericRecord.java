@@ -35,15 +35,16 @@ import org.apache.iceberg.types.Types.StructType;
 public class GenericRecord implements Record, StructLike {
   private static final LoadingCache<StructType, Map<String, Integer>> NAME_MAP_CACHE =
       Caffeine.newBuilder()
-      .weakKeys()
-      .build(struct -> {
-        Map<String, Integer> idToPos = Maps.newHashMap();
-        List<Types.NestedField> fields = struct.fields();
-        for (int i = 0; i < fields.size(); i += 1) {
-          idToPos.put(fields.get(i).name(), i);
-        }
-        return idToPos;
-      });
+          .weakKeys()
+          .build(
+              struct -> {
+                Map<String, Integer> idToPos = Maps.newHashMap();
+                List<Types.NestedField> fields = struct.fields();
+                for (int i = 0; i < fields.size(); i += 1) {
+                  idToPos.put(fields.get(i).name(), i);
+                }
+                return idToPos;
+              });
 
   public static GenericRecord create(Schema schema) {
     return new GenericRecord(schema.asStruct());

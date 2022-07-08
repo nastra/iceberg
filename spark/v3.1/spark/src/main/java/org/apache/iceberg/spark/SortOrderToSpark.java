@@ -30,12 +30,14 @@ class SortOrderToSpark implements SortOrderVisitor<OrderField> {
   }
 
   @Override
-  public OrderField bucket(String sourceName, int id, int width, SortDirection direction, NullOrder nullOrder) {
+  public OrderField bucket(
+      String sourceName, int id, int width, SortDirection direction, NullOrder nullOrder) {
     return OrderField.bucket(sourceName, width, direction, nullOrder);
   }
 
   @Override
-  public OrderField truncate(String sourceName, int id, int width, SortDirection direction, NullOrder nullOrder) {
+  public OrderField truncate(
+      String sourceName, int id, int width, SortDirection direction, NullOrder nullOrder) {
     return OrderField.truncate(sourceName, width, direction, nullOrder);
   }
 
@@ -59,4 +61,3 @@ class SortOrderToSpark implements SortOrderVisitor<OrderField> {
     return OrderField.hour(sourceName, direction, nullOrder);
   }
 }
-

@@ -26,9 +26,9 @@ import org.apache.iceberg.util.CharSequenceSet;
 
 /**
  * A result of writing delete files.
- * <p>
- * Note that objects of this class are NOT meant to be serialized. Task or delta writers will wrap
- * these results into their own serializable results that can be sent back to query engines.
+ *
+ * <p>Note that objects of this class are NOT meant to be serialized. Task or delta writers will
+ * wrap these results into their own serializable results that can be sent back to query engines.
  */
 public class DeleteWriteResult {
   private final List<DeleteFile> deleteFiles;

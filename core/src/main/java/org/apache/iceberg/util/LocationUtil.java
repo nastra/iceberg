@@ -22,12 +22,11 @@ package org.apache.iceberg.util;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 
 public class LocationUtil {
-  private LocationUtil() {
-
-  }
+  private LocationUtil() {}
 
   public static String stripTrailingSlash(String path) {
-    Preconditions.checkArgument(path != null && path.length() > 0, "path must not be null or empty");
+    Preconditions.checkArgument(
+        path != null && path.length() > 0, "path must not be null or empty");
 
     String result = path;
     while (result.endsWith("/")) {

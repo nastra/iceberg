@@ -27,8 +27,7 @@ import org.apache.iceberg.flink.RowDataConverter;
 import org.apache.iceberg.relocated.com.google.common.collect.Iterables;
 
 public class RandomRowData {
-  private RandomRowData() {
-  }
+  private RandomRowData() {}
 
   public static Iterable<RowData> generate(Schema schema, int numRecords, long seed) {
     return convert(schema, RandomGenericData.generate(schema, numRecords, seed));

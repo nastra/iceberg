@@ -36,8 +36,7 @@ import org.apache.iceberg.util.UUIDUtil;
 
 public class Conversions {
 
-  private Conversions() {
-  }
+  private Conversions() {}
 
   private static final String HIVE_NULL = "__HIVE_DEFAULT_PARTITION__";
 
@@ -63,8 +62,7 @@ public class Conversions {
         return UUID.fromString(asString);
       case FIXED:
         Types.FixedType fixed = (Types.FixedType) type;
-        return Arrays.copyOf(
-            asString.getBytes(StandardCharsets.UTF_8), fixed.length());
+        return Arrays.copyOf(asString.getBytes(StandardCharsets.UTF_8), fixed.length());
       case BINARY:
         return asString.getBytes(StandardCharsets.UTF_8);
       case DECIMAL:

@@ -86,7 +86,8 @@ public class TestComparators {
 
   @Test
   public void testUuid() {
-    assertComparesCorrectly(Comparators.forType(Types.UUIDType.get()),
+    assertComparesCorrectly(
+        Comparators.forType(Types.UUIDType.get()),
         UUID.fromString("81873e7d-1374-4493-8e1d-9095eff7046c"),
         UUID.fromString("fd02441d-1423-4a3f-8785-c7dd5647e26b"));
   }
@@ -136,15 +137,16 @@ public class TestComparators {
   @Test
   public void testStruct() {
     assertComparesCorrectly(
-        Comparators.forType(Types.StructType.of(
-            Types.NestedField.required(18, "str19", Types.StringType.get()),
-            Types.NestedField.required(19, "int19", Types.IntegerType.get()))),
+        Comparators.forType(
+            Types.StructType.of(
+                Types.NestedField.required(18, "str19", Types.StringType.get()),
+                Types.NestedField.required(19, "int19", Types.IntegerType.get()))),
         TestHelpers.Row.of("a", 1),
         TestHelpers.Row.of("a", 2));
 
     assertComparesCorrectly(
-        Comparators.forType(Types.StructType.of(
-            Types.NestedField.optional(18, "str19", Types.StringType.get()))),
+        Comparators.forType(
+            Types.StructType.of(Types.NestedField.optional(18, "str19", Types.StringType.get()))),
         TestHelpers.Row.of((String) null),
         TestHelpers.Row.of("a"));
   }

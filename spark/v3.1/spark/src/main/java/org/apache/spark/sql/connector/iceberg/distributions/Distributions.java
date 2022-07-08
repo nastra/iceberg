@@ -33,12 +33,9 @@ import org.apache.spark.sql.connector.iceberg.expressions.SortOrder;
  */
 @Experimental
 public class Distributions {
-  private Distributions() {
-  }
+  private Distributions() {}
 
-  /**
-   * Creates a distribution where no promises are made about co-location of data.
-   */
+  /** Creates a distribution where no promises are made about co-location of data. */
   public static UnspecifiedDistribution unspecified() {
     return new UnspecifiedDistributionImpl();
   }
@@ -52,8 +49,8 @@ public class Distributions {
   }
 
   /**
-   * Creates a distribution where tuples have been ordered across partitions according
-   * to ordering expressions, but not necessarily within a given partition.
+   * Creates a distribution where tuples have been ordered across partitions according to ordering
+   * expressions, but not necessarily within a given partition.
    */
   public static OrderedDistribution ordered(SortOrder[] ordering) {
     return new OrderedDistributionImpl(ordering);

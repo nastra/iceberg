@@ -70,7 +70,8 @@ public class ReaderMetricsContext implements MetricsContext {
         ValidationException.check(type == Long.class, "'%s' requires Integer type", FINISHED_BYTES);
         return (Counter<T>) longCounter(finishedBytes::addAndGet);
       case SPLIT_READER_FETCH_CALLS:
-        ValidationException.check(type == Long.class, "'%s' requires Integer type", SPLIT_READER_FETCH_CALLS);
+        ValidationException.check(
+            type == Long.class, "'%s' requires Integer type", SPLIT_READER_FETCH_CALLS);
         return (Counter<T>) longCounter(splitReaderFetchCalls::addAndGet);
       default:
         throw new IllegalArgumentException(String.format("Unsupported counter: '%s'", name));
@@ -78,7 +79,7 @@ public class ReaderMetricsContext implements MetricsContext {
   }
 
   private Counter<Long> longCounter(Consumer<Long> consumer) {
-    return  new Counter<Long>() {
+    return new Counter<Long>() {
       @Override
       public void increment() {
         increment(1L);

@@ -28,8 +28,7 @@ import org.apache.parquet.schema.MessageType;
 public class GenericParquetWriter extends BaseParquetWriter<Record> {
   private static final GenericParquetWriter INSTANCE = new GenericParquetWriter();
 
-  private GenericParquetWriter() {
-  }
+  private GenericParquetWriter() {}
 
   public static ParquetValueWriter<Record> buildWriter(MessageType type) {
     return INSTANCE.createWriter(type);

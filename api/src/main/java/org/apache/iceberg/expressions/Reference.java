@@ -21,8 +21,8 @@ package org.apache.iceberg.expressions;
 
 /**
  * Represents a variable reference in an {@link Expression expression}.
+ *
  * @see BoundReference
  * @see NamedReference
  */
-public interface Reference<T> extends Term {
-}
+public interface Reference<T> extends Term {}

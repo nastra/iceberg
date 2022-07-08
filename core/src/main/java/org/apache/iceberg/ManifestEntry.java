@@ -19,11 +19,11 @@
 
 package org.apache.iceberg;
 
-import org.apache.iceberg.types.Types;
-import org.apache.iceberg.types.Types.StructType;
-
 import static org.apache.iceberg.types.Types.NestedField.optional;
 import static org.apache.iceberg.types.Types.NestedField.required;
+
+import org.apache.iceberg.types.Types;
+import org.apache.iceberg.types.Types.StructType;
 
 interface ManifestEntry<F extends ContentFile<F>> {
   enum Status {
@@ -54,17 +54,14 @@ interface ManifestEntry<F extends ContentFile<F>> {
   }
 
   static Schema wrapFileSchema(StructType fileType) {
-    return new Schema(STATUS, SNAPSHOT_ID, SEQUENCE_NUMBER, required(DATA_FILE_ID, "data_file", fileType));
+    return new Schema(
+        STATUS, SNAPSHOT_ID, SEQUENCE_NUMBER, required(DATA_FILE_ID, "data_file", fileType));
   }
 
-  /**
-   * Returns the status of the file, whether EXISTING, ADDED, or DELETED.
-   */
+  /** Returns the status of the file, whether EXISTING, ADDED, or DELETED. */
   Status status();
 
-  /**
-   * Returns id of the snapshot in which the file was added to the table.
-   */
+  /** Returns id of the snapshot in which the file was added to the table. */
   Long snapshotId();
 
   /**
@@ -74,9 +71,7 @@ interface ManifestEntry<F extends ContentFile<F>> {
    */
   void setSnapshotId(long snapshotId);
 
-  /**
-   * Returns the sequence number of the snapshot in which the file was added to the table.
-   */
+  /** Returns the sequence number of the snapshot in which the file was added to the table. */
   Long sequenceNumber();
 
   /**
@@ -86,9 +81,7 @@ interface ManifestEntry<F extends ContentFile<F>> {
    */
   void setSequenceNumber(long sequenceNumber);
 
-  /**
-   * Returns a file.
-   */
+  /** Returns a file. */
   F file();
 
   ManifestEntry<F> copy();

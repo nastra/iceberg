@@ -17,8 +17,14 @@
  * under the License.
  */
 
-
 package org.apache.iceberg.spark.action;
+
+import static org.apache.iceberg.types.Types.NestedField.optional;
+import static org.apache.iceberg.types.Types.NestedField.required;
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.current_date;
+import static org.apache.spark.sql.functions.date_add;
+import static org.apache.spark.sql.functions.expr;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -56,13 +62,6 @@ import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Timeout;
-
-import static org.apache.iceberg.types.Types.NestedField.optional;
-import static org.apache.iceberg.types.Types.NestedField.required;
-import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.current_date;
-import static org.apache.spark.sql.functions.date_add;
-import static org.apache.spark.sql.functions.expr;
 
 @Fork(1)
 @State(Scope.Benchmark)
@@ -109,10 +108,10 @@ public class IcebergSortCompactionBenchmark {
     SparkActions.get()
         .rewriteDataFiles(table(), FULL_IDENT)
         .option(BinPackStrategy.REWRITE_ALL, "true")
-        .sort(SortOrder
-            .builderFor(table().schema())
-            .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .build())
+        .sort(
+            SortOrder.builderFor(table().schema())
+                .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .build())
         .execute();
   }
 
@@ -122,11 +121,11 @@ public class IcebergSortCompactionBenchmark {
     SparkActions.get()
         .rewriteDataFiles(table(), FULL_IDENT)
         .option(BinPackStrategy.REWRITE_ALL, "true")
-        .sort(SortOrder
-            .builderFor(table().schema())
-            .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("intCol2", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .build())
+        .sort(
+            SortOrder.builderFor(table().schema())
+                .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("intCol2", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .build())
         .execute();
   }
 
@@ -136,13 +135,13 @@ public class IcebergSortCompactionBenchmark {
     SparkActions.get()
         .rewriteDataFiles(table(), FULL_IDENT)
         .option(BinPackStrategy.REWRITE_ALL, "true")
-        .sort(SortOrder
-            .builderFor(table().schema())
-            .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("intCol2", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("intCol3", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("intCol4", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .build())
+        .sort(
+            SortOrder.builderFor(table().schema())
+                .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("intCol2", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("intCol3", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("intCol4", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .build())
         .execute();
   }
 
@@ -152,13 +151,13 @@ public class IcebergSortCompactionBenchmark {
     SparkActions.get()
         .rewriteDataFiles(table(), FULL_IDENT)
         .option(BinPackStrategy.REWRITE_ALL, "true")
-        .sort(SortOrder
-            .builderFor(table().schema())
-            .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("intCol2", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("intCol3", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("intCol4", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .build())
+        .sort(
+            SortOrder.builderFor(table().schema())
+                .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("intCol2", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("intCol3", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("intCol4", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .build())
         .execute();
   }
 
@@ -168,10 +167,10 @@ public class IcebergSortCompactionBenchmark {
     SparkActions.get()
         .rewriteDataFiles(table(), FULL_IDENT)
         .option(BinPackStrategy.REWRITE_ALL, "true")
-        .sort(SortOrder
-            .builderFor(table().schema())
-            .sortBy("stringCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .build())
+        .sort(
+            SortOrder.builderFor(table().schema())
+                .sortBy("stringCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .build())
         .execute();
   }
 
@@ -181,13 +180,13 @@ public class IcebergSortCompactionBenchmark {
     SparkActions.get()
         .rewriteDataFiles(table(), FULL_IDENT)
         .option(BinPackStrategy.REWRITE_ALL, "true")
-        .sort(SortOrder
-            .builderFor(table().schema())
-            .sortBy("stringCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("dateCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
-            .sortBy("doubleCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
-            .build())
+        .sort(
+            SortOrder.builderFor(table().schema())
+                .sortBy("stringCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("dateCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
+                .sortBy("doubleCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
+                .build())
         .execute();
   }
 
@@ -197,15 +196,15 @@ public class IcebergSortCompactionBenchmark {
     SparkActions.get()
         .rewriteDataFiles(table(), FULL_IDENT)
         .option(BinPackStrategy.REWRITE_ALL, "true")
-        .sort(SortOrder
-            .builderFor(table().schema())
-            .sortBy("stringCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
-            .sortBy("dateCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
-            .sortBy("timestampCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
-            .sortBy("doubleCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
-            .sortBy("longCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
-            .build())
+        .sort(
+            SortOrder.builderFor(table().schema())
+                .sortBy("stringCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("intCol", SortDirection.ASC, NullOrder.NULLS_FIRST)
+                .sortBy("dateCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
+                .sortBy("timestampCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
+                .sortBy("doubleCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
+                .sortBy("longCol", SortDirection.DESC, NullOrder.NULLS_FIRST)
+                .build())
         .execute();
   }
 
@@ -284,54 +283,76 @@ public class IcebergSortCompactionBenchmark {
   }
 
   protected final void initTable() {
-    Schema schema = new Schema(
-        required(1, "longCol", Types.LongType.get()),
-        required(2, "intCol", Types.IntegerType.get()),
-        required(3, "intCol2", Types.IntegerType.get()),
-        required(4, "intCol3", Types.IntegerType.get()),
-        required(5, "intCol4", Types.IntegerType.get()),
-        required(6, "floatCol", Types.FloatType.get()),
-        optional(7, "doubleCol", Types.DoubleType.get()),
-        optional(8, "dateCol", Types.DateType.get()),
-        optional(9, "timestampCol", Types.TimestampType.withZone()),
-        optional(10, "stringCol", Types.StringType.get()));
+    Schema schema =
+        new Schema(
+            required(1, "longCol", Types.LongType.get()),
+            required(2, "intCol", Types.IntegerType.get()),
+            required(3, "intCol2", Types.IntegerType.get()),
+            required(4, "intCol3", Types.IntegerType.get()),
+            required(5, "intCol4", Types.IntegerType.get()),
+            required(6, "floatCol", Types.FloatType.get()),
+            optional(7, "doubleCol", Types.DoubleType.get()),
+            optional(8, "dateCol", Types.DateType.get()),
+            optional(9, "timestampCol", Types.TimestampType.withZone()),
+            optional(10, "stringCol", Types.StringType.get()));
 
     SparkSessionCatalog catalog;
     try {
-      catalog = (SparkSessionCatalog)
-                    Spark3Util.catalogAndIdentifier(spark(), "spark_catalog").catalog();
+      catalog =
+          (SparkSessionCatalog) Spark3Util.catalogAndIdentifier(spark(), "spark_catalog").catalog();
       catalog.dropTable(IDENT);
-      catalog.createTable(IDENT, SparkSchemaUtil.convert(schema), new Transform[0], Collections.emptyMap());
+      catalog.createTable(
+          IDENT, SparkSchemaUtil.convert(schema), new Transform[0], Collections.emptyMap());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   private void appendData() {
-    Dataset<Row> df = spark().range(0, NUM_ROWS * NUM_FILES, 1, NUM_FILES)
-        .drop("id")
-        .withColumn("longCol", new RandomGeneratingUDF(UNIQUE_VALUES).randomLongUDF().apply())
-        .withColumn(
-            "intCol",
-            new RandomGeneratingUDF(UNIQUE_VALUES).randomLongUDF().apply().cast(DataTypes.IntegerType))
-        .withColumn(
-            "intCol2",
-            new RandomGeneratingUDF(UNIQUE_VALUES).randomLongUDF().apply().cast(DataTypes.IntegerType))
-        .withColumn(
-            "intCol3",
-            new RandomGeneratingUDF(UNIQUE_VALUES).randomLongUDF().apply().cast(DataTypes.IntegerType))
-        .withColumn(
-            "intCol4",
-            new RandomGeneratingUDF(UNIQUE_VALUES).randomLongUDF().apply().cast(DataTypes.IntegerType))
-        .withColumn(
-            "floatCol",
-            new RandomGeneratingUDF(UNIQUE_VALUES).randomLongUDF().apply().cast(DataTypes.FloatType))
-        .withColumn(
-            "doubleCol",
-            new RandomGeneratingUDF(UNIQUE_VALUES).randomLongUDF().apply().cast(DataTypes.DoubleType))
-        .withColumn("dateCol", date_add(current_date(), col("intCol").mod(NUM_FILES)))
-        .withColumn("timestampCol", expr("TO_TIMESTAMP(dateCol)"))
-        .withColumn("stringCol", new RandomGeneratingUDF(UNIQUE_VALUES).randomString().apply());
+    Dataset<Row> df =
+        spark()
+            .range(0, NUM_ROWS * NUM_FILES, 1, NUM_FILES)
+            .drop("id")
+            .withColumn("longCol", new RandomGeneratingUDF(UNIQUE_VALUES).randomLongUDF().apply())
+            .withColumn(
+                "intCol",
+                new RandomGeneratingUDF(UNIQUE_VALUES)
+                    .randomLongUDF()
+                    .apply()
+                    .cast(DataTypes.IntegerType))
+            .withColumn(
+                "intCol2",
+                new RandomGeneratingUDF(UNIQUE_VALUES)
+                    .randomLongUDF()
+                    .apply()
+                    .cast(DataTypes.IntegerType))
+            .withColumn(
+                "intCol3",
+                new RandomGeneratingUDF(UNIQUE_VALUES)
+                    .randomLongUDF()
+                    .apply()
+                    .cast(DataTypes.IntegerType))
+            .withColumn(
+                "intCol4",
+                new RandomGeneratingUDF(UNIQUE_VALUES)
+                    .randomLongUDF()
+                    .apply()
+                    .cast(DataTypes.IntegerType))
+            .withColumn(
+                "floatCol",
+                new RandomGeneratingUDF(UNIQUE_VALUES)
+                    .randomLongUDF()
+                    .apply()
+                    .cast(DataTypes.FloatType))
+            .withColumn(
+                "doubleCol",
+                new RandomGeneratingUDF(UNIQUE_VALUES)
+                    .randomLongUDF()
+                    .apply()
+                    .cast(DataTypes.DoubleType))
+            .withColumn("dateCol", date_add(current_date(), col("intCol").mod(NUM_FILES)))
+            .withColumn("timestampCol", expr("TO_TIMESTAMP(dateCol)"))
+            .withColumn("stringCol", new RandomGeneratingUDF(UNIQUE_VALUES).randomString().apply());
     writeData(df);
   }
 
@@ -363,7 +384,8 @@ public class IcebergSortCompactionBenchmark {
   protected void setupSpark() {
     SparkSession.Builder builder =
         SparkSession.builder()
-            .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog")
+            .config(
+                "spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog")
             .config("spark.sql.catalog.spark_catalog.type", "hadoop")
             .config("spark.sql.catalog.spark_catalog.warehouse", getCatalogWarehouse())
             .master("local[*]");

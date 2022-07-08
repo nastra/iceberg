@@ -21,8 +21,5 @@ package org.apache.iceberg.expressions;
 
 import java.io.Serializable;
 
-/**
- * An expression that evaluates to a value.
- */
-public interface Term extends Serializable {
-}
+/** An expression that evaluates to a value. */
+public interface Term extends Serializable {}

@@ -68,9 +68,15 @@ abstract class SparkBatch implements Batch {
     Tasks.range(readTasks.length)
         .stopOnFailure()
         .executeWith(localityEnabled ? ThreadPools.getWorkerPool() : null)
-        .run(index -> readTasks[index] = new ReadTask(
-            tasks().get(index), tableBroadcast, expectedSchemaString,
-            caseSensitive, localityEnabled));
+        .run(
+            index ->
+                readTasks[index] =
+                    new ReadTask(
+                        tasks().get(index),
+                        tableBroadcast,
+                        expectedSchemaString,
+                        caseSensitive,
+                        localityEnabled));
 
     return readTasks;
   }
@@ -97,25 +103,32 @@ abstract class SparkBatch implements Batch {
   }
 
   private boolean parquetOnly() {
-    return tasks().stream().allMatch(task -> !task.isDataTask() && onlyFileFormat(task, FileFormat.PARQUET));
+    return tasks().stream()
+        .allMatch(task -> !task.isDataTask() && onlyFileFormat(task, FileFormat.PARQUET));
   }
 
   private boolean parquetBatchReadsEnabled() {
-    return readConf.parquetVectorizationEnabled() && // vectorization enabled
-        expectedSchema.columns().size() > 0 && // at least one column is projected
-        expectedSchema.columns().stream().allMatch(c -> c.type().isPrimitiveType()); // only primitives
+    return readConf.parquetVectorizationEnabled()
+        && // vectorization enabled
+        expectedSchema.columns().size() > 0
+        && // at least one column is projected
+        expectedSchema.columns().stream()
+            .allMatch(c -> c.type().isPrimitiveType()); // only primitives
   }
 
   private boolean orcOnly() {
-    return tasks().stream().allMatch(task -> !task.isDataTask() && onlyFileFormat(task, FileFormat.ORC));
+    return tasks().stream()
+        .allMatch(task -> !task.isDataTask() && onlyFileFormat(task, FileFormat.ORC));
   }
 
   private boolean orcBatchReadsEnabled() {
-    return readConf.orcVectorizationEnabled() && // vectorization enabled
+    return readConf.orcVectorizationEnabled()
+        && // vectorization enabled
         tasks().stream().noneMatch(TableScanUtil::hasDeletes); // no delete files
   }
 
   private boolean onlyFileFormat(CombinedScanTask task, FileFormat fileFormat) {
-    return task.files().stream().allMatch(fileScanTask -> fileScanTask.file().format().equals(fileFormat));
+    return task.files().stream()
+        .allMatch(fileScanTask -> fileScanTask.file().format().equals(fileFormat));
   }
 }

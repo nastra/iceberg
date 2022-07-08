@@ -24,7 +24,8 @@ import java.util.List;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 
 public class UnboundSortOrder {
-  private static final UnboundSortOrder UNSORTED_ORDER = new UnboundSortOrder(0, Collections.emptyList());
+  private static final UnboundSortOrder UNSORTED_ORDER =
+      new UnboundSortOrder(0, Collections.emptyList());
 
   private final int orderId;
   private final List<UnboundSortField> fields;
@@ -38,7 +39,8 @@ public class UnboundSortOrder {
     SortOrder.Builder builder = SortOrder.builderFor(schema).withOrderId(orderId);
 
     for (UnboundSortField field : fields) {
-      builder.addSortField(field.transformAsString, field.sourceId, field.direction, field.nullOrder);
+      builder.addSortField(
+          field.transformAsString, field.sourceId, field.direction, field.nullOrder);
     }
 
     return builder.build();
@@ -48,7 +50,8 @@ public class UnboundSortOrder {
     SortOrder.Builder builder = SortOrder.builderFor(schema).withOrderId(orderId);
 
     for (UnboundSortField field : fields) {
-      builder.addSortField(field.transformAsString, field.sourceId, field.direction, field.nullOrder);
+      builder.addSortField(
+          field.transformAsString, field.sourceId, field.direction, field.nullOrder);
     }
 
     return builder.buildUnchecked();
@@ -73,22 +76,22 @@ public class UnboundSortOrder {
 
   /**
    * A builder used to create {@link UnboundSortOrder unbound sort orders}.
-   * <p>
-   * Call {@link #builder()} to create a new builder.
+   *
+   * <p>Call {@link #builder()} to create a new builder.
    */
   static class Builder {
     private final List<UnboundSortField> fields = Lists.newArrayList();
     private Integer orderId = null;
 
-    private Builder() {
-    }
+    private Builder() {}
 
     Builder withOrderId(int newOrderId) {
       this.orderId = newOrderId;
       return this;
     }
 
-    Builder addSortField(String transformAsString, int sourceId, SortDirection direction, NullOrder nullOrder) {
+    Builder addSortField(
+        String transformAsString, int sourceId, SortDirection direction, NullOrder nullOrder) {
       fields.add(new UnboundSortField(transformAsString, sourceId, direction, nullOrder));
       return this;
     }
@@ -117,7 +120,8 @@ public class UnboundSortOrder {
     private final SortDirection direction;
     private final NullOrder nullOrder;
 
-    private UnboundSortField(String transformAsString, int sourceId, SortDirection direction, NullOrder nullOrder) {
+    private UnboundSortField(
+        String transformAsString, int sourceId, SortDirection direction, NullOrder nullOrder) {
       this.transformAsString = transformAsString;
       this.sourceId = sourceId;
       this.direction = direction;

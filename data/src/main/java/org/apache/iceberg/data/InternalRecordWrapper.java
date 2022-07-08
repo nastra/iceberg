@@ -37,9 +37,11 @@ public class InternalRecordWrapper implements StructLike {
 
   @SuppressWarnings("unchecked")
   public InternalRecordWrapper(Types.StructType struct) {
-    this.transforms = struct.fields().stream()
-        .map(field -> converter(field.type()))
-        .toArray(length -> (Function<Object, Object>[]) Array.newInstance(Function.class, length));
+    this.transforms =
+        struct.fields().stream()
+            .map(field -> converter(field.type()))
+            .toArray(
+                length -> (Function<Object, Object>[]) Array.newInstance(Function.class, length));
   }
 
   private static Function<Object, Object> converter(Type type) {

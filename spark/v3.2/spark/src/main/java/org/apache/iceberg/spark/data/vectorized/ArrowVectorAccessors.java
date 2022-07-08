@@ -35,6 +35,5 @@ public class ArrowVectorAccessors {
     return factory.getVectorAccessor(holder);
   }
 
-  private ArrowVectorAccessors() {
-  }
+  private ArrowVectorAccessors() {}
 }

@@ -32,8 +32,8 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
 /**
- * Class to adapt a Spark {@code InternalRow} to Iceberg {@link StructLike} for uses like
- * {@link org.apache.iceberg.PartitionKey#partition(StructLike)}
+ * Class to adapt a Spark {@code InternalRow} to Iceberg {@link StructLike} for uses like {@link
+ * org.apache.iceberg.PartitionKey#partition(StructLike)}
  */
 class InternalRowWrapper implements StructLike {
   private final DataType[] types;
@@ -42,12 +42,8 @@ class InternalRowWrapper implements StructLike {
 
   @SuppressWarnings("unchecked")
   InternalRowWrapper(StructType rowType) {
-    this.types = Stream.of(rowType.fields())
-        .map(StructField::dataType)
-        .toArray(DataType[]::new);
-    this.getters = Stream.of(types)
-        .map(InternalRowWrapper::getter)
-        .toArray(BiFunction[]::new);
+    this.types = Stream.of(rowType.fields()).map(StructField::dataType).toArray(DataType[]::new);
+    this.getters = Stream.of(types).map(InternalRowWrapper::getter).toArray(BiFunction[]::new);
   }
 
   InternalRowWrapper wrap(InternalRow internalRow) {

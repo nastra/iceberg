@@ -30,5 +30,4 @@ public abstract class PositionOutputStream extends OutputStream {
    * @throws IOException If the underlying stream throws IOException
    */
   public abstract long getPos() throws IOException;
-
 }

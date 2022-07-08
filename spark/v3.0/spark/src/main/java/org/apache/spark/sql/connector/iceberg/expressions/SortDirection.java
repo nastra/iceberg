@@ -28,7 +28,8 @@ import org.apache.spark.annotation.Experimental;
  */
 @Experimental
 public enum SortDirection {
-  ASCENDING, DESCENDING;
+  ASCENDING,
+  DESCENDING;
 
   @Override
   public String toString() {

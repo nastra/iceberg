@@ -33,17 +33,27 @@ import org.apache.iceberg.io.OutputFileFactory;
 class UnpartitionedDeltaWriter extends BaseDeltaTaskWriter {
   private final RowDataDeltaWriter writer;
 
-  UnpartitionedDeltaWriter(PartitionSpec spec,
-                           FileFormat format,
-                           FileAppenderFactory<RowData> appenderFactory,
-                           OutputFileFactory fileFactory,
-                           FileIO io,
-                           long targetFileSize,
-                           Schema schema,
-                           RowType flinkSchema,
-                           List<Integer> equalityFieldIds,
-                           boolean upsert) {
-    super(spec, format, appenderFactory, fileFactory, io, targetFileSize, schema, flinkSchema, equalityFieldIds,
+  UnpartitionedDeltaWriter(
+      PartitionSpec spec,
+      FileFormat format,
+      FileAppenderFactory<RowData> appenderFactory,
+      OutputFileFactory fileFactory,
+      FileIO io,
+      long targetFileSize,
+      Schema schema,
+      RowType flinkSchema,
+      List<Integer> equalityFieldIds,
+      boolean upsert) {
+    super(
+        spec,
+        format,
+        appenderFactory,
+        fileFactory,
+        io,
+        targetFileSize,
+        schema,
+        flinkSchema,
+        equalityFieldIds,
         upsert);
     this.writer = new RowDataDeltaWriter(null);
   }

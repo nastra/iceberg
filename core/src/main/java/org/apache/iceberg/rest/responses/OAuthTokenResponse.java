@@ -33,8 +33,12 @@ public class OAuthTokenResponse implements RESTResponse {
   private final Integer expiresIn;
   private final String scope;
 
-  private OAuthTokenResponse(String accessToken, String issuedTokenType, String tokenType, Integer expiresIn,
-                            String scope) {
+  private OAuthTokenResponse(
+      String accessToken,
+      String issuedTokenType,
+      String tokenType,
+      Integer expiresIn,
+      String scope) {
     this.accessToken = accessToken;
     this.issuedTokenType = issuedTokenType;
     this.tokenType = tokenType;
@@ -45,8 +49,10 @@ public class OAuthTokenResponse implements RESTResponse {
   @Override
   public void validate() {
     Preconditions.checkNotNull(accessToken, "Invalid access token: null");
-    Preconditions.checkArgument("bearer".equalsIgnoreCase(tokenType) || "N_A".equalsIgnoreCase(tokenType),
-        "Unsupported token type: %s (must be \"bearer\" or \"N_A\")", tokenType);
+    Preconditions.checkArgument(
+        "bearer".equalsIgnoreCase(tokenType) || "N_A".equalsIgnoreCase(tokenType),
+        "Unsupported token type: %s (must be \"bearer\" or \"N_A\")",
+        tokenType);
   }
 
   public String token() {
@@ -80,8 +86,7 @@ public class OAuthTokenResponse implements RESTResponse {
     private Integer expiresInSeconds;
     private final List<String> scopes = Lists.newArrayList();
 
-    private Builder() {
-    }
+    private Builder() {}
 
     public Builder withToken(String token) {
       this.accessToken = token;
@@ -116,7 +121,8 @@ public class OAuthTokenResponse implements RESTResponse {
 
     public OAuthTokenResponse build() {
       String scope = scopes.isEmpty() ? null : OAuth2Util.toScope(scopes);
-      return new OAuthTokenResponse(accessToken, issuedTokenType, tokenType, expiresInSeconds, scope);
+      return new OAuthTokenResponse(
+          accessToken, issuedTokenType, tokenType, expiresInSeconds, scope);
     }
   }
 }

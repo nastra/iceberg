@@ -44,7 +44,8 @@ public class TestFlinkMergingMetrics extends TestMergingMetrics<RowData> {
     RowType flinkSchema = FlinkSchemaUtil.convert(SCHEMA);
 
     FileAppender<RowData> appender =
-        new FlinkAppenderFactory(SCHEMA, flinkSchema, ImmutableMap.of(), PartitionSpec.unpartitioned())
+        new FlinkAppenderFactory(
+                SCHEMA, flinkSchema, ImmutableMap.of(), PartitionSpec.unpartitioned())
             .newAppender(org.apache.iceberg.Files.localOutput(temp.newFile()), fileFormat);
     try (FileAppender<RowData> fileAppender = appender) {
       records.stream().map(r -> RowDataConverter.convert(SCHEMA, r)).forEach(fileAppender::add);

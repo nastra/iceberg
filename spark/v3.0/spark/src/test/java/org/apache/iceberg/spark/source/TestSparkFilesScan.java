@@ -53,10 +53,8 @@ public class TestSparkFilesScan extends SparkCatalogTestBase {
   public void testTaskSetLoading() throws NoSuchTableException, IOException {
     sql("CREATE TABLE %s (id INT, data STRING) USING iceberg", tableName);
 
-    List<SimpleRecord> records = ImmutableList.of(
-        new SimpleRecord(1, "a"),
-        new SimpleRecord(2, "b")
-    );
+    List<SimpleRecord> records =
+        ImmutableList.of(new SimpleRecord(1, "a"), new SimpleRecord(2, "b"));
     Dataset<Row> df = spark.createDataFrame(records, SimpleRecord.class);
     df.writeTo(tableName).append();
 
@@ -69,15 +67,19 @@ public class TestSparkFilesScan extends SparkCatalogTestBase {
       taskSetManager.stageTasks(table, setID, ImmutableList.copyOf(fileScanTasks));
 
       // load the staged file set
-      Dataset<Row> scanDF = spark.read().format("iceberg")
-          .option(SparkReadOptions.FILE_SCAN_TASK_SET_ID, setID)
-          .load(tableName);
+      Dataset<Row> scanDF =
+          spark
+              .read()
+              .format("iceberg")
+              .option(SparkReadOptions.FILE_SCAN_TASK_SET_ID, setID)
+              .load(tableName);
 
       // write the records back essentially duplicating data
       scanDF.writeTo(tableName).append();
     }
 
-    assertEquals("Should have expected rows",
+    assertEquals(
+        "Should have expected rows",
         ImmutableList.of(row(1, "a"), row(1, "a"), row(2, "b"), row(2, "b")),
         sql("SELECT * FROM %s ORDER BY id", tableName));
   }
@@ -86,10 +88,8 @@ public class TestSparkFilesScan extends SparkCatalogTestBase {
   public void testTaskSetPlanning() throws NoSuchTableException, IOException {
     sql("CREATE TABLE %s (id INT, data STRING) USING iceberg", tableName);
 
-    List<SimpleRecord> records = ImmutableList.of(
-        new SimpleRecord(1, "a"),
-        new SimpleRecord(2, "b")
-    );
+    List<SimpleRecord> records =
+        ImmutableList.of(new SimpleRecord(1, "a"), new SimpleRecord(2, "b"));
     Dataset<Row> df = spark.createDataFrame(records, SimpleRecord.class);
     df.coalesce(1).writeTo(tableName).append();
     df.coalesce(1).writeTo(tableName).append();
@@ -104,17 +104,23 @@ public class TestSparkFilesScan extends SparkCatalogTestBase {
       taskSetManager.stageTasks(table, setID, tasks);
 
       // load the staged file set and make sure each file is in a separate split
-      Dataset<Row> scanDF = spark.read().format("iceberg")
-          .option(SparkReadOptions.FILE_SCAN_TASK_SET_ID, setID)
-          .option(SparkReadOptions.SPLIT_SIZE, tasks.get(0).file().fileSizeInBytes())
-          .load(tableName);
+      Dataset<Row> scanDF =
+          spark
+              .read()
+              .format("iceberg")
+              .option(SparkReadOptions.FILE_SCAN_TASK_SET_ID, setID)
+              .option(SparkReadOptions.SPLIT_SIZE, tasks.get(0).file().fileSizeInBytes())
+              .load(tableName);
       Assert.assertEquals("Num partitions should match", 2, scanDF.javaRDD().getNumPartitions());
 
       // load the staged file set and make sure we combine both files into a single split
-      scanDF = spark.read().format("iceberg")
-          .option(SparkReadOptions.FILE_SCAN_TASK_SET_ID, setID)
-          .option(SparkReadOptions.SPLIT_SIZE, Long.MAX_VALUE)
-          .load(tableName);
+      scanDF =
+          spark
+              .read()
+              .format("iceberg")
+              .option(SparkReadOptions.FILE_SCAN_TASK_SET_ID, setID)
+              .option(SparkReadOptions.SPLIT_SIZE, Long.MAX_VALUE)
+              .load(tableName);
       Assert.assertEquals("Num partitions should match", 1, scanDF.javaRDD().getNumPartitions());
     }
   }

@@ -26,8 +26,7 @@ class RewriteNot extends ExpressionVisitors.ExpressionVisitor<Expression> {
     return INSTANCE;
   }
 
-  private RewriteNot() {
-  }
+  private RewriteNot() {}
 
   @Override
   public Expression alwaysTrue() {

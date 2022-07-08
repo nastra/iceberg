@@ -60,13 +60,15 @@ class LocalTableOperations implements TableOperations {
 
   @Override
   public String metadataFileLocation(String fileName) {
-    return createdMetadataFilePaths.computeIfAbsent(fileName, name -> {
-      try {
-        return temp.newFile(name).getAbsolutePath();
-      } catch (IOException e) {
-        throw new RuntimeIOException(e);
-      }
-    });
+    return createdMetadataFilePaths.computeIfAbsent(
+        fileName,
+        name -> {
+          try {
+            return temp.newFile(name).getAbsolutePath();
+          } catch (IOException e) {
+            throw new RuntimeIOException(e);
+          }
+        });
   }
 
   @Override

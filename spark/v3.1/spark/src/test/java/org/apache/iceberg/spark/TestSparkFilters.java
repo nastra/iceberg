@@ -42,10 +42,14 @@ public class TestSparkFilters {
     Expression timestampExpression = SparkFilters.convert(GreaterThan.apply("x", timestamp));
     Expression rawExpression = Expressions.greaterThan("x", epochMicros);
 
-    Assert.assertEquals("Generated Timestamp expression should be correct",
-        rawExpression.toString(), timestampExpression.toString());
-    Assert.assertEquals("Generated Instant expression should be correct",
-        rawExpression.toString(), instantExpression.toString());
+    Assert.assertEquals(
+        "Generated Timestamp expression should be correct",
+        rawExpression.toString(),
+        timestampExpression.toString());
+    Assert.assertEquals(
+        "Generated Instant expression should be correct",
+        rawExpression.toString(),
+        instantExpression.toString());
   }
 
   @Test
@@ -58,10 +62,14 @@ public class TestSparkFilters {
     Expression dateExpression = SparkFilters.convert(GreaterThan.apply("x", date));
     Expression rawExpression = Expressions.greaterThan("x", epochDay);
 
-    Assert.assertEquals("Generated localdate expression should be correct",
-        rawExpression.toString(), localDateExpression.toString());
+    Assert.assertEquals(
+        "Generated localdate expression should be correct",
+        rawExpression.toString(),
+        localDateExpression.toString());
 
-    Assert.assertEquals("Generated date expression should be correct",
-        rawExpression.toString(), dateExpression.toString());
+    Assert.assertEquals(
+        "Generated date expression should be correct",
+        rawExpression.toString(),
+        dateExpression.toString());
   }
 }

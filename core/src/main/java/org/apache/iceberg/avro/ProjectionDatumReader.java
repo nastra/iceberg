@@ -40,10 +40,11 @@ public class ProjectionDatumReader<D> implements DatumReader<D>, SupportsRowPosi
   private Schema fileSchema = null;
   private DatumReader<D> wrapped = null;
 
-  public ProjectionDatumReader(Function<Schema, DatumReader<?>> getReader,
-                               org.apache.iceberg.Schema expectedSchema,
-                               Map<String, String> renames,
-                               NameMapping nameMapping) {
+  public ProjectionDatumReader(
+      Function<Schema, DatumReader<?>> getReader,
+      org.apache.iceberg.Schema expectedSchema,
+      Map<String, String> renames,
+      NameMapping nameMapping) {
     this.getReader = getReader;
     this.expectedSchema = expectedSchema;
     this.renames = renames;

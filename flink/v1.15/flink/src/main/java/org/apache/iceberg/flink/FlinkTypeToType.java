@@ -176,9 +176,10 @@ class FlinkTypeToType extends FlinkTypeVisitor<Type> {
     List<Types.NestedField> newFields = Lists.newArrayListWithExpectedSize(rowType.getFieldCount());
     boolean isRoot = root == rowType;
 
-    List<Type> types = rowType.getFields().stream()
-        .map(f -> f.getType().accept(this))
-        .collect(Collectors.toList());
+    List<Type> types =
+        rowType.getFields().stream()
+            .map(f -> f.getType().accept(this))
+            .collect(Collectors.toList());
 
     for (int i = 0; i < rowType.getFieldCount(); i++) {
       int id = isRoot ? i : getNextId();

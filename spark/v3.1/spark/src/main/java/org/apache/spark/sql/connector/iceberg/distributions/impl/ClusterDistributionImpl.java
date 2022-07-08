@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.apache.spark.sql.connector.iceberg.distributions.impl;
 
 import org.apache.spark.sql.connector.expressions.Expression;

@@ -32,10 +32,12 @@ import org.apache.spark.sql.vectorized.ColumnarArray;
 import org.apache.spark.unsafe.types.UTF8String;
 
 final class ArrowVectorAccessorFactory
-    extends GenericArrowVectorAccessorFactory<Decimal, UTF8String, ColumnarArray, ArrowColumnVector> {
+    extends GenericArrowVectorAccessorFactory<
+        Decimal, UTF8String, ColumnarArray, ArrowColumnVector> {
 
   ArrowVectorAccessorFactory() {
-    super(DecimalFactoryImpl::new,
+    super(
+        DecimalFactoryImpl::new,
         StringFactoryImpl::new,
         StructChildFactoryImpl::new,
         ArrayFactoryImpl::new);
@@ -70,9 +72,7 @@ final class ArrowVectorAccessorFactory
       int end = vector.getEndOffset(rowId);
 
       return UTF8String.fromAddress(
-          null,
-          vector.getDataBuffer().memoryAddress() + start,
-          end - start);
+          null, vector.getDataBuffer().memoryAddress() + start, end - start);
     }
 
     @Override
@@ -84,7 +84,9 @@ final class ArrowVectorAccessorFactory
     public UTF8String ofByteBuffer(ByteBuffer byteBuffer) {
       if (byteBuffer.hasArray()) {
         return UTF8String.fromBytes(
-            byteBuffer.array(), byteBuffer.arrayOffset() + byteBuffer.position(), byteBuffer.remaining());
+            byteBuffer.array(),
+            byteBuffer.arrayOffset() + byteBuffer.position(),
+            byteBuffer.remaining());
       }
       byte[] bytes = new byte[byteBuffer.remaining()];
       byteBuffer.get(bytes);
@@ -92,7 +94,8 @@ final class ArrowVectorAccessorFactory
     }
   }
 
-  private static final class ArrayFactoryImpl implements ArrayFactory<ArrowColumnVector, ColumnarArray> {
+  private static final class ArrayFactoryImpl
+      implements ArrayFactory<ArrowColumnVector, ColumnarArray> {
     @Override
     public ArrowColumnVector ofChild(ValueVector childVector) {
       return new ArrowColumnVector(childVector);
@@ -108,7 +111,8 @@ final class ArrowVectorAccessorFactory
     }
   }
 
-  private static final class StructChildFactoryImpl implements StructChildFactory<ArrowColumnVector> {
+  private static final class StructChildFactoryImpl
+      implements StructChildFactory<ArrowColumnVector> {
     @Override
     public Class<ArrowColumnVector> getGenericClass() {
       return ArrowColumnVector.class;

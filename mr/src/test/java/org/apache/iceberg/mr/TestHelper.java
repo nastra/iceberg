@@ -53,8 +53,14 @@ public class TestHelper {
 
   private Table table;
 
-  public TestHelper(Configuration conf, Tables tables, String tableIdentifier, Schema schema, PartitionSpec spec,
-                    FileFormat fileFormat, TemporaryFolder tmp) {
+  public TestHelper(
+      Configuration conf,
+      Tables tables,
+      String tableIdentifier,
+      Schema schema,
+      PartitionSpec spec,
+      FileFormat fileFormat,
+      TemporaryFolder tmp) {
     this.conf = conf;
     this.tables = tables;
     this.tableIdentifier = tableIdentifier;
@@ -74,8 +80,11 @@ public class TestHelper {
   }
 
   public Map<String, String> properties() {
-    return ImmutableMap.of(TableProperties.DEFAULT_FILE_FORMAT, fileFormat.name(),
-        TableProperties.ENGINE_HIVE_ENABLED, "true");
+    return ImmutableMap.of(
+        TableProperties.DEFAULT_FILE_FORMAT,
+        fileFormat.name(),
+        TableProperties.ENGINE_HIVE_ENABLED,
+        "true");
   }
 
   public Table createTable(Schema theSchema, PartitionSpec theSpec) {
@@ -91,7 +100,6 @@ public class TestHelper {
   public Table createUnpartitionedTable() {
     return createTable(schema, PartitionSpec.unpartitioned());
   }
-
 
   public List<Record> generateRandomRecords(int num, long seed) {
     Preconditions.checkNotNull(table, "table not set");

@@ -78,7 +78,8 @@ class BaseRowDelta extends MergingSnapshotProducer<RowDelta> implements RowDelta
 
   @Override
   public RowDelta conflictDetectionFilter(Expression newConflictDetectionFilter) {
-    Preconditions.checkArgument(newConflictDetectionFilter != null, "Conflict detection filter cannot be null");
+    Preconditions.checkArgument(
+        newConflictDetectionFilter != null, "Conflict detection filter cannot be null");
     this.conflictDetectionFilter = newConflictDetectionFilter;
     return this;
   }
@@ -100,7 +101,11 @@ class BaseRowDelta extends MergingSnapshotProducer<RowDelta> implements RowDelta
     if (base.currentSnapshot() != null) {
       if (!referencedDataFiles.isEmpty()) {
         validateDataFilesExist(
-            base, startingSnapshotId, referencedDataFiles, !validateDeletes, conflictDetectionFilter);
+            base,
+            startingSnapshotId,
+            referencedDataFiles,
+            !validateDeletes,
+            conflictDetectionFilter);
       }
 
       if (validateNewDataFiles) {

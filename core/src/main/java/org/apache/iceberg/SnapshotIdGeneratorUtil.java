@@ -23,8 +23,7 @@ import java.util.UUID;
 
 public final class SnapshotIdGeneratorUtil {
 
-  private SnapshotIdGeneratorUtil() {
-  }
+  private SnapshotIdGeneratorUtil() {}
 
   /**
    * Create a new ID for a Snapshot

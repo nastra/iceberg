@@ -37,9 +37,7 @@ import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.relocated.com.google.common.annotations.VisibleForTesting;
 import org.apache.iceberg.util.ThreadPools;
 
-/**
- * Flink {@link InputFormat} for Iceberg.
- */
+/** Flink {@link InputFormat} for Iceberg. */
 public class FlinkInputFormat extends RichInputFormat<RowData, FlinkInputSplit> {
 
   private static final long serialVersionUID = 1L;
@@ -53,14 +51,19 @@ public class FlinkInputFormat extends RichInputFormat<RowData, FlinkInputSplit> 
   private transient DataIterator<RowData> iterator;
   private transient long currentReadCount = 0L;
 
-  FlinkInputFormat(TableLoader tableLoader, Schema tableSchema, FileIO io, EncryptionManager encryption,
-                   ScanContext context) {
+  FlinkInputFormat(
+      TableLoader tableLoader,
+      Schema tableSchema,
+      FileIO io,
+      EncryptionManager encryption,
+      ScanContext context) {
     this.tableLoader = tableLoader;
     this.io = io;
     this.encryption = encryption;
     this.context = context;
-    this.rowDataReader = new RowDataFileScanTaskReader(tableSchema,
-        context.project(), context.nameMapping(), context.caseSensitive());
+    this.rowDataReader =
+        new RowDataFileScanTaskReader(
+            tableSchema, context.project(), context.nameMapping(), context.caseSensitive());
   }
 
   @VisibleForTesting
@@ -78,7 +81,8 @@ public class FlinkInputFormat extends RichInputFormat<RowData, FlinkInputSplit> 
   public FlinkInputSplit[] createInputSplits(int minNumSplits) throws IOException {
     // Called in Job manager, so it is OK to load table from catalog.
     tableLoader.open();
-    final ExecutorService workerPool = ThreadPools.newWorkerPool("iceberg-plan-worker-pool", context.planParallelism());
+    final ExecutorService workerPool =
+        ThreadPools.newWorkerPool("iceberg-plan-worker-pool", context.planParallelism());
     try (TableLoader loader = tableLoader) {
       Table table = loader.loadTable();
       return FlinkSplitPlanner.planInputSplits(table, context, workerPool);
@@ -89,14 +93,13 @@ public class FlinkInputFormat extends RichInputFormat<RowData, FlinkInputSplit> 
 
   @Override
   public InputSplitAssigner getInputSplitAssigner(FlinkInputSplit[] inputSplits) {
-    return context.exposeLocality() ?
-        new LocatableInputSplitAssigner(inputSplits) :
-        new DefaultInputSplitAssigner(inputSplits);
+    return context.exposeLocality()
+        ? new LocatableInputSplitAssigner(inputSplits)
+        : new DefaultInputSplitAssigner(inputSplits);
   }
 
   @Override
-  public void configure(Configuration parameters) {
-  }
+  public void configure(Configuration parameters) {}
 
   @Override
   public void open(FlinkInputSplit split) {

@@ -37,15 +37,15 @@ public class FileScanTaskSetManager {
 
   private final Map<Pair<String, String>, List<FileScanTask>> tasksMap = Maps.newConcurrentMap();
 
-  private FileScanTaskSetManager() {
-  }
+  private FileScanTaskSetManager() {}
 
   public static FileScanTaskSetManager get() {
     return INSTANCE;
   }
 
   public void stageTasks(Table table, String setID, List<FileScanTask> tasks) {
-    Preconditions.checkArgument(tasks != null && tasks.size() > 0, "Cannot stage null or empty tasks");
+    Preconditions.checkArgument(
+        tasks != null && tasks.size() > 0, "Cannot stage null or empty tasks");
     Pair<String, String> id = toID(table, setID);
     tasksMap.put(id, tasks);
   }

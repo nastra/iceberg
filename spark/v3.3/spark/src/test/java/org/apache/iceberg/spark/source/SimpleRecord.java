@@ -25,8 +25,7 @@ public class SimpleRecord {
   private Integer id;
   private String data;
 
-  public SimpleRecord() {
-  }
+  public SimpleRecord() {}
 
   public SimpleRecord(Integer id, String data) {
     this.id = id;

@@ -28,9 +28,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Object data in memory.
- */
+/** Object data in memory. */
 public class ObjectData {
   public final byte[] content;
   public final Map<String, String> userMetadata;

@@ -19,10 +19,10 @@
 
 package org.apache.iceberg.arrow.vectorized.parquet;
 
+import static org.junit.Assert.assertEquals;
+
 import java.math.BigInteger;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class DecimalVectorUtilTest {
 

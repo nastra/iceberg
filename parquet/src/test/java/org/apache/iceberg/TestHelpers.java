@@ -27,24 +27,23 @@ import org.assertj.core.api.Assertions;
 
 public class TestHelpers {
 
-  private TestHelpers() {
-  }
+  private TestHelpers() {}
 
   /**
    * A convenience method to avoid a large number of @Test(expected=...) tests
+   *
    * @param message A String message to describe this assertion
    * @param expected An Exception class that the Runnable should throw
-   * @param containedInMessage A String that should be contained by the thrown
-   *                           exception's message
+   * @param containedInMessage A String that should be contained by the thrown exception's message
    * @param callable A Callable that is expected to throw the exception
    */
-  public static void assertThrows(String message,
-                                  Class<? extends Exception> expected,
-                                  String containedInMessage,
-                                  Callable callable) {
-    AbstractThrowableAssert<?, ? extends Throwable> check = Assertions.assertThatThrownBy(callable::call)
-        .as(message)
-        .isInstanceOf(expected);
+  public static void assertThrows(
+      String message,
+      Class<? extends Exception> expected,
+      String containedInMessage,
+      Callable callable) {
+    AbstractThrowableAssert<?, ? extends Throwable> check =
+        Assertions.assertThatThrownBy(callable::call).as(message).isInstanceOf(expected);
     if (null != containedInMessage) {
       check.hasMessageContaining(containedInMessage);
     }
@@ -52,19 +51,19 @@ public class TestHelpers {
 
   /**
    * A convenience method to avoid a large number of @Test(expected=...) tests
+   *
    * @param message A String message to describe this assertion
    * @param expected An Exception class that the Runnable should throw
-   * @param containedInMessage A String that should be contained by the thrown
-   *                           exception's message
+   * @param containedInMessage A String that should be contained by the thrown exception's message
    * @param runnable A Runnable that is expected to throw the runtime exception
    */
-  public static void assertThrows(String message,
-                                  Class<? extends Exception> expected,
-                                  String containedInMessage,
-                                  Runnable runnable) {
-    AbstractThrowableAssert<?, ? extends Throwable> check = Assertions.assertThatThrownBy(runnable::run)
-        .as(message)
-        .isInstanceOf(expected);
+  public static void assertThrows(
+      String message,
+      Class<? extends Exception> expected,
+      String containedInMessage,
+      Runnable runnable) {
+    AbstractThrowableAssert<?, ? extends Throwable> check =
+        Assertions.assertThatThrownBy(runnable::run).as(message).isInstanceOf(expected);
     if (null != containedInMessage) {
       check.hasMessageContaining(containedInMessage);
     }
@@ -72,6 +71,7 @@ public class TestHelpers {
 
   /**
    * A convenience method to assert if an Avro field is empty
+   *
    * @param record The record to read from
    * @param field The name of the field
    */

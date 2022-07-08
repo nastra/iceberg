@@ -32,7 +32,7 @@ public interface TaskWriterFactory<T> extends Serializable {
   /**
    * Initialize the factory with a given taskId and attemptId.
    *
-   * @param taskId    the identifier of task.
+   * @param taskId the identifier of task.
    * @param attemptId the attempt id of this task.
    */
   void initialize(int taskId, int attemptId);

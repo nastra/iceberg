@@ -25,9 +25,7 @@ import org.apache.iceberg.types.Comparators;
 import org.apache.iceberg.types.JavaHash;
 import org.apache.iceberg.types.Types;
 
-/**
- * Wrapper to adapt StructLike for use in maps and sets by implementing equals and hashCode.
- */
+/** Wrapper to adapt StructLike for use in maps and sets by implementing equals and hashCode. */
 public class StructLikeWrapper {
 
   public static StructLikeWrapper forType(Types.StructType struct) {

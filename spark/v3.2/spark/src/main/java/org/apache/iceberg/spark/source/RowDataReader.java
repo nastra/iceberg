@@ -81,7 +81,8 @@ class RowDataReader extends BaseDataReader<InternalRow> {
     return tableSchema;
   }
 
-  protected CloseableIterable<InternalRow> open(FileScanTask task, Schema readSchema, Map<Integer, ?> idToConstant) {
+  protected CloseableIterable<InternalRow> open(
+      FileScanTask task, Schema readSchema, Map<Integer, ?> idToConstant) {
     CloseableIterable<InternalRow> iter;
     if (task.isDataTask()) {
       iter = newDataIterable(task.asDataTask(), readSchema);
@@ -112,15 +113,14 @@ class RowDataReader extends BaseDataReader<InternalRow> {
   }
 
   private CloseableIterable<InternalRow> newAvroIterable(
-      InputFile location,
-      FileScanTask task,
-      Schema projection,
-      Map<Integer, ?> idToConstant) {
-    Avro.ReadBuilder builder = Avro.read(location)
-        .reuseContainers()
-        .project(projection)
-        .split(task.start(), task.length())
-        .createReaderFunc(readSchema -> new SparkAvroReader(projection, readSchema, idToConstant));
+      InputFile location, FileScanTask task, Schema projection, Map<Integer, ?> idToConstant) {
+    Avro.ReadBuilder builder =
+        Avro.read(location)
+            .reuseContainers()
+            .project(projection)
+            .split(task.start(), task.length())
+            .createReaderFunc(
+                readSchema -> new SparkAvroReader(projection, readSchema, idToConstant));
 
     if (nameMapping != null) {
       builder.withNameMapping(NameMappingParser.fromJson(nameMapping));
@@ -130,17 +130,16 @@ class RowDataReader extends BaseDataReader<InternalRow> {
   }
 
   private CloseableIterable<InternalRow> newParquetIterable(
-      InputFile location,
-      FileScanTask task,
-      Schema readSchema,
-      Map<Integer, ?> idToConstant) {
-    Parquet.ReadBuilder builder = Parquet.read(location)
-        .reuseContainers()
-        .split(task.start(), task.length())
-        .project(readSchema)
-        .createReaderFunc(fileSchema -> SparkParquetReaders.buildReader(readSchema, fileSchema, idToConstant))
-        .filter(task.residual())
-        .caseSensitive(caseSensitive);
+      InputFile location, FileScanTask task, Schema readSchema, Map<Integer, ?> idToConstant) {
+    Parquet.ReadBuilder builder =
+        Parquet.read(location)
+            .reuseContainers()
+            .split(task.start(), task.length())
+            .project(readSchema)
+            .createReaderFunc(
+                fileSchema -> SparkParquetReaders.buildReader(readSchema, fileSchema, idToConstant))
+            .filter(task.residual())
+            .caseSensitive(caseSensitive);
 
     if (nameMapping != null) {
       builder.withNameMapping(NameMappingParser.fromJson(nameMapping));
@@ -150,19 +149,19 @@ class RowDataReader extends BaseDataReader<InternalRow> {
   }
 
   private CloseableIterable<InternalRow> newOrcIterable(
-      InputFile location,
-      FileScanTask task,
-      Schema readSchema,
-      Map<Integer, ?> idToConstant) {
-    Schema readSchemaWithoutConstantAndMetadataFields = TypeUtil.selectNot(readSchema,
-        Sets.union(idToConstant.keySet(), MetadataColumns.metadataFieldIds()));
+      InputFile location, FileScanTask task, Schema readSchema, Map<Integer, ?> idToConstant) {
+    Schema readSchemaWithoutConstantAndMetadataFields =
+        TypeUtil.selectNot(
+            readSchema, Sets.union(idToConstant.keySet(), MetadataColumns.metadataFieldIds()));
 
-    ORC.ReadBuilder builder = ORC.read(location)
-        .project(readSchemaWithoutConstantAndMetadataFields)
-        .split(task.start(), task.length())
-        .createReaderFunc(readOrcSchema -> new SparkOrcReader(readSchema, readOrcSchema, idToConstant))
-        .filter(task.residual())
-        .caseSensitive(caseSensitive);
+    ORC.ReadBuilder builder =
+        ORC.read(location)
+            .project(readSchemaWithoutConstantAndMetadataFields)
+            .split(task.start(), task.length())
+            .createReaderFunc(
+                readOrcSchema -> new SparkOrcReader(readSchema, readOrcSchema, idToConstant))
+            .filter(task.residual())
+            .caseSensitive(caseSensitive);
 
     if (nameMapping != null) {
       builder.withNameMapping(NameMappingParser.fromJson(nameMapping));
@@ -173,8 +172,8 @@ class RowDataReader extends BaseDataReader<InternalRow> {
 
   private CloseableIterable<InternalRow> newDataIterable(DataTask task, Schema readSchema) {
     StructInternalRow row = new StructInternalRow(readSchema.asStruct());
-    CloseableIterable<InternalRow> asSparkRows = CloseableIterable.transform(
-        task.asDataTask().rows(), row::setStruct);
+    CloseableIterable<InternalRow> asSparkRows =
+        CloseableIterable.transform(task.asDataTask().rows(), row::setStruct);
     return asSparkRows;
   }
 

@@ -35,8 +35,7 @@ import org.apache.iceberg.types.Types.StructType;
 import org.apache.iceberg.util.DateTimeUtil;
 
 class GenericReaders {
-  private GenericReaders() {
-  }
+  private GenericReaders() {}
 
   static ValueReader<LocalDate> dates() {
     return DateReader.INSTANCE;
@@ -54,15 +53,15 @@ class GenericReaders {
     return TimestamptzReader.INSTANCE;
   }
 
-  static ValueReader<Record> struct(StructType struct, List<ValueReader<?>> readers, Map<Integer, ?> idToConstant) {
+  static ValueReader<Record> struct(
+      StructType struct, List<ValueReader<?>> readers, Map<Integer, ?> idToConstant) {
     return new GenericRecordReader(readers, struct, idToConstant);
   }
 
   private static class DateReader implements ValueReader<LocalDate> {
     private static final DateReader INSTANCE = new DateReader();
 
-    private DateReader() {
-    }
+    private DateReader() {}
 
     @Override
     public LocalDate read(Decoder decoder, Object reuse) throws IOException {
@@ -73,8 +72,7 @@ class GenericReaders {
   private static class TimeReader implements ValueReader<LocalTime> {
     private static final TimeReader INSTANCE = new TimeReader();
 
-    private TimeReader() {
-    }
+    private TimeReader() {}
 
     @Override
     public LocalTime read(Decoder decoder, Object reuse) throws IOException {
@@ -85,8 +83,7 @@ class GenericReaders {
   private static class TimestampReader implements ValueReader<LocalDateTime> {
     private static final TimestampReader INSTANCE = new TimestampReader();
 
-    private TimestampReader() {
-    }
+    private TimestampReader() {}
 
     @Override
     public LocalDateTime read(Decoder decoder, Object reuse) throws IOException {
@@ -97,8 +94,7 @@ class GenericReaders {
   private static class TimestamptzReader implements ValueReader<OffsetDateTime> {
     private static final TimestamptzReader INSTANCE = new TimestamptzReader();
 
-    private TimestamptzReader() {
-    }
+    private TimestamptzReader() {}
 
     @Override
     public OffsetDateTime read(Decoder decoder, Object reuse) throws IOException {
@@ -109,7 +105,8 @@ class GenericReaders {
   private static class GenericRecordReader extends ValueReaders.StructReader<Record> {
     private final StructType structType;
 
-    private GenericRecordReader(List<ValueReader<?>> readers, StructType struct, Map<Integer, ?> idToConstant) {
+    private GenericRecordReader(
+        List<ValueReader<?>> readers, StructType struct, Map<Integer, ?> idToConstant) {
       super(readers, struct, idToConstant);
       this.structType = struct;
     }

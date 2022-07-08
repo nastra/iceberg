@@ -40,7 +40,8 @@ public class ObjectMetadata {
 
   private String metaFile;
 
-  // The following getters and setters are required for Jackson ObjectMapper serialization and deserialization.
+  // The following getters and setters are required for Jackson ObjectMapper serialization and
+  // deserialization.
 
   public long getContentLength() {
     return contentLength;

@@ -27,6 +27,4 @@ import org.apache.spark.annotation.Experimental;
  * @since 3.2.0
  */
 @Experimental
-public interface Distribution {
-}
-
+public interface Distribution {}

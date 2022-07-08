@@ -69,7 +69,7 @@ public class TestSparkDateTimes {
     ZoneId zoneId = DateTimeUtils.getZoneId("UTC");
     TimestampFormatter formatter = TimestampFormatter.getFractionFormatter(zoneId);
     String sparkTimestamp = DateTimeUtils.timestampToString(formatter, ts.value());
-    Assert.assertEquals("Should be the same timestamp (" + ts.value() + ")",
-        sparkRepr, sparkTimestamp);
+    Assert.assertEquals(
+        "Should be the same timestamp (" + ts.value() + ")", sparkRepr, sparkTimestamp);
   }
 }

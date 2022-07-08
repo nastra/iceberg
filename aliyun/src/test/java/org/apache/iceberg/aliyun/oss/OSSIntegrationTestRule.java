@@ -80,7 +80,8 @@ public class OSSIntegrationTestRule implements AliyunOSSTestRule {
   public void setUpBucket(String bucket) {
     Preconditions.checkArgument(
         ossClient().doesBucketExist(bucket),
-        "Bucket %s does not exist, please create it firstly.", bucket);
+        "Bucket %s does not exist, please create it firstly.",
+        bucket);
   }
 
   @Override
@@ -89,10 +90,11 @@ public class OSSIntegrationTestRule implements AliyunOSSTestRule {
     String nextContinuationToken = null;
     ListObjectsV2Result objectListingResult;
     do {
-      ListObjectsV2Request listObjectsV2Request = new ListObjectsV2Request(bucket)
-          .withMaxKeys(maxKeys)
-          .withPrefix(ossKey)
-          .withContinuationToken(nextContinuationToken);
+      ListObjectsV2Request listObjectsV2Request =
+          new ListObjectsV2Request(bucket)
+              .withMaxKeys(maxKeys)
+              .withPrefix(ossKey)
+              .withContinuationToken(nextContinuationToken);
       objectListingResult = ossClient().listObjectsV2(listObjectsV2Request);
 
       for (OSSObjectSummary s : objectListingResult.getObjectSummaries()) {

@@ -27,22 +27,29 @@ public class TestArrayBatchRecords {
 
   @Test
   public void testFullRange() {
-    String[] elements = new String[]{"0", "1", "2", "3"};
+    String[] elements = new String[] {"0", "1", "2", "3"};
     testArray(elements, elements.length, 2, 119);
   }
 
   @Test
   public void testSubRange() {
-    String[] elements = new String[]{"0", "1", "2", "3"};
+    String[] elements = new String[] {"0", "1", "2", "3"};
     testArray(elements, 2, 0, 0);
   }
 
-  private void testArray(String[] elements, int numberOfRecords, int fileOffset, long startingRecordOffset) {
+  private void testArray(
+      String[] elements, int numberOfRecords, int fileOffset, long startingRecordOffset) {
     String splitId = "iceberg_split_1";
     AtomicBoolean recycled = new AtomicBoolean();
 
-    ArrayBatchRecords<String> recordsWithSplitIds = ArrayBatchRecords.forRecords(splitId,
-        ignored -> recycled.set(true), elements, numberOfRecords, fileOffset, startingRecordOffset);
+    ArrayBatchRecords<String> recordsWithSplitIds =
+        ArrayBatchRecords.forRecords(
+            splitId,
+            ignored -> recycled.set(true),
+            elements,
+            numberOfRecords,
+            fileOffset,
+            startingRecordOffset);
 
     Assert.assertEquals(splitId, recordsWithSplitIds.nextSplit());
 
@@ -59,5 +66,4 @@ public class TestArrayBatchRecords {
     recordsWithSplitIds.recycle();
     Assert.assertTrue(recycled.get());
   }
-
 }

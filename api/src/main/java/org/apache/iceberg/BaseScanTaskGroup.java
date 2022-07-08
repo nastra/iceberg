@@ -41,7 +41,8 @@ public class BaseScanTaskGroup<T extends ScanTask> implements ScanTaskGroup<T> {
     if (taskList == null) {
       synchronized (this) {
         if (taskList == null) {
-          ImmutableList.Builder<T> listBuilder = ImmutableList.builderWithExpectedSize(tasks.length);
+          ImmutableList.Builder<T> listBuilder =
+              ImmutableList.builderWithExpectedSize(tasks.length);
           for (Object task : tasks) {
             listBuilder.add((T) task);
           }
@@ -55,8 +56,6 @@ public class BaseScanTaskGroup<T extends ScanTask> implements ScanTaskGroup<T> {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("tasks", Joiner.on(", ").join(tasks))
-        .toString();
+    return MoreObjects.toStringHelper(this).add("tasks", Joiner.on(", ").join(tasks)).toString();
   }
 }

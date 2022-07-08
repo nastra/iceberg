@@ -82,8 +82,9 @@ public class TestIcebergSourceBounded extends TestFlinkScan {
     return run(null, null, null);
   }
 
-  private List<Row> run(Schema projectedSchema, List<Expression> filters,
-                        Map<String, String> options) throws Exception {
+  private List<Row> run(
+      Schema projectedSchema, List<Expression> filters, Map<String, String> options)
+      throws Exception {
 
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setParallelism(1);
@@ -95,11 +96,19 @@ public class TestIcebergSourceBounded extends TestFlinkScan {
       table = tableLoader.loadTable();
     }
 
-    IcebergSource.Builder<RowData> sourceBuilder = IcebergSource.<RowData>builder()
-        .tableLoader(tableLoader())
-        .assignerFactory(new SimpleSplitAssignerFactory())
-        .readerFunction(new RowDataReaderFunction(config, table.schema(), projectedSchema,
-            null, false, table.io(), table.encryption()));
+    IcebergSource.Builder<RowData> sourceBuilder =
+        IcebergSource.<RowData>builder()
+            .tableLoader(tableLoader())
+            .assignerFactory(new SimpleSplitAssignerFactory())
+            .readerFunction(
+                new RowDataReaderFunction(
+                    config,
+                    table.schema(),
+                    projectedSchema,
+                    null,
+                    false,
+                    table.io(),
+                    table.encryption()));
     if (projectedSchema != null) {
       sourceBuilder.project(projectedSchema);
     }
@@ -110,17 +119,19 @@ public class TestIcebergSourceBounded extends TestFlinkScan {
       sourceBuilder.properties(options);
     }
 
-    DataStream<Row> stream = env.fromSource(
-        sourceBuilder.build(),
-        WatermarkStrategy.noWatermarks(),
-        "testBasicRead",
-        TypeInformation.of(RowData.class))
-        .map(new RowDataToRowMapper(FlinkSchemaUtil.convert(
-            projectedSchema == null ? table.schema() : projectedSchema)));
+    DataStream<Row> stream =
+        env.fromSource(
+                sourceBuilder.build(),
+                WatermarkStrategy.noWatermarks(),
+                "testBasicRead",
+                TypeInformation.of(RowData.class))
+            .map(
+                new RowDataToRowMapper(
+                    FlinkSchemaUtil.convert(
+                        projectedSchema == null ? table.schema() : projectedSchema)));
 
     try (CloseableIterator<Row> iter = stream.executeAndCollect()) {
       return Lists.newArrayList(iter);
     }
   }
-
 }

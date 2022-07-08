@@ -39,8 +39,7 @@ class ConstantColumnVector extends ColumnVector {
   }
 
   @Override
-  public void close() {
-  }
+  public void close() {}
 
   @Override
   public boolean hasNull() {

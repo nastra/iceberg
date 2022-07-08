@@ -19,7 +19,6 @@
 
 package org.apache.iceberg.expressions;
 
-
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 
 public abstract class Predicate<T, C extends Term> implements Expression {

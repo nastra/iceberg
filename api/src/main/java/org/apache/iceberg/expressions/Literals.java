@@ -44,8 +44,7 @@ import org.apache.iceberg.util.ByteBuffers;
 import org.apache.iceberg.util.NaNUtil;
 
 class Literals {
-  private Literals() {
-  }
+  private Literals() {}
 
   private static final OffsetDateTime EPOCH = Instant.ofEpochSecond(0).atOffset(ZoneOffset.UTC);
   private static final LocalDate EPOCH_DAY = EPOCH.toLocalDate();
@@ -84,8 +83,9 @@ class Literals {
       return (Literal<T>) new Literals.DecimalLiteral((BigDecimal) value);
     }
 
-    throw new IllegalArgumentException(String.format(
-        "Cannot create expression literal from %s: %s", value.getClass().getName(), value));
+    throw new IllegalArgumentException(
+        String.format(
+            "Cannot create expression literal from %s: %s", value.getClass().getName(), value));
   }
 
   @SuppressWarnings("unchecked")
@@ -149,7 +149,6 @@ class Literals {
     public int hashCode() {
       return Objects.hashCode(value);
     }
-
   }
 
   private abstract static class ComparableLiteral<C extends Comparable<C>> extends BaseLiteral<C> {
@@ -171,8 +170,7 @@ class Literals {
   static class AboveMax<T> implements Literal<T> {
     private static final AboveMax INSTANCE = new AboveMax();
 
-    private AboveMax() {
-    }
+    private AboveMax() {}
 
     @Override
     public T value() {
@@ -198,8 +196,7 @@ class Literals {
   static class BelowMin<T> implements Literal<T> {
     private static final BelowMin INSTANCE = new BelowMin();
 
-    private BelowMin() {
-    }
+    private BelowMin() {}
 
     @Override
     public T value() {
@@ -264,8 +261,8 @@ class Literals {
         case DECIMAL:
           int scale = ((Types.DecimalType) type).scale();
           // rounding mode isn't necessary, but pass one to avoid warnings
-          return (Literal<T>) new DecimalLiteral(
-              BigDecimal.valueOf(value()).setScale(scale, RoundingMode.HALF_UP));
+          return (Literal<T>)
+              new DecimalLiteral(BigDecimal.valueOf(value()).setScale(scale, RoundingMode.HALF_UP));
         default:
           return null;
       }
@@ -313,8 +310,8 @@ class Literals {
         case DECIMAL:
           int scale = ((Types.DecimalType) type).scale();
           // rounding mode isn't necessary, but pass one to avoid warnings
-          return (Literal<T>) new DecimalLiteral(
-              BigDecimal.valueOf(value()).setScale(scale, RoundingMode.HALF_UP));
+          return (Literal<T>)
+              new DecimalLiteral(BigDecimal.valueOf(value()).setScale(scale, RoundingMode.HALF_UP));
         default:
           return null;
       }
@@ -341,8 +338,8 @@ class Literals {
           return (Literal<T>) new DoubleLiteral(value().doubleValue());
         case DECIMAL:
           int scale = ((Types.DecimalType) type).scale();
-          return (Literal<T>) new DecimalLiteral(
-              BigDecimal.valueOf(value()).setScale(scale, RoundingMode.HALF_UP));
+          return (Literal<T>)
+              new DecimalLiteral(BigDecimal.valueOf(value()).setScale(scale, RoundingMode.HALF_UP));
         default:
           return null;
       }
@@ -376,8 +373,8 @@ class Literals {
           return (Literal<T>) this;
         case DECIMAL:
           int scale = ((Types.DecimalType) type).scale();
-          return (Literal<T>) new DecimalLiteral(
-              BigDecimal.valueOf(value()).setScale(scale, RoundingMode.HALF_UP));
+          return (Literal<T>)
+              new DecimalLiteral(BigDecimal.valueOf(value()).setScale(scale, RoundingMode.HALF_UP));
         default:
           return null;
       }
@@ -441,8 +438,11 @@ class Literals {
         case TIMESTAMP:
           return (Literal<T>) this;
         case DATE:
-          return (Literal<T>) new DateLiteral((int) ChronoUnit.DAYS.between(
-              EPOCH_DAY, EPOCH.plus(value(), ChronoUnit.MICROS).toLocalDate()));
+          return (Literal<T>)
+              new DateLiteral(
+                  (int)
+                      ChronoUnit.DAYS.between(
+                          EPOCH_DAY, EPOCH.plus(value(), ChronoUnit.MICROS).toLocalDate()));
         default:
       }
       return null;
@@ -490,24 +490,29 @@ class Literals {
     public <T> Literal<T> to(Type type) {
       switch (type.typeId()) {
         case DATE:
-          int date = (int) ChronoUnit.DAYS.between(EPOCH_DAY,
-              LocalDate.parse(value(), DateTimeFormatter.ISO_LOCAL_DATE));
+          int date =
+              (int)
+                  ChronoUnit.DAYS.between(
+                      EPOCH_DAY, LocalDate.parse(value(), DateTimeFormatter.ISO_LOCAL_DATE));
           return (Literal<T>) new DateLiteral(date);
 
         case TIME:
-          long timeMicros = LocalTime.parse(value(), DateTimeFormatter.ISO_LOCAL_TIME)
-              .toNanoOfDay() / 1000;
+          long timeMicros =
+              LocalTime.parse(value(), DateTimeFormatter.ISO_LOCAL_TIME).toNanoOfDay() / 1000;
           return (Literal<T>) new TimeLiteral(timeMicros);
 
         case TIMESTAMP:
           if (((Types.TimestampType) type).shouldAdjustToUTC()) {
-            long timestampMicros = ChronoUnit.MICROS.between(EPOCH,
-                OffsetDateTime.parse(value(), DateTimeFormatter.ISO_DATE_TIME));
+            long timestampMicros =
+                ChronoUnit.MICROS.between(
+                    EPOCH, OffsetDateTime.parse(value(), DateTimeFormatter.ISO_DATE_TIME));
             return (Literal<T>) new TimestampLiteral(timestampMicros);
           } else {
-            long timestampMicros = ChronoUnit.MICROS.between(EPOCH,
-                LocalDateTime.parse(value(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                    .atOffset(ZoneOffset.UTC));
+            long timestampMicros =
+                ChronoUnit.MICROS.between(
+                    EPOCH,
+                    LocalDateTime.parse(value(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                        .atOffset(ZoneOffset.UTC));
             return (Literal<T>) new TimestampLiteral(timestampMicros);
           }
 

@@ -25,9 +25,7 @@ import java.util.Map;
 import org.apache.iceberg.encryption.Ciphers;
 import org.apache.iceberg.encryption.KmsClient;
 
-/**
- * For testing and demonstrations; not for use in production.
- */
+/** For testing and demonstrations; not for use in production. */
 public abstract class MemoryMockKMS implements KmsClient {
 
   protected Map<String, byte[]> masterKeys;
@@ -36,7 +34,8 @@ public abstract class MemoryMockKMS implements KmsClient {
   public String wrapKey(ByteBuffer key, String wrappingKeyId) {
     byte[] wrappingKey = masterKeys.get(wrappingKeyId);
     if (null == wrappingKey) {
-      throw new RuntimeException("Cannot wrap, because wrapping key " + wrappingKeyId + " is not found");
+      throw new RuntimeException(
+          "Cannot wrap, because wrapping key " + wrappingKeyId + " is not found");
     }
     Ciphers.AesGcmEncryptor keyEncryptor = new Ciphers.AesGcmEncryptor(wrappingKey);
     byte[] encryptedKey = keyEncryptor.encrypt(key.array(), null);
@@ -48,7 +47,8 @@ public abstract class MemoryMockKMS implements KmsClient {
     byte[] encryptedKey = Base64.getDecoder().decode(wrappedKey);
     byte[] wrappingKey = masterKeys.get(wrappingKeyId);
     if (null == wrappingKey) {
-      throw new RuntimeException("Cannot unwrap, because wrapping key " + wrappingKeyId + " is not found");
+      throw new RuntimeException(
+          "Cannot unwrap, because wrapping key " + wrappingKeyId + " is not found");
     }
     Ciphers.AesGcmDecryptor keyDecryptor = new Ciphers.AesGcmDecryptor(wrappingKey);
     byte[] key = keyDecryptor.decrypt(encryptedKey, null);

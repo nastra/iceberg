@@ -41,12 +41,17 @@ public class HadoopTableResource extends ExternalResource {
   private TableLoader tableLoader;
   private Table table;
 
-  public HadoopTableResource(TemporaryFolder temporaryFolder, String database, String tableName, Schema schema) {
+  public HadoopTableResource(
+      TemporaryFolder temporaryFolder, String database, String tableName, Schema schema) {
     this(temporaryFolder, database, tableName, schema, null);
   }
 
-  public HadoopTableResource(TemporaryFolder temporaryFolder, String database, String tableName,
-                             Schema schema, PartitionSpec partitionSpec) {
+  public HadoopTableResource(
+      TemporaryFolder temporaryFolder,
+      String database,
+      String tableName,
+      Schema schema,
+      PartitionSpec partitionSpec) {
     this.temporaryFolder = temporaryFolder;
     this.database = database;
     this.tableName = tableName;
@@ -67,7 +72,8 @@ public class HadoopTableResource extends ExternalResource {
     if (partitionSpec == null) {
       this.table = catalog.createTable(TableIdentifier.of(database, tableName), schema);
     } else {
-      this.table = catalog.createTable(TableIdentifier.of(database, tableName), schema, partitionSpec);
+      this.table =
+          catalog.createTable(TableIdentifier.of(database, tableName), schema, partitionSpec);
     }
     tableLoader.open();
   }

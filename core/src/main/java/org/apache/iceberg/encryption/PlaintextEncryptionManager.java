@@ -31,7 +31,8 @@ public class PlaintextEncryptionManager implements EncryptionManager {
   @Override
   public InputFile decrypt(EncryptedInputFile encrypted) {
     if (encrypted.keyMetadata().buffer() != null) {
-      LOG.warn("File encryption key metadata is present, but currently using PlaintextEncryptionManager.");
+      LOG.warn(
+          "File encryption key metadata is present, but currently using PlaintextEncryptionManager.");
     }
     return encrypted.encryptedInputFile();
   }

@@ -21,13 +21,9 @@ package org.apache.spark.sql.connector.iceberg.write;
 
 import org.apache.spark.sql.connector.write.WriteBuilder;
 
-/**
- * An interface for building delta writes.
- */
+/** An interface for building delta writes. */
 public interface DeltaWriteBuilder extends WriteBuilder {
-  /**
-   * Returns a logical delta write.
-   */
+  /** Returns a logical delta write. */
   @Override
   default DeltaWrite build() {
     throw new UnsupportedOperationException("Not implemented: build");

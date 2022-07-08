@@ -22,8 +22,8 @@ package org.apache.iceberg.actions;
 import org.apache.iceberg.Snapshot;
 
 /**
- * An action that produces snapshots. This interface contains common methods for all
- * actions that create a new {@link Snapshot}.
+ * An action that produces snapshots. This interface contains common methods for all actions that
+ * create a new {@link Snapshot}.
  *
  * @param <ThisT> the child Java API class, returned by method chaining
  * @param <R> the Java type of the result produced by this action

@@ -31,27 +31,22 @@ class ManualContinuousSplitPlanner implements ContinuousSplitPlanner {
 
   @Override
   public ContinuousEnumerationResult planSplits(IcebergEnumeratorPosition lastPosition) {
-    ContinuousEnumerationResult result = new ContinuousEnumerationResult(
-        Lists.newArrayList(splits), lastPosition, latestPosition);
+    ContinuousEnumerationResult result =
+        new ContinuousEnumerationResult(Lists.newArrayList(splits), lastPosition, latestPosition);
     return result;
   }
 
-  /**
-   * Add new splits to the collection
-   */
+  /** Add new splits to the collection */
   public void addSplits(List<IcebergSourceSplit> newSplits, IcebergEnumeratorPosition newPosition) {
     splits.addAll(newSplits);
     this.latestPosition = newPosition;
   }
 
-  /**
-   * Clear the splits collection
-   */
+  /** Clear the splits collection */
   public void clearSplits() {
     splits.clear();
   }
 
   @Override
-  public void close() throws IOException {
-  }
+  public void close() throws IOException {}
 }

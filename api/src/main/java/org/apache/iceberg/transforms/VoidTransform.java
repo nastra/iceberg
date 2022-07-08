@@ -32,8 +32,7 @@ class VoidTransform<S> implements Transform<S, Void> {
     return (VoidTransform<T>) INSTANCE;
   }
 
-  private VoidTransform() {
-  }
+  private VoidTransform() {}
 
   @Override
   public Void apply(Object value) {

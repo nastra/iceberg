@@ -50,12 +50,18 @@ public class UnboundTransform<S, T> implements UnboundTerm<T>, Term {
     Transform<S, T> typeTransform;
     try {
       // TODO: Avoid using toString/fromString
-      typeTransform = (Transform<S, T>) Transforms.fromString(boundRef.type(), transform.toString());
-      ValidationException.check(typeTransform.canTransform(boundRef.type()),
-          "Cannot bind: %s cannot transform %s values from '%s'", transform, boundRef.type(), ref.name());
+      typeTransform =
+          (Transform<S, T>) Transforms.fromString(boundRef.type(), transform.toString());
+      ValidationException.check(
+          typeTransform.canTransform(boundRef.type()),
+          "Cannot bind: %s cannot transform %s values from '%s'",
+          transform,
+          boundRef.type(),
+          ref.name());
     } catch (IllegalArgumentException e) {
       throw new ValidationException(
-          "Cannot bind: %s cannot transform %s values from '%s'", transform, boundRef.type(), ref.name());
+          "Cannot bind: %s cannot transform %s values from '%s'",
+          transform, boundRef.type(), ref.name());
     }
 
     return new BoundTransform<>(boundRef, typeTransform);

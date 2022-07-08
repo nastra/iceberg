@@ -52,8 +52,7 @@ import org.apache.iceberg.util.JsonUtil;
 
 public class RESTSerializers {
 
-  private RESTSerializers() {
-  }
+  private RESTSerializers() {}
 
   public static void registerAll(ObjectMapper mapper) {
     SimpleModule module = new SimpleModule();
@@ -92,7 +91,8 @@ public class RESTSerializers {
 
   public static class UpdateRequirementSerializer extends JsonSerializer<UpdateRequirement> {
     @Override
-    public void serialize(UpdateRequirement value, JsonGenerator gen, SerializerProvider serializers)
+    public void serialize(
+        UpdateRequirement value, JsonGenerator gen, SerializerProvider serializers)
         throws IOException {
       UpdateRequirementParser.toJson(value, gen);
     }
@@ -100,7 +100,8 @@ public class RESTSerializers {
 
   public static class TableMetadataDeserializer extends JsonDeserializer<TableMetadata> {
     @Override
-    public TableMetadata deserialize(JsonParser p, DeserializationContext context) throws IOException {
+    public TableMetadata deserialize(JsonParser p, DeserializationContext context)
+        throws IOException {
       JsonNode node = p.getCodec().readTree(p);
       return TableMetadataParser.fromJson(node);
     }
@@ -133,7 +134,8 @@ public class RESTSerializers {
 
   public static class ErrorResponseDeserializer extends JsonDeserializer<ErrorResponse> {
     @Override
-    public ErrorResponse deserialize(JsonParser p, DeserializationContext context) throws IOException {
+    public ErrorResponse deserialize(JsonParser p, DeserializationContext context)
+        throws IOException {
       JsonNode node = p.getCodec().readTree(p);
       return ErrorResponseParser.fromJson(node);
     }
@@ -141,7 +143,8 @@ public class RESTSerializers {
 
   public static class ErrorResponseSerializer extends JsonSerializer<ErrorResponse> {
     @Override
-    public void serialize(ErrorResponse errorResponse, JsonGenerator gen, SerializerProvider serializers)
+    public void serialize(
+        ErrorResponse errorResponse, JsonGenerator gen, SerializerProvider serializers)
         throws IOException {
       ErrorResponseParser.toJson(errorResponse, gen);
     }
@@ -175,7 +178,8 @@ public class RESTSerializers {
 
   public static class TableIdentifierSerializer extends JsonSerializer<TableIdentifier> {
     @Override
-    public void serialize(TableIdentifier identifier, JsonGenerator gen, SerializerProvider serializers)
+    public void serialize(
+        TableIdentifier identifier, JsonGenerator gen, SerializerProvider serializers)
         throws IOException {
       TableIdentifierParser.toJson(identifier, gen);
     }
@@ -206,7 +210,8 @@ public class RESTSerializers {
     }
   }
 
-  public static class UnboundPartitionSpecDeserializer extends JsonDeserializer<UnboundPartitionSpec> {
+  public static class UnboundPartitionSpecDeserializer
+      extends JsonDeserializer<UnboundPartitionSpec> {
     @Override
     public UnboundPartitionSpec deserialize(JsonParser p, DeserializationContext context)
         throws IOException {
@@ -217,7 +222,8 @@ public class RESTSerializers {
 
   public static class UnboundSortOrderSerializer extends JsonSerializer<UnboundSortOrder> {
     @Override
-    public void serialize(UnboundSortOrder sortOrder, JsonGenerator gen, SerializerProvider serializers)
+    public void serialize(
+        UnboundSortOrder sortOrder, JsonGenerator gen, SerializerProvider serializers)
         throws IOException {
       SortOrderParser.toJson(sortOrder, gen);
     }
@@ -225,7 +231,8 @@ public class RESTSerializers {
 
   public static class UnboundSortOrderDeserializer extends JsonDeserializer<UnboundSortOrder> {
     @Override
-    public UnboundSortOrder deserialize(JsonParser p, DeserializationContext context) throws IOException {
+    public UnboundSortOrder deserialize(JsonParser p, DeserializationContext context)
+        throws IOException {
       JsonNode jsonNode = p.getCodec().readTree(p);
       return SortOrderParser.fromJson(jsonNode);
     }
@@ -233,7 +240,8 @@ public class RESTSerializers {
 
   public static class OAuthTokenResponseSerializer extends JsonSerializer<OAuthTokenResponse> {
     @Override
-    public void serialize(OAuthTokenResponse tokenResponse, JsonGenerator gen, SerializerProvider serializers)
+    public void serialize(
+        OAuthTokenResponse tokenResponse, JsonGenerator gen, SerializerProvider serializers)
         throws IOException {
       OAuth2Util.tokenResponseToJson(tokenResponse, gen);
     }
@@ -241,7 +249,8 @@ public class RESTSerializers {
 
   public static class OAuthTokenResponseDeserializer extends JsonDeserializer<OAuthTokenResponse> {
     @Override
-    public OAuthTokenResponse deserialize(JsonParser p, DeserializationContext context) throws IOException {
+    public OAuthTokenResponse deserialize(JsonParser p, DeserializationContext context)
+        throws IOException {
       JsonNode jsonNode = p.getCodec().readTree(p);
       return OAuth2Util.tokenResponseFromJson(jsonNode);
     }

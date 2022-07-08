@@ -46,7 +46,8 @@ public class IndexParents extends TypeUtil.SchemaVisitor<Map<Integer, Integer>> 
   }
 
   @Override
-  public Map<Integer, Integer> struct(Types.StructType struct, List<Map<Integer, Integer>> fieldResults) {
+  public Map<Integer, Integer> struct(
+      Types.StructType struct, List<Map<Integer, Integer>> fieldResults) {
     for (Types.NestedField field : struct.fields()) {
       Integer parentId = idStack.peek();
       if (parentId != null) {
@@ -69,7 +70,8 @@ public class IndexParents extends TypeUtil.SchemaVisitor<Map<Integer, Integer>> 
   }
 
   @Override
-  public Map<Integer, Integer> map(Types.MapType map, Map<Integer, Integer> key, Map<Integer, Integer> value) {
+  public Map<Integer, Integer> map(
+      Types.MapType map, Map<Integer, Integer> key, Map<Integer, Integer> value) {
     idToParent.put(map.keyId(), idStack.peek());
     idToParent.put(map.valueId(), idStack.peek());
     return idToParent;

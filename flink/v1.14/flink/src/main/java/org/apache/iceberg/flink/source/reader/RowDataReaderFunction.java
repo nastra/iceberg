@@ -39,10 +39,18 @@ public class RowDataReaderFunction extends DataIteratorReaderFunction<RowData> {
   private final EncryptionManager encryption;
 
   public RowDataReaderFunction(
-      Configuration config, Schema tableSchema, Schema projectedSchema,
-      String nameMapping, boolean caseSensitive, FileIO io, EncryptionManager encryption) {
-    super(new ArrayPoolDataIteratorBatcher<>(config, new RowDataRecordFactory(
-        FlinkSchemaUtil.convert(readSchema(tableSchema, projectedSchema)))));
+      Configuration config,
+      Schema tableSchema,
+      Schema projectedSchema,
+      String nameMapping,
+      boolean caseSensitive,
+      FileIO io,
+      EncryptionManager encryption) {
+    super(
+        new ArrayPoolDataIteratorBatcher<>(
+            config,
+            new RowDataRecordFactory(
+                FlinkSchemaUtil.convert(readSchema(tableSchema, projectedSchema)))));
     this.tableSchema = tableSchema;
     this.readSchema = readSchema(tableSchema, projectedSchema);
     this.nameMapping = nameMapping;
@@ -54,17 +62,14 @@ public class RowDataReaderFunction extends DataIteratorReaderFunction<RowData> {
   @Override
   public DataIterator<RowData> createDataIterator(IcebergSourceSplit split) {
     return new DataIterator<>(
-        new RowDataFileScanTaskReader(
-            tableSchema,
-            readSchema,
-            nameMapping,
-            caseSensitive),
-        split.task(), io, encryption);
+        new RowDataFileScanTaskReader(tableSchema, readSchema, nameMapping, caseSensitive),
+        split.task(),
+        io,
+        encryption);
   }
 
   private static Schema readSchema(Schema tableSchema, Schema projectedSchema) {
     Preconditions.checkNotNull(tableSchema, "Table schema can't be null");
     return projectedSchema == null ? tableSchema : projectedSchema;
   }
-
 }

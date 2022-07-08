@@ -49,8 +49,7 @@ public abstract class SparkTestBaseWithCatalog extends SparkTestBase {
     }
   }
 
-  @Rule
-  public TemporaryFolder temp = new TemporaryFolder();
+  @Rule public TemporaryFolder temp = new TemporaryFolder();
 
   protected final String catalogName;
   protected final Catalog validationCatalog;
@@ -66,21 +65,25 @@ public abstract class SparkTestBaseWithCatalog extends SparkTestBase {
     this(config.catalogName(), config.implementation(), config.properties());
   }
 
-  public SparkTestBaseWithCatalog(String catalogName, String implementation, Map<String, String> config) {
+  public SparkTestBaseWithCatalog(
+      String catalogName, String implementation, Map<String, String> config) {
     this.catalogName = catalogName;
-    this.validationCatalog = catalogName.equals("testhadoop") ?
-        new HadoopCatalog(spark.sessionState().newHadoopConf(), "file:" + warehouse) :
-        catalog;
+    this.validationCatalog =
+        catalogName.equals("testhadoop")
+            ? new HadoopCatalog(spark.sessionState().newHadoopConf(), "file:" + warehouse)
+            : catalog;
     this.validationNamespaceCatalog = (SupportsNamespaces) validationCatalog;
 
     spark.conf().set("spark.sql.catalog." + catalogName, implementation);
-    config.forEach((key, value) -> spark.conf().set("spark.sql.catalog." + catalogName + "." + key, value));
+    config.forEach(
+        (key, value) -> spark.conf().set("spark.sql.catalog." + catalogName + "." + key, value));
 
     if (config.get("type").equalsIgnoreCase("hadoop")) {
       spark.conf().set("spark.sql.catalog." + catalogName + ".warehouse", "file:" + warehouse);
     }
 
-    this.tableName = (catalogName.equals("spark_catalog") ? "" : catalogName + ".") + "default.table";
+    this.tableName =
+        (catalogName.equals("spark_catalog") ? "" : catalogName + ".") + "default.table";
 
     sql("CREATE NAMESPACE IF NOT EXISTS default");
   }

@@ -19,6 +19,9 @@
 
 package org.apache.iceberg.io;
 
+import static org.apache.iceberg.types.Types.NestedField.optional;
+import static org.apache.iceberg.types.Types.NestedField.required;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -51,9 +54,6 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static org.apache.iceberg.types.Types.NestedField.optional;
-import static org.apache.iceberg.types.Types.NestedField.required;
-
 @RunWith(Parameterized.class)
 public abstract class TestWriterMetrics<T> {
 
@@ -62,18 +62,15 @@ public abstract class TestWriterMetrics<T> {
   protected static final Types.NestedField ID_FIELD = required(1, "id", Types.IntegerType.get());
   protected static final Types.NestedField DATA_FIELD = optional(2, "data", Types.StringType.get());
 
-  protected static final Types.StructType NESTED_FIELDS = Types.StructType.of(
-      required(4, "booleanField", Types.BooleanType.get()),
-      optional(5, "longValue", Types.LongType.get()));
+  protected static final Types.StructType NESTED_FIELDS =
+      Types.StructType.of(
+          required(4, "booleanField", Types.BooleanType.get()),
+          optional(5, "longValue", Types.LongType.get()));
 
   protected static final Types.NestedField STRUCT_FIELD = optional(3, "structField", NESTED_FIELDS);
 
   // create a schema with all supported fields
-  protected static final Schema SCHEMA = new Schema(
-      ID_FIELD,
-      DATA_FIELD,
-      STRUCT_FIELD
-  );
+  protected static final Schema SCHEMA = new Schema(ID_FIELD, DATA_FIELD, STRUCT_FIELD);
 
   protected static final SortOrder sortOrder =
       SortOrder.builderFor(SCHEMA).asc("id").asc("structField.longValue").build();
@@ -81,8 +78,7 @@ public abstract class TestWriterMetrics<T> {
   protected static final Map<String, String> properties =
       ImmutableMap.of(TableProperties.DEFAULT_WRITE_METRICS_MODE, "none");
 
-  @Rule
-  public TemporaryFolder temp = new TemporaryFolder();
+  @Rule public TemporaryFolder temp = new TemporaryFolder();
 
   protected FileFormat fileFormat;
   protected TestTables.TestTable table = null;
@@ -90,10 +86,7 @@ public abstract class TestWriterMetrics<T> {
 
   @Parameterized.Parameters(name = "FileFormat = {0}")
   public static Object[][] parameters() {
-    return new Object[][] {
-        {FileFormat.ORC},
-        {FileFormat.PARQUET}
-    };
+    return new Object[][] {{FileFormat.ORC}, {FileFormat.PARQUET}};
   }
 
   public TestWriterMetrics(FileFormat fileFormat) {
@@ -111,13 +104,9 @@ public abstract class TestWriterMetrics<T> {
     File tableDir = temp.newFolder();
     tableDir.delete(); // created by table create
 
-    this.table = TestTables.create(
-        tableDir,
-        "test",
-        SCHEMA,
-        PartitionSpec.unpartitioned(),
-        sortOrder,
-        FORMAT_V2);
+    this.table =
+        TestTables.create(
+            tableDir, "test", SCHEMA, PartitionSpec.unpartitioned(), sortOrder, FORMAT_V2);
     table.updateProperties().set(TableProperties.DEFAULT_WRITE_METRICS_MODE, "none").commit();
 
     this.fileFactory = OutputFileFactory.builderFor(table, 1, 1).format(fileFormat).build();
@@ -131,36 +120,39 @@ public abstract class TestWriterMetrics<T> {
   @Test
   public void verifySortedColMetric() throws Exception {
     T row = toRow(3, "3", true, 3L);
-    DataWriter dataWriter = newWriterFactory(table).newDataWriter(
-        fileFactory.newOutputFile(),
-        PartitionSpec.unpartitioned(),
-        null
-    );
+    DataWriter dataWriter =
+        newWriterFactory(table)
+            .newDataWriter(fileFactory.newOutputFile(), PartitionSpec.unpartitioned(), null);
     dataWriter.write(row);
     dataWriter.close();
     DataFile dataFile = dataWriter.toDataFile();
 
     // Only two sorted fields (id, structField.longValue) will have metrics
     Map<Integer, ByteBuffer> lowerBounds = dataFile.lowerBounds();
-    Assert.assertEquals(3, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), lowerBounds.get(1)));
+    Assert.assertEquals(
+        3, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), lowerBounds.get(1)));
     Assert.assertFalse(lowerBounds.containsKey(2));
     Assert.assertFalse(lowerBounds.containsKey(3));
     Assert.assertFalse(lowerBounds.containsKey(4));
-    Assert.assertEquals(3L, (long) Conversions.fromByteBuffer(Types.LongType.get(), lowerBounds.get(5)));
+    Assert.assertEquals(
+        3L, (long) Conversions.fromByteBuffer(Types.LongType.get(), lowerBounds.get(5)));
 
     Map<Integer, ByteBuffer> upperBounds = dataFile.upperBounds();
-    Assert.assertEquals(3, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), upperBounds.get(1)));
+    Assert.assertEquals(
+        3, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), upperBounds.get(1)));
     Assert.assertFalse(upperBounds.containsKey(2));
     Assert.assertFalse(upperBounds.containsKey(3));
     Assert.assertFalse(upperBounds.containsKey(4));
-    Assert.assertEquals(3L, (long) Conversions.fromByteBuffer(Types.LongType.get(), upperBounds.get(5)));
+    Assert.assertEquals(
+        3L, (long) Conversions.fromByteBuffer(Types.LongType.get(), upperBounds.get(5)));
   }
 
   @Test
   public void testPositionDeleteMetrics() throws IOException {
     FileWriterFactory<T> writerFactory = newWriterFactory(table);
     EncryptedOutputFile outputFile = fileFactory.newOutputFile();
-    PositionDeleteWriter<T> deleteWriter = writerFactory.newPositionDeleteWriter(outputFile, table.spec(), null);
+    PositionDeleteWriter<T> deleteWriter =
+        writerFactory.newPositionDeleteWriter(outputFile, table.spec(), null);
 
     try {
       T deletedRow = toRow(3, "3", true, 3L);
@@ -176,33 +168,40 @@ public abstract class TestWriterMetrics<T> {
     int pathFieldId = MetadataColumns.DELETE_FILE_PATH.fieldId();
     int posFieldId = MetadataColumns.DELETE_FILE_POS.fieldId();
 
-    // should have metrics for _file and _pos as well as two sorted fields (id, structField.longValue)
+    // should have metrics for _file and _pos as well as two sorted fields (id,
+    // structField.longValue)
 
     Map<Integer, ByteBuffer> lowerBounds = deleteFile.lowerBounds();
 
     Assert.assertEquals(
         CharBuffer.wrap("File A"),
         Conversions.fromByteBuffer(Types.StringType.get(), lowerBounds.get(pathFieldId)));
-    Assert.assertEquals(1L, (long) Conversions.fromByteBuffer(Types.LongType.get(), lowerBounds.get(posFieldId)));
+    Assert.assertEquals(
+        1L, (long) Conversions.fromByteBuffer(Types.LongType.get(), lowerBounds.get(posFieldId)));
 
-    Assert.assertEquals(3, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), lowerBounds.get(1)));
+    Assert.assertEquals(
+        3, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), lowerBounds.get(1)));
     Assert.assertFalse(lowerBounds.containsKey(2));
     Assert.assertFalse(lowerBounds.containsKey(3));
     Assert.assertFalse(lowerBounds.containsKey(4));
-    Assert.assertEquals(3L, (long) Conversions.fromByteBuffer(Types.LongType.get(), lowerBounds.get(5)));
+    Assert.assertEquals(
+        3L, (long) Conversions.fromByteBuffer(Types.LongType.get(), lowerBounds.get(5)));
 
     Map<Integer, ByteBuffer> upperBounds = deleteFile.upperBounds();
 
     Assert.assertEquals(
         CharBuffer.wrap("File A"),
         Conversions.fromByteBuffer(Types.StringType.get(), upperBounds.get(pathFieldId)));
-    Assert.assertEquals(1L, (long) Conversions.fromByteBuffer(Types.LongType.get(), upperBounds.get(posFieldId)));
+    Assert.assertEquals(
+        1L, (long) Conversions.fromByteBuffer(Types.LongType.get(), upperBounds.get(posFieldId)));
 
-    Assert.assertEquals(3, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), upperBounds.get(1)));
+    Assert.assertEquals(
+        3, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), upperBounds.get(1)));
     Assert.assertFalse(upperBounds.containsKey(2));
     Assert.assertFalse(upperBounds.containsKey(3));
     Assert.assertFalse(upperBounds.containsKey(4));
-    Assert.assertEquals(3L, (long) Conversions.fromByteBuffer(Types.LongType.get(), upperBounds.get(5)));
+    Assert.assertEquals(
+        3L, (long) Conversions.fromByteBuffer(Types.LongType.get(), upperBounds.get(5)));
   }
 
   @Test
@@ -217,22 +216,21 @@ public abstract class TestWriterMetrics<T> {
     }
     Schema maxColSchema = new Schema(fields);
 
-    Table maxColumnTable = TestTables.create(
-        tableDir,
-        "max_col_table",
-        maxColSchema,
-        PartitionSpec.unpartitioned(),
-        SortOrder.unsorted(),
-        FORMAT_V2);
-    OutputFileFactory maxColFactory = OutputFileFactory.builderFor(maxColumnTable, 1, 1)
-        .format(fileFormat).build();
+    Table maxColumnTable =
+        TestTables.create(
+            tableDir,
+            "max_col_table",
+            maxColSchema,
+            PartitionSpec.unpartitioned(),
+            SortOrder.unsorted(),
+            FORMAT_V2);
+    OutputFileFactory maxColFactory =
+        OutputFileFactory.builderFor(maxColumnTable, 1, 1).format(fileFormat).build();
 
     T row = toGenericRow(1, numColumns);
-    DataWriter dataWriter = newWriterFactory(maxColumnTable).newDataWriter(
-        maxColFactory.newOutputFile(),
-        PartitionSpec.unpartitioned(),
-        null
-    );
+    DataWriter dataWriter =
+        newWriterFactory(maxColumnTable)
+            .newDataWriter(maxColFactory.newOutputFile(), PartitionSpec.unpartitioned(), null);
     dataWriter.add(row);
     dataWriter.close();
     DataFile dataFile = dataWriter.toDataFile();
@@ -241,7 +239,8 @@ public abstract class TestWriterMetrics<T> {
     Assert.assertTrue("Should not have any lower bound metrics", dataFile.lowerBounds().isEmpty());
     Assert.assertTrue("Should not have any upper bound metrics", dataFile.upperBounds().isEmpty());
     Assert.assertTrue("Should not have any nan value metrics", dataFile.nanValueCounts().isEmpty());
-    Assert.assertTrue("Should not have any null value metrics", dataFile.nullValueCounts().isEmpty());
+    Assert.assertTrue(
+        "Should not have any null value metrics", dataFile.nullValueCounts().isEmpty());
     Assert.assertTrue("Should not have any value metrics", dataFile.valueCounts().isEmpty());
   }
 
@@ -257,24 +256,27 @@ public abstract class TestWriterMetrics<T> {
     }
     Schema maxColSchema = new Schema(fields);
 
-    Table maxColumnTable = TestTables.create(
-        tableDir,
-        "max_col_table",
-        maxColSchema,
-        PartitionSpec.unpartitioned(),
-        SortOrder.unsorted(),
-        FORMAT_V2);
-    maxColumnTable.updateProperties().set(TableProperties.DEFAULT_WRITE_METRICS_MODE,
-        TableProperties.DEFAULT_WRITE_METRICS_MODE_DEFAULT).commit();
-    OutputFileFactory maxColFactory = OutputFileFactory.builderFor(maxColumnTable, 1, 1)
-        .format(fileFormat).build();
+    Table maxColumnTable =
+        TestTables.create(
+            tableDir,
+            "max_col_table",
+            maxColSchema,
+            PartitionSpec.unpartitioned(),
+            SortOrder.unsorted(),
+            FORMAT_V2);
+    maxColumnTable
+        .updateProperties()
+        .set(
+            TableProperties.DEFAULT_WRITE_METRICS_MODE,
+            TableProperties.DEFAULT_WRITE_METRICS_MODE_DEFAULT)
+        .commit();
+    OutputFileFactory maxColFactory =
+        OutputFileFactory.builderFor(maxColumnTable, 1, 1).format(fileFormat).build();
 
     T row = toGenericRow(1, numColumns);
-    DataWriter dataWriter = newWriterFactory(maxColumnTable).newDataWriter(
-        maxColFactory.newOutputFile(),
-        PartitionSpec.unpartitioned(),
-        null
-    );
+    DataWriter dataWriter =
+        newWriterFactory(maxColumnTable)
+            .newDataWriter(maxColFactory.newOutputFile(), PartitionSpec.unpartitioned(), null);
     dataWriter.add(row);
     dataWriter.close();
     DataFile dataFile = dataWriter.toDataFile();
@@ -283,8 +285,10 @@ public abstract class TestWriterMetrics<T> {
     Map<Integer, ByteBuffer> upperBounds = dataFile.upperBounds();
     Map<Integer, ByteBuffer> lowerBounds = dataFile.upperBounds();
     for (int i = 0; i < numColumns; i++) {
-      Assert.assertEquals(1, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), upperBounds.get(1)));
-      Assert.assertEquals(1, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), lowerBounds.get(1)));
+      Assert.assertEquals(
+          1, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), upperBounds.get(1)));
+      Assert.assertEquals(
+          1, (int) Conversions.fromByteBuffer(Types.IntegerType.get(), lowerBounds.get(1)));
     }
   }
 }

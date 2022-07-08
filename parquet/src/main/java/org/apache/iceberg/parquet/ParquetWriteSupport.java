@@ -31,7 +31,8 @@ class ParquetWriteSupport<T> extends WriteSupport<T> {
   private final Map<String, String> keyValueMetadata;
   private final WriteSupport<T> wrapped;
 
-  ParquetWriteSupport(MessageType type, Map<String, String> keyValueMetadata, WriteSupport<T> writeSupport) {
+  ParquetWriteSupport(
+      MessageType type, Map<String, String> keyValueMetadata, WriteSupport<T> writeSupport) {
     this.type = type;
     this.keyValueMetadata = keyValueMetadata;
     this.wrapped = writeSupport;
@@ -40,10 +41,11 @@ class ParquetWriteSupport<T> extends WriteSupport<T> {
   @Override
   public WriteContext init(Configuration configuration) {
     WriteContext wrappedContext = wrapped.init(configuration);
-    Map<String, String> metadata = ImmutableMap.<String, String>builder()
-        .putAll(keyValueMetadata)
-        .putAll(wrappedContext.getExtraMetaData())
-        .build();
+    Map<String, String> metadata =
+        ImmutableMap.<String, String>builder()
+            .putAll(keyValueMetadata)
+            .putAll(wrappedContext.getExtraMetaData())
+            .build();
     return new WriteContext(type, metadata);
   }
 

@@ -33,9 +33,8 @@ import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 public final class IcebergDecimalObjectInspector extends AbstractPrimitiveJavaObjectInspector
     implements HiveDecimalObjectInspector, WriteObjectInspector {
 
-  private static final Cache<Integer, IcebergDecimalObjectInspector> CACHE = Caffeine.newBuilder()
-          .expireAfterAccess(10, TimeUnit.MINUTES)
-          .build();
+  private static final Cache<Integer, IcebergDecimalObjectInspector> CACHE =
+      Caffeine.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
   public static IcebergDecimalObjectInspector get(int precision, int scale) {
     Preconditions.checkArgument(scale < precision);

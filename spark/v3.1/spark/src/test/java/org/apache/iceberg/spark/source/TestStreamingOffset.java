@@ -29,14 +29,17 @@ public class TestStreamingOffset {
 
   @Test
   public void testJsonConversion() {
-    StreamingOffset[] expected = new StreamingOffset[]{
-        new StreamingOffset(System.currentTimeMillis(), 1L, false),
-        new StreamingOffset(System.currentTimeMillis(), 2L, false),
-        new StreamingOffset(System.currentTimeMillis(), 3L, false),
-        new StreamingOffset(System.currentTimeMillis(), 4L, true)
-    };
-    Assert.assertArrayEquals("StreamingOffsets should match", expected,
-          Arrays.stream(expected).map(elem -> StreamingOffset.fromJson(elem.json())).toArray());
+    StreamingOffset[] expected =
+        new StreamingOffset[] {
+          new StreamingOffset(System.currentTimeMillis(), 1L, false),
+          new StreamingOffset(System.currentTimeMillis(), 2L, false),
+          new StreamingOffset(System.currentTimeMillis(), 3L, false),
+          new StreamingOffset(System.currentTimeMillis(), 4L, true)
+        };
+    Assert.assertArrayEquals(
+        "StreamingOffsets should match",
+        expected,
+        Arrays.stream(expected).map(elem -> StreamingOffset.fromJson(elem.json())).toArray());
   }
 
   @Test

@@ -22,12 +22,14 @@ package org.apache.iceberg.deletes;
 public interface PositionDeleteIndex {
   /**
    * Set a deleted row position.
+   *
    * @param position the deleted row position
    */
   void delete(long position);
 
   /**
    * Set a range of deleted row positions.
+   *
    * @param posStart inclusive beginning of position range
    * @param posEnd exclusive ending of position range
    */
@@ -35,13 +37,12 @@ public interface PositionDeleteIndex {
 
   /**
    * Checks whether a row at the position is deleted.
+   *
    * @param position deleted row position
    * @return whether the position is deleted
    */
   boolean isDeleted(long position);
 
-  /**
-   * Returns true if this collection contains no element.
-   */
+  /** Returns true if this collection contains no element. */
   boolean isEmpty();
 }

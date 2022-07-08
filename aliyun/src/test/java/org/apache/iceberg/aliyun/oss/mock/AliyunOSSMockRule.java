@@ -63,9 +63,11 @@ public class AliyunOSSMockRule implements AliyunOSSTestRule {
 
   @Override
   public OSS createOSSClient() {
-    String endpoint = String.format("http://localhost:%s", properties.getOrDefault(
-        AliyunOSSMockApp.PROP_HTTP_PORT,
-        AliyunOSSMockApp.PORT_HTTP_PORT_DEFAULT));
+    String endpoint =
+        String.format(
+            "http://localhost:%s",
+            properties.getOrDefault(
+                AliyunOSSMockApp.PROP_HTTP_PORT, AliyunOSSMockApp.PORT_HTTP_PORT_DEFAULT));
     return new OSSClientBuilder().build(endpoint, "foo", "bar");
   }
 
@@ -85,13 +87,14 @@ public class AliyunOSSMockRule implements AliyunOSSTestRule {
     try {
       Files.walk(rootDir().toPath())
           .filter(p -> p.toFile().isFile())
-          .forEach(p -> {
-            try {
-              Files.delete(p);
-            } catch (IOException e) {
-              // delete this file quietly.
-            }
-          });
+          .forEach(
+              p -> {
+                try {
+                  Files.delete(p);
+                } catch (IOException e) {
+                  // delete this file quietly.
+                }
+              });
 
       createOSSClient().deleteBucket(bucket);
     } catch (IOException e) {
@@ -110,7 +113,9 @@ public class AliyunOSSMockRule implements AliyunOSSTestRule {
     public AliyunOSSTestRule build() {
       String rootDir = (String) props.get(AliyunOSSMockApp.PROP_ROOT_DIR);
       if (Strings.isNullOrEmpty(rootDir)) {
-        File dir = new File(FileUtils.getTempDirectory(), "oss-mock-file-store-" + System.currentTimeMillis());
+        File dir =
+            new File(
+                FileUtils.getTempDirectory(), "oss-mock-file-store-" + System.currentTimeMillis());
         rootDir = dir.getAbsolutePath();
         props.put(AliyunOSSMockApp.PROP_ROOT_DIR, rootDir);
       }

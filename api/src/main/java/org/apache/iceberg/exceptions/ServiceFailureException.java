@@ -21,9 +21,7 @@ package org.apache.iceberg.exceptions;
 
 import com.google.errorprone.annotations.FormatMethod;
 
-/**
- * Exception thrown on HTTP 5XX Server Error.
- */
+/** Exception thrown on HTTP 5XX Server Error. */
 public class ServiceFailureException extends RuntimeException {
   @FormatMethod
   public ServiceFailureException(String message, Object... args) {

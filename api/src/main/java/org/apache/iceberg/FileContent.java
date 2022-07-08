@@ -19,9 +19,7 @@
 
 package org.apache.iceberg;
 
-/**
- * Content type stored in a file, one of DATA, POSITION_DELETES, or EQUALITY_DELETES.
- */
+/** Content type stored in a file, one of DATA, POSITION_DELETES, or EQUALITY_DELETES. */
 public enum FileContent {
   DATA(0),
   POSITION_DELETES(1),

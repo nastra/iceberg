@@ -75,7 +75,8 @@ class Identity<T> implements Transform<T, T> {
     if (predicate.isUnaryPredicate()) {
       return Expressions.predicate(predicate.op(), name);
     } else if (predicate.isLiteralPredicate()) {
-      return Expressions.predicate(predicate.op(), name, predicate.asLiteralPredicate().literal().value());
+      return Expressions.predicate(
+          predicate.op(), name, predicate.asLiteralPredicate().literal().value());
     } else if (predicate.isSetPredicate()) {
       return Expressions.predicate(predicate.op(), name, predicate.asSetPredicate().literalSet());
     }

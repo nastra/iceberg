@@ -28,14 +28,14 @@ import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 
 /**
  * This class defines different metrics modes, which allow users to control the collection of
- * value_counts, null_value_counts, nan_value_counts, lower_bounds, upper_bounds for different columns in metadata.
+ * value_counts, null_value_counts, nan_value_counts, lower_bounds, upper_bounds for different
+ * columns in metadata.
  */
 public class MetricsModes {
 
   private static final Pattern TRUNCATE = Pattern.compile("truncate\\((\\d+)\\)");
 
-  private MetricsModes() {
-  }
+  private MetricsModes() {}
 
   public static MetricsMode fromString(String mode) {
     if ("none".equalsIgnoreCase(mode)) {
@@ -57,14 +57,14 @@ public class MetricsModes {
 
   /**
    * A metrics calculation mode.
-   * <p>
-   * Implementations must be immutable.
+   *
+   * <p>Implementations must be immutable.
    */
-  public interface MetricsMode extends Serializable {
-  }
+  public interface MetricsMode extends Serializable {}
 
   /**
-   * Under this mode, value_counts, null_value_counts, nan_value_counts, lower_bounds, upper_bounds are not persisted.
+   * Under this mode, value_counts, null_value_counts, nan_value_counts, lower_bounds, upper_bounds
+   * are not persisted.
    */
   public static class None extends ProxySerializableMetricsMode {
     private static final None INSTANCE = new None();
@@ -79,9 +79,7 @@ public class MetricsModes {
     }
   }
 
-  /**
-   * Under this mode, only value_counts, null_value_counts, nan_value_counts are persisted.
-   */
+  /** Under this mode, only value_counts, null_value_counts, nan_value_counts are persisted. */
   public static class Counts extends ProxySerializableMetricsMode {
     private static final Counts INSTANCE = new Counts();
 
@@ -96,8 +94,8 @@ public class MetricsModes {
   }
 
   /**
-   * Under this mode, value_counts, null_value_counts, nan_value_counts
-   * and truncated lower_bounds, upper_bounds are persisted.
+   * Under this mode, value_counts, null_value_counts, nan_value_counts and truncated lower_bounds,
+   * upper_bounds are persisted.
    */
   public static class Truncate extends ProxySerializableMetricsMode {
     private final int length;
@@ -138,8 +136,8 @@ public class MetricsModes {
   }
 
   /**
-   * Under this mode, value_counts, null_value_counts, nan_value_counts
-   * and full lower_bounds, upper_bounds are persisted.
+   * Under this mode, value_counts, null_value_counts, nan_value_counts and full lower_bounds,
+   * upper_bounds are persisted.
    */
   public static class Full extends ProxySerializableMetricsMode {
     private static final Full INSTANCE = new Full();
@@ -154,7 +152,8 @@ public class MetricsModes {
     }
   }
 
-  // we cannot serialize/deserialize MetricsMode directly as it breaks reference equality used in metrics utils
+  // we cannot serialize/deserialize MetricsMode directly as it breaks reference equality used in
+  // metrics utils
   private abstract static class ProxySerializableMetricsMode implements MetricsMode {
     Object writeReplace() throws ObjectStreamException {
       return new MetricsModeProxy(toString());

@@ -24,9 +24,9 @@ import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.LocationProvider;
 
 /**
- * TableOperations implementation that provides access to metadata for a Table at some point in time, using a
- * table metadata location. It will never refer to a different Metadata object than the one it was created with
- * and cannot be used to create or delete files.
+ * TableOperations implementation that provides access to metadata for a Table at some point in
+ * time, using a table metadata location. It will never refer to a different Metadata object than
+ * the one it was created with and cannot be used to create or delete files.
  */
 public class StaticTableOperations implements TableOperations {
   private TableMetadata staticMetadata;
@@ -34,14 +34,13 @@ public class StaticTableOperations implements TableOperations {
   private final FileIO io;
   private final LocationProvider locationProvider;
 
-  /**
-   * Creates a StaticTableOperations tied to a specific static version of the TableMetadata
-   */
+  /** Creates a StaticTableOperations tied to a specific static version of the TableMetadata */
   public StaticTableOperations(String metadataFileLocation, FileIO io) {
     this(metadataFileLocation, io, null);
   }
 
-  public StaticTableOperations(String metadataFileLocation, FileIO io, LocationProvider locationProvider) {
+  public StaticTableOperations(
+      String metadataFileLocation, FileIO io, LocationProvider locationProvider) {
     this.io = io;
     this.metadataFileLocation = metadataFileLocation;
     this.locationProvider = locationProvider;
@@ -56,8 +55,9 @@ public class StaticTableOperations implements TableOperations {
   }
 
   /**
-   * StaticTableOperations works on the same version of TableMetadata, and it will never refer a different TableMetadata
-   * object than the one it was created with.
+   * StaticTableOperations works on the same version of TableMetadata, and it will never refer a
+   * different TableMetadata object than the one it was created with.
+   *
    * @return always {@link #current()}.
    */
   @Override

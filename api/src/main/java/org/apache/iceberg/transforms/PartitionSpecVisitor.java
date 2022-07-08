@@ -87,7 +87,8 @@ public interface PartitionSpecVisitor<T> {
   }
 
   default T unknown(int fieldId, String sourceName, int sourceId, String transform) {
-    throw new UnsupportedOperationException(String.format("Unknown transform %s is not supported", transform));
+    throw new UnsupportedOperationException(
+        String.format("Unknown transform %s is not supported", transform));
   }
 
   /**

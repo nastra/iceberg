@@ -39,9 +39,11 @@ public class TestSparkPositionDeltaWriters extends TestPositionDeltaWriters<Inte
   }
 
   @Override
-  protected FileWriterFactory<InternalRow> newWriterFactory(Schema dataSchema, List<Integer> equalityFieldIds,
-                                                            Schema equalityDeleteRowSchema,
-                                                            Schema positionDeleteRowSchema) {
+  protected FileWriterFactory<InternalRow> newWriterFactory(
+      Schema dataSchema,
+      List<Integer> equalityFieldIds,
+      Schema equalityDeleteRowSchema,
+      Schema positionDeleteRowSchema) {
     return SparkFileWriterFactory.builderFor(table)
         .dataSchema(table.schema())
         .dataFileFormat(format())

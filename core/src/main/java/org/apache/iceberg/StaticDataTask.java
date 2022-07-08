@@ -34,9 +34,14 @@ import org.apache.iceberg.util.StructProjection;
 
 class StaticDataTask implements DataTask {
 
-  static <T> DataTask of(InputFile metadata, Schema tableSchema, Schema projectedSchema, Iterable<T> values,
-                         Function<T, Row> transform) {
-    return new StaticDataTask(metadata,
+  static <T> DataTask of(
+      InputFile metadata,
+      Schema tableSchema,
+      Schema projectedSchema,
+      Iterable<T> values,
+      Function<T, Row> transform) {
+    return new StaticDataTask(
+        metadata,
         tableSchema,
         projectedSchema,
         Lists.newArrayList(Iterables.transform(values, transform::apply)).toArray(new Row[0]));
@@ -47,14 +52,16 @@ class StaticDataTask implements DataTask {
   private final Schema tableSchema;
   private final Schema projectedSchema;
 
-  private StaticDataTask(InputFile metadata, Schema tableSchema, Schema projectedSchema, StructLike[] rows) {
+  private StaticDataTask(
+      InputFile metadata, Schema tableSchema, Schema projectedSchema, StructLike[] rows) {
     this.tableSchema = tableSchema;
     this.projectedSchema = projectedSchema;
-    this.metadataFile = DataFiles.builder(PartitionSpec.unpartitioned())
-        .withInputFile(metadata)
-        .withRecordCount(rows.length)
-        .withFormat(FileFormat.METADATA)
-        .build();
+    this.metadataFile =
+        DataFiles.builder(PartitionSpec.unpartitioned())
+            .withInputFile(metadata)
+            .withRecordCount(rows.length)
+            .withFormat(FileFormat.METADATA)
+            .build();
     this.rows = rows;
   }
 
@@ -100,9 +107,7 @@ class StaticDataTask implements DataTask {
     return ImmutableList.of(this);
   }
 
-  /**
-   * Implements {@link StructLike#get} for passing static rows.
-   */
+  /** Implements {@link StructLike#get} for passing static rows. */
   static class Row implements StructLike, Serializable {
     public static Row of(Object... values) {
       return new Row(values);

@@ -31,9 +31,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * Tool to run database scripts
- */
+/** Tool to run database scripts */
 public class ScriptRunner {
 
   private static final String DEFAULT_DELIMITER = ";";
@@ -49,11 +47,8 @@ public class ScriptRunner {
   private String delimiter = DEFAULT_DELIMITER;
   private boolean fullLineDelimiter = false;
 
-  /**
-   * Default constructor
-   */
-  public ScriptRunner(Connection connection, boolean autoCommit,
-                      boolean stopOnError) {
+  /** Default constructor */
+  public ScriptRunner(Connection connection, boolean autoCommit, boolean stopOnError) {
     this.connection = connection;
     this.autoCommit = autoCommit;
     this.stopOnError = stopOnError;
@@ -67,8 +62,7 @@ public class ScriptRunner {
   /**
    * Setter for logWriter property
    *
-   * @param logWriter
-   *            - the new value of the logWriter property
+   * @param logWriter - the new value of the logWriter property
    */
   public void setLogWriter(PrintWriter logWriter) {
     this.logWriter = logWriter;
@@ -77,8 +71,7 @@ public class ScriptRunner {
   /**
    * Setter for errorLogWriter property
    *
-   * @param errorLogWriter
-   *            - the new value of the errorLogWriter property
+   * @param errorLogWriter - the new value of the errorLogWriter property
    */
   public void setErrorLogWriter(PrintWriter errorLogWriter) {
     this.errorLogWriter = errorLogWriter;
@@ -87,8 +80,7 @@ public class ScriptRunner {
   /**
    * Runs an SQL script (read in using the Reader parameter)
    *
-   * @param reader
-   *            - the source of the script
+   * @param reader - the source of the script
    */
   public void runScript(Reader reader) throws IOException, SQLException {
     try {
@@ -111,17 +103,12 @@ public class ScriptRunner {
   }
 
   /**
-   * Runs an SQL script (read in using the Reader parameter) using the
-   * connection passed in
+   * Runs an SQL script (read in using the Reader parameter) using the connection passed in
    *
-   * @param conn
-   *            - the connection to use for the script
-   * @param reader
-   *            - the source of the script
-   * @throws SQLException
-   *             if any SQL errors occur
-   * @throws IOException
-   *             if there is an error reading from the Reader
+   * @param conn - the connection to use for the script
+   * @param reader - the source of the script
+   * @throws SQLException if any SQL errors occur
+   * @throws IOException if there is an error reading from the Reader
    */
   @SuppressWarnings("checkstyle:CyclomaticComplexity")
   private void runScript(Connection conn, Reader reader) throws IOException, SQLException {
@@ -140,10 +127,9 @@ public class ScriptRunner {
           // Do nothing
         } else if (trimmedLine.length() < 1 || trimmedLine.startsWith("--")) {
           // Do nothing
-        } else if (!fullLineDelimiter && trimmedLine.endsWith(getDelimiter()) ||
-            fullLineDelimiter && trimmedLine.equals(getDelimiter())) {
-          command.append(line.substring(0, line
-                  .lastIndexOf(getDelimiter())));
+        } else if (!fullLineDelimiter && trimmedLine.endsWith(getDelimiter())
+            || fullLineDelimiter && trimmedLine.equals(getDelimiter())) {
+          command.append(line.substring(0, line.lastIndexOf(getDelimiter())));
           command.append(" ");
           Statement statement = conn.createStatement();
 

@@ -80,10 +80,8 @@ class GenericAvroReader<T> implements DatumReader<T>, SupportsRowPosition {
     @SuppressWarnings("unchecked")
     public ValueReader<?> record(Schema record, List<String> names, List<ValueReader<?>> fields) {
       try {
-        Class<?> recordClass = DynClasses.builder()
-            .loader(loader)
-            .impl(record.getFullName())
-            .buildChecked();
+        Class<?> recordClass =
+            DynClasses.builder().loader(loader).impl(record.getFullName()).buildChecked();
         if (IndexedRecord.class.isAssignableFrom(recordClass)) {
           return ValueReaders.record(fields, (Class<? extends IndexedRecord>) recordClass, record);
         }

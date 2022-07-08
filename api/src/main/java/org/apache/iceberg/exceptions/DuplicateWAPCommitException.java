@@ -20,8 +20,8 @@
 package org.apache.iceberg.exceptions;
 
 /**
- * This exception occurs when the WAP workflow detects a duplicate wap commit. This helps clients
- * to detect duplicate snapshots that are connected by the same wap id.
+ * This exception occurs when the WAP workflow detects a duplicate wap commit. This helps clients to
+ * detect duplicate snapshots that are connected by the same wap id.
  */
 public class DuplicateWAPCommitException extends ValidationException {
 

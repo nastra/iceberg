@@ -27,8 +27,13 @@ public class UnpartitionedWriter<T> extends BaseTaskWriter<T> {
 
   private final RollingFileWriter currentWriter;
 
-  public UnpartitionedWriter(PartitionSpec spec, FileFormat format, FileAppenderFactory<T> appenderFactory,
-                             OutputFileFactory fileFactory, FileIO io, long targetFileSize) {
+  public UnpartitionedWriter(
+      PartitionSpec spec,
+      FileFormat format,
+      FileAppenderFactory<T> appenderFactory,
+      OutputFileFactory fileFactory,
+      FileIO io,
+      long targetFileSize) {
     super(spec, format, appenderFactory, fileFactory, io, targetFileSize);
     currentWriter = new RollingFileWriter(null);
   }
