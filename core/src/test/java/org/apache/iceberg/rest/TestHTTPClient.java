@@ -44,9 +44,8 @@ import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
 
-/**
- * * Exercises the RESTClient interface, specifically over a mocked-server using the actual
- * HttpRESTClient code.
+/***
+ * Exercises the RESTClient interface, specifically over a mocked-server using the actual HttpRESTClient code.
  */
 public class TestHTTPClient {
 

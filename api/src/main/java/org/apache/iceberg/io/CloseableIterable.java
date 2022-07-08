@@ -73,6 +73,36 @@ public interface CloseableIterable<T> extends Iterable<T>, Closeable {
     };
   }
 
+  /**
+   * Will run the given runnable when {@link CloseableIterable#close()} has been called.
+   *
+   * @param iterable The underlying {@link CloseableIterable} to iterate over
+   * @param onCompletionRunnable The runnable to run after the underlying iterable was closed
+   * @param <E> The type of der underlying iterable
+   * @return A new {@link CloseableIterable} where the runnable will be executed as the final step
+   *     after {@link CloseableIterable#close()} has been called
+   */
+  static <E> CloseableIterable<E> whenComplete(
+      CloseableIterable<E> iterable, Runnable onCompletionRunnable) {
+    Preconditions.checkNotNull(
+        onCompletionRunnable, "Cannot execute a null Runnable after completion");
+    return new CloseableIterable<E>() {
+      @Override
+      public void close() throws IOException {
+        try {
+          iterable.close();
+        } finally {
+          onCompletionRunnable.run();
+        }
+      }
+
+      @Override
+      public CloseableIterator<E> iterator() {
+        return CloseableIterator.withClose(iterable.iterator());
+      }
+    };
+  }
+
   static <E> CloseableIterable<E> filter(CloseableIterable<E> iterable, Predicate<E> pred) {
     return combine(
         () ->

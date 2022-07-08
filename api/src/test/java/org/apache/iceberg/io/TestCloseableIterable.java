@@ -94,6 +94,71 @@ public class TestCloseableIterable {
   }
 
   @Test
+  public void testWithCompletionRunnable() throws IOException {
+    AtomicInteger completionCounter = new AtomicInteger(0);
+    List<Integer> items = Lists.newArrayList(1, 2, 3, 4, 5);
+    Assertions.assertThatThrownBy(
+            () -> CloseableIterable.whenComplete(CloseableIterable.combine(items, () -> {}), null))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessage("Cannot execute a null Runnable after completion");
+
+    try (CloseableIterable<Integer> iter =
+        CloseableIterable.whenComplete(
+            CloseableIterable.combine(items, () -> {}), completionCounter::incrementAndGet)) {
+      iter.forEach(val -> Assertions.assertThat(completionCounter.get()).isEqualTo(0));
+    }
+    Assertions.assertThat(completionCounter.get()).isEqualTo(1);
+  }
+
+  @Test
+  public void testWithCompletionRunnableAndEmptyIterable() throws IOException {
+    AtomicInteger completionCounter = new AtomicInteger(0);
+    CloseableIterable<Integer> empty = CloseableIterable.empty();
+    try (CloseableIterable<Integer> iter =
+        CloseableIterable.whenComplete(
+            CloseableIterable.combine(empty, () -> {}), completionCounter::incrementAndGet)) {
+      iter.forEach(val -> Assertions.assertThat(completionCounter.get()).isEqualTo(0));
+    }
+    Assertions.assertThat(completionCounter.get()).isEqualTo(1);
+  }
+
+  @Test
+  public void testWithCompletionRunnableAndUnclosedIterable() {
+    AtomicInteger completionCounter = new AtomicInteger(0);
+    List<Integer> items = Lists.newArrayList(1, 2, 3, 4, 5);
+    CloseableIterable<Integer> iter =
+        CloseableIterable.whenComplete(
+            CloseableIterable.combine(items, () -> {}), completionCounter::incrementAndGet);
+    iter.forEach(val -> Assertions.assertThat(completionCounter.get()).isEqualTo(0));
+    // given that we never close iter, the completionRunnable is never called
+    Assertions.assertThat(completionCounter.get()).isEqualTo(0);
+  }
+
+  @Test
+  public void testWithCompletionRunnableWhenIterableThrows() {
+    AtomicInteger completionCounter = new AtomicInteger(0);
+    List<Integer> items = Lists.newArrayList(1, 2, 3, 4, 5);
+
+    Assertions.assertThatThrownBy(
+            () -> {
+              try (CloseableIterable<Integer> iter =
+                  CloseableIterable.whenComplete(
+                      CloseableIterable.combine(
+                          items,
+                          () -> {
+                            throw new RuntimeException("expected");
+                          }),
+                      completionCounter::incrementAndGet)) {
+                iter.forEach(val -> Assertions.assertThat(completionCounter.get()).isEqualTo(0));
+              }
+            })
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("expected");
+
+    Assertions.assertThat(completionCounter.get()).isEqualTo(1);
+  }
+
+  @Test
   public void testConcatWithEmpty() {
     AtomicInteger counter = new AtomicInteger(0);
     CloseableIterable.concat(Collections.emptyList()).forEach(c -> counter.incrementAndGet());

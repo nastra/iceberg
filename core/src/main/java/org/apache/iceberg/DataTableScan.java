@@ -110,6 +110,7 @@ public class DataTableScan extends BaseTableScan {
             .select(colStats() ? SCAN_WITH_STATS_COLUMNS : SCAN_COLUMNS)
             .filterData(filter())
             .specsById(table().specs())
+            .scanMetrics(scanMetrics())
             .ignoreDeleted();
 
     if (shouldIgnoreResiduals()) {

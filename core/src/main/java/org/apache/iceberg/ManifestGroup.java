@@ -36,6 +36,7 @@ import org.apache.iceberg.expressions.ResidualEvaluator;
 import org.apache.iceberg.io.CloseableIterable;
 import org.apache.iceberg.io.CloseableIterator;
 import org.apache.iceberg.io.FileIO;
+import org.apache.iceberg.metrics.ScanReport;
 import org.apache.iceberg.relocated.com.google.common.collect.Iterables;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.relocated.com.google.common.collect.Sets;
@@ -60,6 +61,7 @@ class ManifestGroup {
   private List<String> columns;
   private boolean caseSensitive;
   private ExecutorService executorService;
+  private ScanReport.ScanMetrics scanMetrics;
 
   ManifestGroup(FileIO io, Iterable<ManifestFile> manifests) {
     this(
@@ -83,6 +85,7 @@ class ManifestGroup {
     this.caseSensitive = true;
     this.manifestPredicate = m -> true;
     this.manifestEntryPredicate = e -> true;
+    this.scanMetrics = ScanReport.ScanMetrics.NOOP;
   }
 
   ManifestGroup specsById(Map<Integer, PartitionSpec> newSpecsById) {
@@ -116,6 +119,11 @@ class ManifestGroup {
   ManifestGroup filterManifestEntries(
       Predicate<ManifestEntry<DataFile>> newManifestEntryPredicate) {
     this.manifestEntryPredicate = manifestEntryPredicate.and(newManifestEntryPredicate);
+    return this;
+  }
+
+  ManifestGroup scanMetrics(ScanReport.ScanMetrics metrics) {
+    this.scanMetrics = metrics;
     return this;
   }
 
@@ -177,6 +185,9 @@ class ManifestGroup {
     Iterable<CloseableIterable<FileScanTask>> tasks =
         entries(
             (manifest, entries) -> {
+              scanMetrics.addedDataFiles().increment(manifest.addedFilesCount());
+              scanMetrics.deletedDataFiles().increment(manifest.deletedFilesCount());
+              scanMetrics.totalDataManifestsRead().increment();
               int specId = manifest.partitionSpecId();
               PartitionSpec spec = specsById.get(specId);
               String schemaString = SchemaParser.toJson(spec.schema());
@@ -184,13 +195,16 @@ class ManifestGroup {
               ResidualEvaluator residuals = residualCache.get(specId);
               return CloseableIterable.transform(
                   entries,
-                  e ->
-                      new BaseFileScanTask(
-                          e.file().copy(!dropStats),
-                          deleteFiles.forEntry(e),
-                          schemaString,
-                          specString,
-                          residuals));
+                  e -> {
+                    scanMetrics.matchingDataFiles().increment();
+                    scanMetrics.totalFileSizeInBytes().increment(e.file().fileSizeInBytes());
+                    return new BaseFileScanTask(
+                        e.file().copy(!dropStats),
+                        deleteFiles.forEntry(e),
+                        schemaString,
+                        specString,
+                        residuals);
+                  });
             });
 
     if (executorService != null) {
@@ -237,12 +251,19 @@ class ManifestGroup {
       evaluator = null;
     }
 
+    if (evalCache == null) {
+      scanMetrics.totalDataManifestsRead().increment(dataManifests.size());
+    }
+
     Iterable<ManifestFile> matchingManifests =
         evalCache == null
             ? dataManifests
             : Iterables.filter(
                 dataManifests,
-                manifest -> evalCache.get(manifest.partitionSpecId()).eval(manifest));
+                manifest -> {
+                  scanMetrics.totalDataManifestsRead().increment();
+                  return evalCache.get(manifest.partitionSpecId()).eval(manifest);
+                });
 
     if (ignoreDeleted) {
       // only scan manifests that have entries other than deletes
@@ -264,7 +285,16 @@ class ManifestGroup {
               manifest -> manifest.hasAddedFiles() || manifest.hasDeletedFiles());
     }
 
-    matchingManifests = Iterables.filter(matchingManifests, manifestPredicate::test);
+    matchingManifests =
+        Iterables.filter(
+            matchingManifests,
+            manifest -> {
+              boolean test = manifestPredicate.test(manifest);
+              if (test) {
+                scanMetrics.matchingDataManifests().increment();
+              }
+              return test;
+            });
 
     return Iterables.transform(
         matchingManifests,
