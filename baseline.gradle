@@ -44,8 +44,13 @@ subprojects {
 
   pluginManager.withPlugin('com.diffplug.spotless') {
     spotless {
-      // don't run spotlessCheck during gradle check task
-      enforceCheck = false
+      if (JavaVersion.current() < JavaVersion.VERSION_11) {
+        // if the build is running with JDK 8, then spotlessCheck will run with google-java-format 1.7
+        // which will produce different formatting results than the latest
+        // google-java-format version (which requires JDK11+)
+        // therefore we don't enforce the check when running with < JDK 11
+        enforceCheck = false
+      }
       java {
         target 'src/main/java/**/*.java', 'src/test/java/**/*.java', 'src/jmh/java/**/*.java'
         googleJavaFormat()
