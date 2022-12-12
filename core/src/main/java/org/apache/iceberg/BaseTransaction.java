@@ -426,10 +426,10 @@ public class BaseTransaction implements Transaction {
       throw e;
 
     } catch (PendingUpdateFailedException e) {
-      cleanUpOnCommitFailure();
+      rollback();
       throw e.wrapped();
     } catch (RuntimeException e) {
-      cleanUpOnCommitFailure();
+      rollback();
       throw e;
     }
 
@@ -468,7 +468,7 @@ public class BaseTransaction implements Transaction {
     }
   }
 
-  private void cleanUpOnCommitFailure() {
+  public void rollback() {
     // the commit failed and no files were committed. clean up each update.
     Tasks.foreach(updates)
         .suppressFailureWhenFinished()
@@ -484,6 +484,11 @@ public class BaseTransaction implements Transaction {
         .suppressFailureWhenFinished()
         .onFailure((file, exc) -> LOG.warn("Failed to delete uncommitted file: {}", file, exc))
         .run(ops.io()::deleteFile);
+  }
+
+  @Override
+  public List<PendingUpdate> pendingUpdates() {
+    return updates;
   }
 
   private void applyUpdates(TableOperations underlyingOps) {
