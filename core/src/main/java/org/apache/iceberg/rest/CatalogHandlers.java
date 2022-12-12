@@ -51,6 +51,7 @@ import org.apache.iceberg.exceptions.NoSuchTableException;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.relocated.com.google.common.collect.Sets;
+import org.apache.iceberg.rest.requests.CommitTransactionRequest;
 import org.apache.iceberg.rest.requests.CreateNamespaceRequest;
 import org.apache.iceberg.rest.requests.CreateTableRequest;
 import org.apache.iceberg.rest.requests.RenameTableRequest;
@@ -281,6 +282,20 @@ public class CatalogHandlers {
 
   public static void renameTable(Catalog catalog, RenameTableRequest request) {
     catalog.renameTable(request.source(), request.destination());
+  }
+
+  public static void commitTransaction(Catalog catalog, CommitTransactionRequest request) {
+    for (CommitTransactionRequest.CommitTableRequest tableChange : request.tableChanges()) {
+      Table table = catalog.loadTable(tableChange.identifier());
+      if (table instanceof BaseTable) {
+        TableOperations ops = ((BaseTable) table).operations();
+        UpdateTableRequest updateTableRequest =
+            new UpdateTableRequest(tableChange.requirements(), tableChange.updates());
+        commit(ops, updateTableRequest);
+      } else {
+        throw new IllegalStateException("Cannot wrap catalog that does not produce BaseTable");
+      }
+    }
   }
 
   private static boolean isCreate(UpdateTableRequest request) {

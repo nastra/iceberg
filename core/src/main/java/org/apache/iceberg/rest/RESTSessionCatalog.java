@@ -66,8 +66,11 @@ import org.apache.iceberg.rest.auth.OAuth2Util;
 import org.apache.iceberg.rest.auth.OAuth2Util.AuthSession;
 import org.apache.iceberg.rest.requests.CreateNamespaceRequest;
 import org.apache.iceberg.rest.requests.CreateTableRequest;
+import org.apache.iceberg.rest.requests.ImmutableCommitTableRequest;
+import org.apache.iceberg.rest.requests.ImmutableCommitTransactionRequest;
 import org.apache.iceberg.rest.requests.RenameTableRequest;
 import org.apache.iceberg.rest.requests.UpdateNamespacePropertiesRequest;
+import org.apache.iceberg.rest.requests.UpdateTableRequest;
 import org.apache.iceberg.rest.responses.ConfigResponse;
 import org.apache.iceberg.rest.responses.CreateNamespaceResponse;
 import org.apache.iceberg.rest.responses.GetNamespaceResponse;
@@ -872,5 +875,25 @@ public class RESTSessionCatalog extends BaseSessionCatalog
         .removalListener(
             (RemovalListener<String, AuthSession>) (id, auth, cause) -> auth.stopRefreshing())
         .build();
+  }
+
+  void commitCatalogTransaction(
+      SessionContext context, Map<TableIdentifier, UpdateTableRequest> updatesByTable) {
+    ImmutableCommitTransactionRequest.Builder builder = ImmutableCommitTransactionRequest.builder();
+    updatesByTable.forEach(
+        (ident, update) ->
+            builder.addTableChanges(
+                ImmutableCommitTableRequest.builder()
+                    .identifier(ident)
+                    .requirements(update.requirements())
+                    .updates(update.updates())
+                    .build()));
+
+    client.post(
+        paths.commitTransaction(),
+        builder.build(),
+        null,
+        headers(context),
+        ErrorHandlers.tableCommitHandler());
   }
 }
