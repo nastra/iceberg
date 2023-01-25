@@ -18,6 +18,7 @@
  */
 package org.apache.iceberg;
 
+import java.util.function.Predicate;
 import org.apache.iceberg.exceptions.CommitFailedException;
 import org.apache.iceberg.exceptions.CommitStateUnknownException;
 import org.apache.iceberg.exceptions.ValidationException;
@@ -61,5 +62,11 @@ public interface PendingUpdate<T> {
    */
   default Object updateEvent() {
     return null;
+  }
+
+  default void validate(Predicate<T> current) {
+    if (!current.test(apply())) {
+      throw new ValidationException("validation failed");
+    }
   }
 }

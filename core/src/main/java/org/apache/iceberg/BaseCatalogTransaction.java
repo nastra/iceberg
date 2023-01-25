@@ -29,6 +29,7 @@ import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.CatalogTransaction;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.TableIdentifier;
+import org.apache.iceberg.exceptions.CommitFailedException;
 import org.apache.iceberg.exceptions.CommitStateUnknownException;
 import org.apache.iceberg.exceptions.ValidationException;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
@@ -46,6 +47,8 @@ public class BaseCatalogTransaction implements CatalogTransaction {
   private final Instant startTime;
 
   public BaseCatalogTransaction(TransactionalCatalog origin, IsolationLevel isolationLevel) {
+    Preconditions.checkArgument(null != origin, "Invalid transactional catalog: null");
+    Preconditions.checkArgument(null != isolationLevel, "Invalid isolation level: null");
     this.origin = origin;
     this.isolationLevel = isolationLevel;
     this.txByTable = Maps.newConcurrentMap();
@@ -63,22 +66,53 @@ public class BaseCatalogTransaction implements CatalogTransaction {
           || IsolationLevel.SERIALIZABLE_WITH_LOADING_READS == isolationLevel) {
         // make sure tables that are participating in the TX haven't been updated externally
         for (TableIdentifier affectedTable : updatesByTable.keySet()) {
-          if (((BaseTable) origin.loadTable(affectedTable))
-                  .operations()
-                  .current()
-                  .lastUpdatedMillis()
-              >= startTime.toEpochMilli()) {
+          TableMetadata tableMetadata =
+              ((BaseTable) origin.loadTable(affectedTable)).operations().current();
+          if (tableMetadata.lastUpdatedMillis() >= startTime.toEpochMilli()) {
             throw new ValidationException(
-                "Found updates to table %s at isolation level %s",
-                affectedTable.name(), isolationLevel.name());
+                "Found updates at '%s' to table '%s' at isolation level %s after TX start time at '%s'",
+                Instant.ofEpochMilli(tableMetadata.lastUpdatedMillis()),
+                affectedTable.name(),
+                isolationLevel.name(),
+                startTime);
           }
         }
       }
 
       // this is effectively SNAPSHOT isolation where we make sure that no conflicting updates have
       // been performed
+      // FIXME: should this do apply or commit?
+      // commit actually does conflict detected and apply only returns the changes to be applied
+      //      Tasks.foreach(updatesByTable.values())
+      //          .run(pendingUpdates -> pendingUpdates.forEach(PendingUpdate::commit));
+
+      // TODO: what we really need here is a way to apply a soft commit where non-conflicting
+      // changes are "committed" and visible inside the catalog TX.
+      // A conflicting change needs to roll back all previously "committed" changes, so that from
+      // the outside it looks like absolutely nothing was changed when "any" conflict happens.
       Tasks.foreach(updatesByTable.values())
-          .run(pendingUpdates -> pendingUpdates.forEach(PendingUpdate::commit));
+          .run(
+              pendingUpdates ->
+                  pendingUpdates.forEach(
+                      up -> {
+                        Object x = up.apply();
+                        if (up instanceof SchemaUpdate) {
+                          SchemaUpdate schemaUpdate = (SchemaUpdate) up;
+                          boolean validate = schemaUpdate.validate();
+                          if (!validate) {
+                            throw new CommitFailedException("Underlying schema changed");
+                          }
+                        }
+                        // FIXME: calling commit here causes simple schema changes inside the
+                        // catalog TX to fail, because we call
+                        // catalogTx.updateSchema(table)...commit();
+                        // and then call
+                        // catalogTx.commitTransaction();
+                        // which causes a "Table metadata refresh is required" conflict, because the
+                        // "commit" call updated "internally" the table's metadata
+                        up.commit();
+                      }));
+
       Tasks.foreach(txByTable.values()).run(Transaction::commitTransaction);
       hasCommitted = true;
     } catch (CommitStateUnknownException e) {
@@ -87,6 +121,17 @@ public class BaseCatalogTransaction implements CatalogTransaction {
       rollback();
       throw e;
     }
+  }
+
+  private TableIdentifier identifierWithoutCatalog(String tableWithCatalog) {
+    if (tableWithCatalog.startsWith(origin.name())) {
+      return TableIdentifier.parse(tableWithCatalog.replace(origin.name() + ".", ""));
+    }
+    return TableIdentifier.parse(tableWithCatalog);
+  }
+
+  private TableIdentifier identifierWithCatalog(TableIdentifier identifier) {
+    return TableIdentifier.parse(BaseMetastoreCatalog.fullTableName(origin.name(), identifier));
   }
 
   @Override
@@ -108,7 +153,7 @@ public class BaseCatalogTransaction implements CatalogTransaction {
 
   private Transaction txForTable(Table table) {
     return txByTable.computeIfAbsent(
-        TableIdentifier.parse(table.name()),
+        identifierWithoutCatalog(table.name()),
         k -> {
           TableOperations operations = ((HasTableOperations) table).operations();
           return new BaseTransaction(
@@ -208,13 +253,16 @@ public class BaseCatalogTransaction implements CatalogTransaction {
           BaseCatalogTransaction.this
               .txTable(identifier)
               .orElseGet(() -> origin.loadTable(identifier));
-      Preconditions.checkArgument(table instanceof BaseTable);
 
       if (IsolationLevel.SERIALIZABLE_WITH_FIXED_READS == isolationLevel) {
         // load table using the snapshotId as of TX start time
         Long snapshotId =
             SnapshotUtil.snapshotIdAsOfTimeOptional(table, startTime.toEpochMilli()).orElse(null);
-        table = new SnapshotTable((BaseTable) table, snapshotId);
+        TableOperations tableOps =
+            table instanceof TransactionTable
+                ? ((TransactionTable) table).operations()
+                : ((BaseTable) table).operations();
+        table = new SnapshotTable(table, tableOps, snapshotId);
       }
 
       return table;
@@ -256,15 +304,15 @@ public class BaseCatalogTransaction implements CatalogTransaction {
   }
 
   public static class SnapshotTable extends BaseTable {
-    private final BaseTable baseTable;
+    private final Table baseTable;
     private final Long snapshotId;
     private final Snapshot currentSnapshot;
 
-    private SnapshotTable(BaseTable table, Long snapshotId) {
-      super(table.operations(), table.name());
+    private SnapshotTable(Table table, TableOperations tableOperations, Long snapshotId) {
+      super(tableOperations, table.name());
       this.baseTable = table;
       this.snapshotId = snapshotId;
-      this.currentSnapshot = baseTable.snapshot(snapshotId);
+      this.currentSnapshot = null == snapshotId ? null : baseTable.snapshot(snapshotId);
     }
 
     @Override

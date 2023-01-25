@@ -23,15 +23,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.iceberg.ManifestEntry.Status;
+import org.apache.iceberg.catalog.CatalogTransaction;
 import org.apache.iceberg.exceptions.CommitFailedException;
+import org.apache.iceberg.inmemory.TransactionalInMemoryCatalog;
+import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.types.Types;
 import org.assertj.core.api.Assertions;
+import org.junit.Before;
 import org.junit.Test;
 
 public class TestCatalogTransaction extends TableTestBase {
+  private TransactionalInMemoryCatalog catalog;
 
   public TestCatalogTransaction() {
     super(2);
+  }
+
+  @Before
+  public void before() {
+    catalog = new TransactionalInMemoryCatalog();
+    catalog.initialize("in-memory-catalog", ImmutableMap.of());
   }
 
   @Test
@@ -44,7 +55,8 @@ public class TestCatalogTransaction extends TableTestBase {
 
     TableMetadata base = TestTables.readMetadata(one.name());
 
-    BaseCatalogTransaction catalogTransaction = new BaseCatalogTransaction(null, null);
+    CatalogTransaction catalogTransaction =
+        catalog.startTransaction(CatalogTransaction.IsolationLevel.SNAPSHOT);
     catalogTransaction.newAppend(one).appendFile(FILE_A).appendFile(FILE_B).commit();
 
     assertThat(TestTables.metadataVersion(one.name())).isEqualTo(0L);
@@ -78,7 +90,8 @@ public class TestCatalogTransaction extends TableTestBase {
     TableMetadata baseMetadataTwo = TestTables.readMetadata(two.name());
     TableMetadata baseMetadataThree = TestTables.readMetadata(three.name());
 
-    BaseCatalogTransaction catalogTransaction = new BaseCatalogTransaction(null, null);
+    CatalogTransaction catalogTransaction =
+        catalog.startTransaction(CatalogTransaction.IsolationLevel.SNAPSHOT);
     catalogTransaction.newAppend(one).appendFile(FILE_A).appendFile(FILE_B).commit();
     assertThat(baseMetadataOne).isSameAs(TestTables.readMetadata(one.name()));
 
@@ -149,7 +162,8 @@ public class TestCatalogTransaction extends TableTestBase {
     TableMetadata baseMetadataTwo = TestTables.readMetadata(two.name());
     TableMetadata baseMetadataThree = TestTables.readMetadata(three.name());
 
-    BaseCatalogTransaction catalogTransaction = new BaseCatalogTransaction(null, null);
+    CatalogTransaction catalogTransaction =
+        catalog.startTransaction(CatalogTransaction.IsolationLevel.SNAPSHOT);
     // Table table1 = catalogTransaction.asCatalog().loadTable(TableIdentifier.parse(one.name()));
     catalogTransaction.newAppend(one).appendFile(FILE_A).appendFile(FILE_B).commit();
     assertThat(baseMetadataOne).isSameAs(TestTables.readMetadata(one.name()));
@@ -167,21 +181,19 @@ public class TestCatalogTransaction extends TableTestBase {
         .commit();
 
     assertThat(baseMetadataThree).isSameAs(TestTables.readMetadata(three.name()));
-    int schemaId = three.schema().schemaId();
 
-    // directly update the table for adding "another-column" (which causes in-progress txn commit
-    // fail)
+    // directly update the table for adding "another-column"
     three.updateSchema().addColumn("another-column", Types.IntegerType.get()).commit();
-    int conflictingSchemaId = three.schema().schemaId();
 
     assertThat(baseMetadataOne).isSameAs(TestTables.readMetadata(one.name()));
     assertThat(baseMetadataTwo).isSameAs(TestTables.readMetadata(two.name()));
     assertThat(baseMetadataThree).isNotSameAs(TestTables.readMetadata(three.name()));
 
     Assertions.assertThatThrownBy(catalogTransaction::commitTransaction)
-        .isInstanceOf(CommitFailedException.class)
-        .hasMessage("Table metadata refresh is required");
+        .isInstanceOf(CommitFailedException.class);
 
+    // the third update in the catalog TX fails, so we need to make sure that all changes from the
+    // catalog TX are rolled back
     assertThat(baseMetadataOne).isSameAs(TestTables.readMetadata(one.name()));
     assertThat(baseMetadataTwo).isSameAs(TestTables.readMetadata(two.name()));
     assertThat(baseMetadataThree).isNotSameAs(TestTables.readMetadata(three.name()));

@@ -495,7 +495,7 @@ public class BaseTransaction implements Transaction {
     if (base != underlyingOps.refresh()) {
       // use refreshed the metadata
       this.base = underlyingOps.current();
-      this.current = underlyingOps.current();
+      this.current = base;
       for (PendingUpdate update : updates) {
         // re-commit each update in the chain to apply it and update current
         try {

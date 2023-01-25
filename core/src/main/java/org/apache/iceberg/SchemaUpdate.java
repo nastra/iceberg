@@ -436,6 +436,10 @@ class SchemaUpdate implements UpdateSchema {
     return newSchema;
   }
 
+  public boolean validate() {
+    return apply().schemaId() == ops.refresh().currentSchemaId();
+  }
+
   @Override
   public void commit() {
     TableMetadata update = applyChangesToMetadata(base.updateSchema(apply(), lastColumnId));
@@ -548,7 +552,7 @@ class SchemaUpdate implements UpdateSchema {
     freshIdentifierFieldIds.forEach(
         id -> Schema.validateIdentifierField(id, idToField, idToParent));
 
-    return new Schema(struct.fields(), freshIdentifierFieldIds);
+    return new Schema(schema.schemaId() + 1, struct.fields(), freshIdentifierFieldIds);
   }
 
   private static class ApplyChanges extends TypeUtil.SchemaVisitor<Type> {
