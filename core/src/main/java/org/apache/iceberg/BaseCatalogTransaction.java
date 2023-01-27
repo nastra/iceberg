@@ -130,10 +130,6 @@ public class BaseCatalogTransaction implements CatalogTransaction {
     return TableIdentifier.parse(tableWithCatalog);
   }
 
-  private TableIdentifier identifierWithCatalog(TableIdentifier identifier) {
-    return TableIdentifier.parse(BaseMetastoreCatalog.fullTableName(origin.name(), identifier));
-  }
-
   @Override
   public Catalog asCatalog() {
     return new AsTransactionalCatalog();
@@ -166,86 +162,6 @@ public class BaseCatalogTransaction implements CatalogTransaction {
     return isolationLevel;
   }
 
-  @Override
-  public UpdateSchema updateSchema(Table table) {
-    return txForTable(table).updateSchema();
-  }
-
-  @Override
-  public UpdatePartitionSpec updateSpec(Table table) {
-    return txForTable(table).updateSpec();
-  }
-
-  @Override
-  public UpdateProperties updateProperties(Table table) {
-    return txForTable(table).updateProperties();
-  }
-
-  @Override
-  public ReplaceSortOrder replaceSortOrder(Table table) {
-    return txForTable(table).replaceSortOrder();
-  }
-
-  @Override
-  public UpdateLocation updateLocation(Table table) {
-    return txForTable(table).updateLocation();
-  }
-
-  @Override
-  public AppendFiles newAppend(Table table) {
-    return txForTable(table).newAppend();
-  }
-
-  @Override
-  public AppendFiles newFastAppend(Table table) {
-    return txForTable(table).newFastAppend();
-  }
-
-  @Override
-  public RewriteFiles newRewrite(Table table) {
-    return txForTable(table).newRewrite();
-  }
-
-  @Override
-  public RewriteManifests rewriteManifests(Table table) {
-    return txForTable(table).rewriteManifests();
-  }
-
-  @Override
-  public OverwriteFiles newOverwrite(Table table) {
-    return txForTable(table).newOverwrite();
-  }
-
-  @Override
-  public RowDelta newRowDelta(Table table) {
-    return txForTable(table).newRowDelta();
-  }
-
-  @Override
-  public ReplacePartitions newReplacePartitions(Table table) {
-    return txForTable(table).newReplacePartitions();
-  }
-
-  @Override
-  public DeleteFiles newDelete(Table table) {
-    return txForTable(table).newDelete();
-  }
-
-  @Override
-  public UpdateStatistics updateStatistics(Table table) {
-    return txForTable(table).updateStatistics();
-  }
-
-  @Override
-  public ExpireSnapshots expireSnapshots(Table table) {
-    return txForTable(table).expireSnapshots();
-  }
-
-  @Override
-  public ManageSnapshots manageSnapshots(Table table) {
-    return txForTable(table).manageSnapshots();
-  }
-
   public class AsTransactionalCatalog extends TransactionalCatalog {
     @Override
     public Table loadTable(TableIdentifier identifier) {
@@ -262,10 +178,14 @@ public class BaseCatalogTransaction implements CatalogTransaction {
             table instanceof TransactionTable
                 ? ((TransactionTable) table).operations()
                 : ((BaseTable) table).operations();
-        table = new SnapshotTable(table, tableOps, snapshotId);
+        return new SnapshotTable(table, tableOps, snapshotId);
       }
 
-      return table;
+      TableOperations tableOps =
+          table instanceof TransactionTable
+              ? ((TransactionTable) table).operations()
+              : ((BaseTable) table).operations();
+      return new TransactionalBaseTable(table, tableOps);
     }
 
     @Override
@@ -303,26 +223,195 @@ public class BaseCatalogTransaction implements CatalogTransaction {
     }
   }
 
-  public static class SnapshotTable extends BaseTable {
-    private final Table baseTable;
+  public class SnapshotTable extends BaseTable {
+    private final Table table;
     private final Long snapshotId;
     private final Snapshot currentSnapshot;
 
     private SnapshotTable(Table table, TableOperations tableOperations, Long snapshotId) {
       super(tableOperations, table.name());
-      this.baseTable = table;
+      this.table = table;
       this.snapshotId = snapshotId;
-      this.currentSnapshot = null == snapshotId ? null : baseTable.snapshot(snapshotId);
+      this.currentSnapshot = null == snapshotId ? null : this.table.snapshot(snapshotId);
     }
 
     @Override
     public Schema schema() {
-      return SnapshotUtil.schemaFor(baseTable, snapshotId, null);
+      return SnapshotUtil.schemaFor(table, snapshotId, null);
     }
 
     @Override
     public Snapshot currentSnapshot() {
       return currentSnapshot;
+    }
+
+    @Override
+    public UpdateSchema updateSchema() {
+      return txForTable(table).updateSchema();
+    }
+
+    @Override
+    public UpdatePartitionSpec updateSpec() {
+      return txForTable(table).updateSpec();
+    }
+
+    @Override
+    public UpdateProperties updateProperties() {
+      return txForTable(table).updateProperties();
+    }
+
+    @Override
+    public ReplaceSortOrder replaceSortOrder() {
+      return txForTable(table).replaceSortOrder();
+    }
+
+    @Override
+    public UpdateLocation updateLocation() {
+      return txForTable(table).updateLocation();
+    }
+
+    @Override
+    public AppendFiles newAppend() {
+      return txForTable(table).newAppend();
+    }
+
+    @Override
+    public AppendFiles newFastAppend() {
+      return txForTable(table).newFastAppend();
+    }
+
+    @Override
+    public RewriteFiles newRewrite() {
+      return txForTable(table).newRewrite();
+    }
+
+    @Override
+    public RewriteManifests rewriteManifests() {
+      return txForTable(table).rewriteManifests();
+    }
+
+    @Override
+    public OverwriteFiles newOverwrite() {
+      return txForTable(table).newOverwrite();
+    }
+
+    @Override
+    public RowDelta newRowDelta() {
+      return txForTable(table).newRowDelta();
+    }
+
+    @Override
+    public ReplacePartitions newReplacePartitions() {
+      return txForTable(table).newReplacePartitions();
+    }
+
+    @Override
+    public DeleteFiles newDelete() {
+      return txForTable(table).newDelete();
+    }
+
+    @Override
+    public UpdateStatistics updateStatistics() {
+      return txForTable(table).updateStatistics();
+    }
+
+    @Override
+    public ExpireSnapshots expireSnapshots() {
+      return txForTable(table).expireSnapshots();
+    }
+
+    @Override
+    public ManageSnapshots manageSnapshots() {
+      return txForTable(table).manageSnapshots();
+    }
+  }
+
+  public class TransactionalBaseTable extends BaseTable {
+    private final Table table;
+
+    public TransactionalBaseTable(Table table, TableOperations ops) {
+      super(ops, table.name());
+      this.table = table;
+    }
+
+    @Override
+    public UpdateSchema updateSchema() {
+      return txForTable(table).updateSchema();
+    }
+
+    @Override
+    public UpdatePartitionSpec updateSpec() {
+      return txForTable(table).updateSpec();
+    }
+
+    @Override
+    public UpdateProperties updateProperties() {
+      return txForTable(table).updateProperties();
+    }
+
+    @Override
+    public ReplaceSortOrder replaceSortOrder() {
+      return txForTable(table).replaceSortOrder();
+    }
+
+    @Override
+    public UpdateLocation updateLocation() {
+      return txForTable(table).updateLocation();
+    }
+
+    @Override
+    public AppendFiles newAppend() {
+      return txForTable(table).newAppend();
+    }
+
+    @Override
+    public AppendFiles newFastAppend() {
+      return txForTable(table).newFastAppend();
+    }
+
+    @Override
+    public RewriteFiles newRewrite() {
+      return txForTable(table).newRewrite();
+    }
+
+    @Override
+    public RewriteManifests rewriteManifests() {
+      return txForTable(table).rewriteManifests();
+    }
+
+    @Override
+    public OverwriteFiles newOverwrite() {
+      return txForTable(table).newOverwrite();
+    }
+
+    @Override
+    public RowDelta newRowDelta() {
+      return txForTable(table).newRowDelta();
+    }
+
+    @Override
+    public ReplacePartitions newReplacePartitions() {
+      return txForTable(table).newReplacePartitions();
+    }
+
+    @Override
+    public DeleteFiles newDelete() {
+      return txForTable(table).newDelete();
+    }
+
+    @Override
+    public UpdateStatistics updateStatistics() {
+      return txForTable(table).updateStatistics();
+    }
+
+    @Override
+    public ExpireSnapshots expireSnapshots() {
+      return txForTable(table).expireSnapshots();
+    }
+
+    @Override
+    public ManageSnapshots manageSnapshots() {
+      return txForTable(table).manageSnapshots();
     }
   }
 }

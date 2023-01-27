@@ -28,12 +28,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
-import org.apache.iceberg.BaseMetastoreCatalog;
 import org.apache.iceberg.BaseMetastoreTableOperations;
 import org.apache.iceberg.CatalogProperties;
 import org.apache.iceberg.CatalogUtil;
 import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.TableOperations;
+import org.apache.iceberg.TransactionalCatalog;
+import org.apache.iceberg.catalog.CatalogTransaction.IsolationLevel;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.SupportsNamespaces;
 import org.apache.iceberg.catalog.TableIdentifier;
@@ -47,6 +48,7 @@ import org.apache.iceberg.io.InMemoryFileIO;
 import org.apache.iceberg.relocated.com.google.common.base.Joiner;
 import org.apache.iceberg.relocated.com.google.common.base.Objects;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
+import org.apache.iceberg.relocated.com.google.common.collect.ImmutableSet;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +61,7 @@ import org.slf4j.LoggerFactory;
  * <p>This catalog supports namespaces. This catalog automatically creates namespaces if needed
  * during table creation.
  */
-public class InMemoryCatalog extends BaseMetastoreCatalog implements SupportsNamespaces, Closeable {
+public class InMemoryCatalog extends TransactionalCatalog implements SupportsNamespaces, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryCatalog.class);
   private static final Joiner SLASH = Joiner.on("/");
@@ -300,6 +302,14 @@ public class InMemoryCatalog extends BaseMetastoreCatalog implements SupportsNam
   public void close() throws IOException {
     namespaceDb.clear();
     tableDb.clear();
+  }
+
+  @Override
+  public Set<IsolationLevel> supportedIsolationLevels() {
+    return ImmutableSet.of(
+        IsolationLevel.SNAPSHOT,
+        IsolationLevel.SERIALIZABLE_WITH_LOADING_READS,
+        IsolationLevel.SERIALIZABLE_WITH_FIXED_READS);
   }
 
   private class InMemoryTableOperations extends BaseMetastoreTableOperations {

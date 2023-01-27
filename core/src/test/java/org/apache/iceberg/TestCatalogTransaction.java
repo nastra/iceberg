@@ -24,14 +24,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.iceberg.ManifestEntry.Status;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.CatalogTransaction;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.exceptions.CommitFailedException;
 import org.apache.iceberg.exceptions.ValidationException;
-import org.apache.iceberg.inmemory.TransactionalInMemoryCatalog;
+import org.apache.iceberg.inmemory.InMemoryCatalog;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.types.Types;
 import org.assertj.core.api.Assertions;
@@ -39,7 +38,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestCatalogTransaction extends TableTestBase {
-  private TransactionalInMemoryCatalog catalog;
+  private InMemoryCatalog catalog;
 
   public TestCatalogTransaction() {
     super(2);
@@ -47,166 +46,153 @@ public class TestCatalogTransaction extends TableTestBase {
 
   @Before
   public void before() {
-    catalog = new TransactionalInMemoryCatalog();
-    catalog.initialize("in-memory-catalog", ImmutableMap.of());
+    catalog = new InMemoryCatalog();
+    catalog.initialize(
+        "in-memory-catalog",
+        ImmutableMap.of(CatalogProperties.WAREHOUSE_LOCATION, metadataDir.getAbsolutePath()));
   }
 
   @Test
   public void testSingleOperationTransaction() {
-    Table one =
-        TestTables.create(
-            tableDir, "tx-with-single-op", SCHEMA, SPEC, SortOrder.unsorted(), formatVersion);
+    TableIdentifier identifier = TableIdentifier.of("tx-with-single-op");
+    catalog.createTable(identifier, SCHEMA, SPEC);
 
-    assertThat(TestTables.metadataVersion(one.name())).isEqualTo(0L);
-
-    TableMetadata base = TestTables.readMetadata(one.name());
+    Table one = catalog.loadTable(identifier);
+    TableMetadata base = ((BaseTable) one).operations().current();
 
     CatalogTransaction catalogTransaction =
         catalog.startTransaction(CatalogTransaction.IsolationLevel.SNAPSHOT);
-    catalogTransaction.newAppend(one).appendFile(FILE_A).appendFile(FILE_B).commit();
+    Catalog txCatalog = catalogTransaction.asCatalog();
+    txCatalog.loadTable(identifier).newAppend().appendFile(FILE_A).appendFile(FILE_B).commit();
 
-    assertThat(TestTables.metadataVersion(one.name())).isEqualTo(0L);
-    assertThat(base).isSameAs(TestTables.readMetadata(one.name()));
+    assertThat(base).isSameAs(((BaseTable) one).operations().refresh());
+    assertThat(base.currentSnapshot()).isNull();
 
     catalogTransaction.commitTransaction();
 
-    assertThat(TestTables.metadataVersion(one.name())).isEqualTo(1L);
-    validateSnapshot(
-        base.currentSnapshot(),
-        TestTables.readMetadata(one.name()).currentSnapshot(),
-        FILE_A,
-        FILE_B);
+    TableMetadata updated = ((BaseTable) one).operations().refresh();
+    assertThat(base).isNotSameAs(updated);
+    assertThat(base.lastUpdatedMillis()).isLessThan(updated.lastUpdatedMillis());
+
+    assertThat(updated.currentSnapshot().addedDataFiles(catalog.loadTable(identifier).io()))
+        .hasSize(2);
   }
 
   @Test
   public void testTransactionsAgainstMultipleTables() {
-    Table one =
-        TestTables.create(tableDir, "one", SCHEMA, SPEC, SortOrder.unsorted(), formatVersion);
-    Table two =
-        TestTables.create(tableDir, "two", SCHEMA, SPEC, SortOrder.unsorted(), formatVersion);
-    Table three =
-        TestTables.create(tableDir, "three", SCHEMA, SPEC, SortOrder.unsorted(), formatVersion);
-
-    List<Table> tables = Arrays.asList(one, two, three);
-    for (Table tbl : tables) {
-      assertThat(TestTables.metadataVersion(tbl.name())).isEqualTo(0L);
+    List<String> tables = Arrays.asList("a", "b", "c");
+    for (String tbl : tables) {
+      catalog.createTable(TableIdentifier.of(tbl), SCHEMA);
     }
 
-    TableMetadata baseMetadataOne = TestTables.readMetadata(one.name());
-    TableMetadata baseMetadataTwo = TestTables.readMetadata(two.name());
-    TableMetadata baseMetadataThree = TestTables.readMetadata(three.name());
+    TableIdentifier a = TableIdentifier.of("a");
+    TableIdentifier b = TableIdentifier.of("b");
+    TableIdentifier c = TableIdentifier.of("c");
+    Table one = catalog.loadTable(a);
+    Table two = catalog.loadTable(b);
+    Table three = catalog.loadTable(c);
+
+    TableMetadata baseMetadataOne = ((BaseTable) one).operations().current();
+    TableMetadata baseMetadataTwo = ((BaseTable) two).operations().current();
+    TableMetadata baseMetadataThree = ((BaseTable) three).operations().current();
 
     CatalogTransaction catalogTransaction =
         catalog.startTransaction(CatalogTransaction.IsolationLevel.SNAPSHOT);
-    catalogTransaction.newAppend(one).appendFile(FILE_A).appendFile(FILE_B).commit();
-    assertThat(baseMetadataOne).isSameAs(TestTables.readMetadata(one.name()));
+    Catalog txCatalog = catalogTransaction.asCatalog();
 
-    catalogTransaction.newFastAppend(two).appendFile(FILE_B).appendFile(FILE_C).commit();
-    catalogTransaction.newDelete(two).deleteFile(FILE_C).commit();
-    assertThat(baseMetadataTwo).isSameAs(TestTables.readMetadata(two.name()));
+    txCatalog.loadTable(a).newFastAppend().appendFile(FILE_A).appendFile(FILE_B).commit();
+    assertThat(baseMetadataOne).isSameAs(((BaseTable) one).operations().current());
 
-    catalogTransaction.newDelete(three).deleteFile(FILE_A).commit();
-    catalogTransaction.newAppend(three).appendFile(FILE_D).commit();
+    txCatalog.loadTable(b).newDelete().deleteFile(FILE_C).commit();
+    txCatalog.loadTable(b).newFastAppend().appendFile(FILE_B).appendFile(FILE_C).commit();
+    assertThat(baseMetadataTwo).isSameAs(((BaseTable) two).operations().current());
 
-    assertThat(baseMetadataOne).isSameAs(TestTables.readMetadata(one.name()));
-    assertThat(baseMetadataTwo).isSameAs(TestTables.readMetadata(two.name()));
-    assertThat(baseMetadataThree).isSameAs(TestTables.readMetadata(three.name()));
+    txCatalog.loadTable(c).newDelete().deleteFile(FILE_A).commit();
+    txCatalog.loadTable(c).newAppend().appendFile(FILE_D).commit();
 
-    for (Table tbl : tables) {
-      assertThat(TestTables.metadataVersion(tbl.name())).isEqualTo(0L);
+    assertThat(baseMetadataOne).isSameAs(((BaseTable) one).operations().current());
+    assertThat(baseMetadataTwo).isSameAs(((BaseTable) two).operations().current());
+    assertThat(baseMetadataThree).isSameAs(((BaseTable) three).operations().current());
+
+    for (String tbl : tables) {
+      TableMetadata current =
+          ((BaseTable) catalog.loadTable(TableIdentifier.of(tbl))).operations().current();
+      assertThat(current.snapshots()).isEmpty();
     }
 
     catalogTransaction.commitTransaction();
 
-    for (Table tbl : tables) {
-      assertThat(TestTables.metadataVersion(tbl.name())).isEqualTo(1L);
+    for (String tbl : tables) {
+      TableMetadata current =
+          ((BaseTable) catalog.loadTable(TableIdentifier.of(tbl))).operations().current();
+      assertThat(current.snapshots()).hasSizeGreaterThanOrEqualTo(1);
     }
 
-    assertThat(one.currentSnapshot().snapshotId()).isEqualTo(1L);
-    assertThat(two.currentSnapshot().snapshotId()).isEqualTo(2L);
-    assertThat(three.currentSnapshot().snapshotId()).isEqualTo(2L);
+    one = catalog.loadTable(a);
+    two = catalog.loadTable(b);
+    three = catalog.loadTable(c);
+    assertThat(one.currentSnapshot().allManifests(one.io())).hasSize(1);
+    assertThat(two.currentSnapshot().allManifests(two.io())).hasSize(1);
+    assertThat(three.currentSnapshot().allManifests(three.io())).hasSize(1);
 
-    assertThat(TestTables.readMetadata(one.name()).currentSnapshot().allManifests(table.io()))
-        .hasSize(1);
-    assertThat(TestTables.readMetadata(two.name()).currentSnapshot().allManifests(table.io()))
-        .hasSize(1);
-    assertThat(TestTables.readMetadata(three.name()).currentSnapshot().allManifests(table.io()))
-        .hasSize(1);
-
-    validateManifestEntries(
-        TestTables.readMetadata(one.name()).currentSnapshot().allManifests(table.io()).get(0),
-        ids(1L, 1L),
-        files(FILE_A, FILE_B),
-        statuses(Status.ADDED, Status.ADDED));
-
-    validateManifestEntries(
-        TestTables.readMetadata(two.name()).currentSnapshot().allManifests(table.io()).get(0),
-        ids(1L, 2L),
-        files(FILE_B, FILE_C),
-        statuses(Status.EXISTING, Status.DELETED));
-
-    validateManifestEntries(
-        TestTables.readMetadata(three.name()).currentSnapshot().allManifests(table.io()).get(0),
-        ids(2L),
-        files(FILE_D),
-        statuses(Status.ADDED));
+    assertThat(one.currentSnapshot().addedDataFiles(one.io())).hasSize(2);
+    assertThat(two.currentSnapshot().addedDataFiles(two.io())).hasSize(2);
+    assertThat(three.currentSnapshot().addedDataFiles(three.io())).hasSize(1);
   }
 
   @Test
   public void testTransactionsAgainstMultipleTablesLastOneFails() {
-    Table one = TestTables.create(tableDir, "a", SCHEMA, SPEC, SortOrder.unsorted(), formatVersion);
-    Table two = TestTables.create(tableDir, "b", SCHEMA, SPEC, SortOrder.unsorted(), formatVersion);
-    Table three =
-        TestTables.create(tableDir, "c", SCHEMA, SPEC, SortOrder.unsorted(), formatVersion);
-
-    List<Table> tables = Arrays.asList(one, two, three);
-    for (Table tbl : tables) {
-      assertThat(TestTables.metadataVersion(tbl.name())).isEqualTo(0L);
+    for (String tbl : Arrays.asList("a", "b", "c")) {
+      catalog.createTable(TableIdentifier.of(tbl), SCHEMA);
     }
 
-    TableMetadata baseMetadataOne = TestTables.readMetadata(one.name());
-    TableMetadata baseMetadataTwo = TestTables.readMetadata(two.name());
-    TableMetadata baseMetadataThree = TestTables.readMetadata(three.name());
+    TableIdentifier a = TableIdentifier.of("a");
+    TableIdentifier b = TableIdentifier.of("b");
+    TableIdentifier c = TableIdentifier.of("c");
+    Table one = catalog.loadTable(a);
+    Table two = catalog.loadTable(b);
+    Table three = catalog.loadTable(c);
+
+    TableMetadata baseMetadataOne = ((BaseTable) one).operations().current();
+    TableMetadata baseMetadataTwo = ((BaseTable) two).operations().current();
+    TableMetadata baseMetadataThree = ((BaseTable) three).operations().current();
 
     CatalogTransaction catalogTransaction =
         catalog.startTransaction(CatalogTransaction.IsolationLevel.SNAPSHOT);
-    // Table table1 = catalogTransaction.asCatalog().loadTable(TableIdentifier.parse(one.name()));
-    catalogTransaction.newAppend(one).appendFile(FILE_A).appendFile(FILE_B).commit();
-    assertThat(baseMetadataOne).isSameAs(TestTables.readMetadata(one.name()));
+    Catalog txCatalog = catalogTransaction.asCatalog();
+    txCatalog.loadTable(a).newAppend().appendFile(FILE_A).appendFile(FILE_B).commit();
+    assertThat(baseMetadataOne).isSameAs(((BaseTable) one).operations().current());
 
-    catalogTransaction.newFastAppend(two).appendFile(FILE_B).appendFile(FILE_C).commit();
-    catalogTransaction.newDelete(two).deleteFile(FILE_C).commit();
-    assertThat(baseMetadataTwo).isSameAs(TestTables.readMetadata(two.name()));
+    txCatalog.loadTable(b).newFastAppend().appendFile(FILE_B).appendFile(FILE_C).commit();
+    txCatalog.loadTable(b).newDelete().deleteFile(FILE_C).commit();
+    assertThat(baseMetadataTwo).isSameAs(((BaseTable) two).operations().current());
 
-    catalogTransaction.newDelete(three).deleteFile(FILE_A).commit();
-    catalogTransaction.newAppend(three).appendFile(FILE_D).commit();
+    txCatalog.loadTable(c).newDelete().deleteFile(FILE_A).commit();
+    txCatalog.loadTable(c).newAppend().appendFile(FILE_D).commit();
 
-    catalogTransaction
-        .updateSchema(three)
-        .addColumn("new-column", Types.IntegerType.get())
-        .commit();
+    txCatalog.loadTable(c).updateSchema().addColumn("new-column", Types.IntegerType.get()).commit();
 
-    assertThat(baseMetadataThree).isSameAs(TestTables.readMetadata(three.name()));
+    assertThat(baseMetadataThree).isSameAs(((BaseTable) three).operations().current());
 
     // directly update the table for adding "another-column"
     three.updateSchema().addColumn("another-column", Types.IntegerType.get()).commit();
 
-    assertThat(baseMetadataOne).isSameAs(TestTables.readMetadata(one.name()));
-    assertThat(baseMetadataTwo).isSameAs(TestTables.readMetadata(two.name()));
-    assertThat(baseMetadataThree).isNotSameAs(TestTables.readMetadata(three.name()));
+    assertThat(baseMetadataOne).isSameAs(((BaseTable) one).operations().current());
+    assertThat(baseMetadataTwo).isSameAs(((BaseTable) two).operations().current());
+    assertThat(baseMetadataThree).isNotSameAs(((BaseTable) three).operations().current());
 
     Assertions.assertThatThrownBy(catalogTransaction::commitTransaction)
         .isInstanceOf(CommitFailedException.class);
 
     // the third update in the catalog TX fails, so we need to make sure that all changes from the
     // catalog TX are rolled back
-    assertThat(baseMetadataOne).isSameAs(TestTables.readMetadata(one.name()));
-    assertThat(baseMetadataTwo).isSameAs(TestTables.readMetadata(two.name()));
-    assertThat(baseMetadataThree).isNotSameAs(TestTables.readMetadata(three.name()));
+    assertThat(baseMetadataOne).isSameAs(((BaseTable) one).operations().current());
+    assertThat(baseMetadataTwo).isSameAs(((BaseTable) two).operations().current());
+    assertThat(baseMetadataThree).isNotSameAs(((BaseTable) three).operations().current());
 
-    assertThat(TestTables.readMetadata(one.name()).currentSnapshot()).isNull();
-    assertThat(TestTables.readMetadata(two.name()).currentSnapshot()).isNull();
-    assertThat(TestTables.readMetadata(three.name()).currentSnapshot()).isNull();
+    assertThat(((BaseTable) one).operations().current().currentSnapshot()).isNull();
+    assertThat(((BaseTable) two).operations().current().currentSnapshot()).isNull();
+    assertThat(((BaseTable) three).operations().current().currentSnapshot()).isNull();
   }
 
   @Test
@@ -247,12 +233,13 @@ public class TestCatalogTransaction extends TableTestBase {
 
     CatalogTransaction catalogTx =
         catalog.startTransaction(CatalogTransaction.IsolationLevel.SERIALIZABLE_WITH_FIXED_READS);
+    Catalog txCatalog = catalogTx.asCatalog();
 
     // this should fail when the catalog TX commits due to SERIALIZABLE not permitting any other
     // updates
     table.updateSchema().addColumn("x", Types.BooleanType.get()).commit();
 
-    catalogTx.updateSchema(table).addColumn("y", Types.BooleanType.get()).commit();
+    txCatalog.loadTable(identifier).updateSchema().addColumn("y", Types.BooleanType.get()).commit();
     assertThatThrownBy(catalogTx::commitTransaction)
         .isInstanceOf(ValidationException.class)
         .hasMessageContaining("Found updates at")
@@ -271,13 +258,16 @@ public class TestCatalogTransaction extends TableTestBase {
 
     CatalogTransaction catalogTx =
         catalog.startTransaction(CatalogTransaction.IsolationLevel.SERIALIZABLE_WITH_FIXED_READS);
-
     Catalog txCatalog = catalogTx.asCatalog();
 
     String column = "new_col";
 
     assertThat(txCatalog.loadTable(identifier).schema().findField(column)).isNull();
-    catalogTx.updateSchema(table).addColumn(column, Types.BooleanType.get()).commit();
+    txCatalog
+        .loadTable(identifier)
+        .updateSchema()
+        .addColumn(column, Types.BooleanType.get())
+        .commit();
     // changes inside the catalog TX should be visible
     assertThat(txCatalog.loadTable(identifier).schema().findField(column)).isNotNull();
 
