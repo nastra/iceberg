@@ -458,6 +458,9 @@ public class TableMetadataParser {
       snapshots.add(SnapshotParser.fromJson(iterator.next()));
     }
 
+    SnapshotOperations snapshotOperations =
+        ImmutableSnapshotOperations.builder().initialSnapshots(snapshots).initialRefs(refs).build();
+
     List<StatisticsFile> statisticsFiles;
     if (node.has(STATISTICS)) {
       statisticsFiles = statisticsFilesFromJson(node.get(STATISTICS));
@@ -506,10 +509,9 @@ public class TableMetadataParser {
         sortOrders,
         properties,
         currentSnapshotId,
-        snapshots,
+        snapshotOperations,
         entries.build(),
         metadataEntries.build(),
-        refs,
         statisticsFiles,
         ImmutableList.of() /* no changes from the file */);
   }
