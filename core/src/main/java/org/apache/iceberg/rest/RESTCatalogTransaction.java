@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import org.apache.iceberg.AppendFiles;
 import org.apache.iceberg.BaseTable;
 import org.apache.iceberg.BaseTransaction;
+import org.apache.iceberg.DataTableScan;
 import org.apache.iceberg.DeleteFiles;
 import org.apache.iceberg.ExpireSnapshots;
 import org.apache.iceberg.HasTableOperations;
@@ -37,10 +38,12 @@ import org.apache.iceberg.ReplaceSortOrder;
 import org.apache.iceberg.RewriteFiles;
 import org.apache.iceberg.RewriteManifests;
 import org.apache.iceberg.RowDelta;
+import org.apache.iceberg.SnapshotRef;
 import org.apache.iceberg.Table;
 import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.TableMetadataDiffAccess;
 import org.apache.iceberg.TableOperations;
+import org.apache.iceberg.TableScan;
 import org.apache.iceberg.Transaction;
 import org.apache.iceberg.Transactions;
 import org.apache.iceberg.UpdateLocation;
@@ -59,10 +62,11 @@ import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.rest.requests.UpdateTableRequest;
 import org.apache.iceberg.util.Tasks;
+import org.immutables.value.Value;
 
 public class RESTCatalogTransaction implements CatalogTransaction {
   private final Map<TableIdentifier, Transaction> txByTable;
-  private final Map<TableIdentifier, TableMetadata> initiallyReadTableMetadata;
+  private final Map<TableRef, TableMetadata> initiallyReadTableMetadataByRef;
   private final Map<TableIdentifier, Table> initiallyReadTables;
   private final IsolationLevel isolationLevel;
   private final Catalog origin;
@@ -83,9 +87,9 @@ public class RESTCatalogTransaction implements CatalogTransaction {
     this.isolationLevel = isolationLevel;
     this.sessionCatalog = sessionCatalog;
     this.context = context;
-    this.txByTable = Maps.newConcurrentMap();
-    this.initiallyReadTableMetadata = Maps.newConcurrentMap();
-    this.initiallyReadTables = Maps.newConcurrentMap();
+    this.txByTable = Maps.newHashMap();
+    this.initiallyReadTableMetadataByRef = Maps.newHashMap();
+    this.initiallyReadTables = Maps.newHashMap();
   }
 
   @Override
@@ -93,7 +97,7 @@ public class RESTCatalogTransaction implements CatalogTransaction {
     Preconditions.checkState(!hasCommitted, "Transaction has already committed changes");
 
     try {
-      Map<TableIdentifier, List<PendingUpdate>> pendingUpdatesByTable = Maps.newConcurrentMap();
+      Map<TableIdentifier, List<PendingUpdate>> pendingUpdatesByTable = Maps.newHashMap();
       txByTable.forEach((key, value) -> pendingUpdatesByTable.put(key, value.pendingUpdates()));
       Map<TableIdentifier, UpdateTableRequest> updatesByTable = Maps.newHashMap();
 
@@ -153,33 +157,48 @@ public class RESTCatalogTransaction implements CatalogTransaction {
    * happens due to a transaction taking action based on an outdated premise (a fact that was true
    * when a table was initially loaded but then changed due to a concurrent update to the table
    * while this TX was in-progress). When this TX wants to commit, the original premise might not
-   * hold anymore, thus we need to check whether {@link TableMetadata} changed after it was
-   * initially read inside this TX.
+   * hold anymore, thus we need to check whether the {@link org.apache.iceberg.Snapshot} a branch
+   * was pointing to changed after it was initially read inside this TX. If no information a
+   * branch's snapshot is available, we check whether {@link TableMetadata} changed after it was
+   * initially read.
    */
   private void validateSerializableIsolation() {
-    for (TableIdentifier readTable : initiallyReadTableMetadata.keySet()) {
+    for (TableRef readTable : initiallyReadTableMetadataByRef.keySet()) {
       // we need to check all read tables to determine whether they changed outside the catalog
-      // TX after we initially read them
+      // TX after we initially read them on a particular branch
       if (IsolationLevel.SERIALIZABLE == isolationLevel) {
-        TableMetadata currentTableMetadata =
-            ((BaseTable) origin.loadTable(readTable)).operations().current();
+        BaseTable table = (BaseTable) origin.loadTable(readTable.identifier());
+        SnapshotRef snapshotRef = table.operations().current().ref(readTable.ref());
+        SnapshotRef snapshotRefInsideTx =
+            initiallyReadTableMetadataByRef.get(readTable).ref(readTable.ref());
 
-        if (!currentTableMetadata
-            .metadataFileLocation()
-            .equals(initiallyReadTableMetadata.get(readTable).metadataFileLocation())) {
+        if (null != snapshotRef
+            && null != snapshotRefInsideTx
+            && snapshotRef.snapshotId() != snapshotRefInsideTx.snapshotId()) {
           throw new ValidationException(
-              "%s isolation violation: Found table metadata updates to table '%s' after it was read",
-              isolationLevel(), readTable);
+              "%s isolation violation: Found table metadata updates to table '%s' after it was read on branch '%s'",
+              isolationLevel(), readTable.identifier().toString(), readTable.ref());
+        }
+
+        if (null == snapshotRef || null == snapshotRefInsideTx) {
+          TableMetadata currentTableMetadata = table.operations().current();
+
+          if (!currentTableMetadata
+              .metadataFileLocation()
+              .equals(initiallyReadTableMetadataByRef.get(readTable).metadataFileLocation())) {
+            throw new ValidationException(
+                "%s isolation violation: Found table metadata updates to table '%s' after it was read",
+                isolationLevel(), readTable.identifier());
+          }
         }
       }
     }
   }
 
-  @Override
-  public void rollback() {
+  private void rollback() {
     Tasks.foreach(txByTable.values()).run(Transaction::rollback);
     txByTable.clear();
-    initiallyReadTableMetadata.clear();
+    initiallyReadTableMetadataByRef.clear();
     initiallyReadTables.clear();
   }
 
@@ -246,19 +265,18 @@ public class RESTCatalogTransaction implements CatalogTransaction {
                                 // we need to remember the very first version of table metadata that
                                 // we read
                                 if (IsolationLevel.SERIALIZABLE == isolationLevel()) {
-                                  initiallyReadTableMetadata.computeIfAbsent(
-                                      identifier,
-                                      ident -> ((BaseTable) loadTable).operations().current());
+                                  initiallyReadTableMetadataByRef.computeIfAbsent(
+                                      ImmutableTableRef.builder()
+                                          .identifier(identifier)
+                                          .ref(SnapshotRef.MAIN_BRANCH)
+                                          .build(),
+                                      ident -> opsFromTable(loadTable).current());
                                 }
 
                                 return loadTable;
                               }));
 
-      TableOperations tableOps =
-          table instanceof BaseTransaction.TransactionTable
-              ? ((BaseTransaction.TransactionTable) table).operations()
-              : ((BaseTable) table).operations();
-      return new TransactionalTable(table, tableOps);
+      return new TransactionalTable(table, opsFromTable(table));
     }
 
     @Override
@@ -277,12 +295,28 @@ public class RESTCatalogTransaction implements CatalogTransaction {
     }
   }
 
+  private static TableOperations opsFromTable(Table table) {
+    return table instanceof BaseTransaction.TransactionTable
+        ? ((BaseTransaction.TransactionTable) table).operations()
+        : ((BaseTable) table).operations();
+  }
+
   private class TransactionalTable extends BaseTable {
     private final Table table;
 
     private TransactionalTable(Table table, TableOperations ops) {
       super(ops, table.name());
       this.table = table;
+    }
+
+    @Override
+    public TableScan newScan() {
+      TableScan tableScan = super.newScan();
+      if (tableScan instanceof DataTableScan) {
+        return new TransactionalTableScan((DataTableScan) tableScan);
+      }
+
+      return tableScan;
     }
 
     @Override
@@ -363,6 +397,41 @@ public class RESTCatalogTransaction implements CatalogTransaction {
     @Override
     public ManageSnapshots manageSnapshots() {
       return txForTable(table).manageSnapshots();
+    }
+  }
+
+  private class TransactionalTableScan extends DataTableScan {
+    protected TransactionalTableScan(DataTableScan delegate) {
+      super(delegate.table(), delegate.schema(), delegate.context());
+    }
+
+    @Override
+    public TableScan useRef(String name) {
+      DataTableScan tableScan = (DataTableScan) super.useRef(name);
+
+      if (IsolationLevel.SERIALIZABLE == isolationLevel()) {
+        // store which version of the table on the given branch we read the first time
+        initiallyReadTableMetadataByRef.computeIfAbsent(
+            ImmutableTableRef.builder()
+                .identifier(identifierWithoutCatalog(table().name()))
+                .ref(name)
+                .build(),
+            ident -> opsFromTable(table()).current());
+      }
+
+      return tableScan;
+    }
+  }
+
+  @Value.Immutable
+  interface TableRef {
+    TableIdentifier identifier();
+
+    String ref();
+
+    @Value.Lazy
+    default String name() {
+      return identifier().toString() + "@" + ref();
     }
   }
 }

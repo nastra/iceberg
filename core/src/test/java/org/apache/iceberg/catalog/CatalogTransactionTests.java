@@ -98,15 +98,6 @@ public abstract class CatalogTransactionTests<
   }
 
   @Test
-  public void multipleRollbacksShouldNotFail() {
-    CatalogTransaction catalogTx = catalog().startTransaction(SERIALIZABLE);
-    catalogTx.rollback();
-    catalogTx.commitTransaction();
-    catalogTx.rollback();
-    catalogTx.rollback();
-  }
-
-  @Test
   public void invalidIsolationLevel() {
     assertThatThrownBy(() -> catalog().startTransaction(null))
         .isInstanceOf(IllegalArgumentException.class)
@@ -524,5 +515,205 @@ public abstract class CatalogTransactionTests<
 
     assertThat(Iterables.size(catalog().loadTable(first).newScan().planFiles())).isEqualTo(2);
     assertThat(Iterables.size(catalog().loadTable(second).newScan().planFiles())).isEqualTo(3);
+  }
+
+  @Test
+  public void readOnlyTxWithSerializableOnBranchShouldNotFail() {
+    String branch = "branch";
+    for (String tbl : Arrays.asList("a", "b")) {
+      Table table = catalog().createTable(TableIdentifier.of("ns", tbl), SCHEMA);
+      table.newFastAppend().appendFile(FILE_A).commit();
+      table.manageSnapshots().createBranch(branch, table.currentSnapshot().snapshotId()).commit();
+    }
+
+    TableIdentifier first = TableIdentifier.of("ns", "a");
+    TableIdentifier second = TableIdentifier.of("ns", "b");
+    Table one = catalog().loadTable(first);
+    Table two = catalog().loadTable(second);
+
+    CatalogTransaction catalogTransaction = catalog().startTransaction(SERIALIZABLE);
+    Catalog txCatalog = catalogTransaction.asCatalog();
+
+    assertThat(Iterables.size(txCatalog.loadTable(first).newScan().useRef(branch).planFiles()))
+        .isEqualTo(1);
+    assertThat(Iterables.size(txCatalog.loadTable(second).newScan().useRef(branch).planFiles()))
+        .isEqualTo(1);
+
+    // changes happen outside the catalog TX
+    one.newFastAppend().appendFile(FILE_A).appendFile(FILE_D).toBranch(branch).commit();
+    two.newFastAppend()
+        .appendFile(FILE_B)
+        .appendFile(FILE_C)
+        .appendFile(FILE_D)
+        .toBranch(branch)
+        .commit();
+
+    // catalog TX should still the version of the table it initially read (with 0 files)
+    assertThat(Iterables.size(txCatalog.loadTable(first).newScan().useRef(branch).planFiles()))
+        .isEqualTo(1);
+    assertThat(Iterables.size(txCatalog.loadTable(second).newScan().useRef(branch).planFiles()))
+        .isEqualTo(1);
+
+    // this ends up being a read-only TX, thus no write skew can happen, and it shouldn't fail
+    catalogTransaction.commitTransaction();
+
+    assertThat(Iterables.size(catalog().loadTable(first).newScan().useRef(branch).planFiles()))
+        .isEqualTo(3);
+    assertThat(Iterables.size(catalog().loadTable(second).newScan().useRef(branch).planFiles()))
+        .isEqualTo(4);
+  }
+
+  @Test
+  public void concurrentTxOnBranch() {
+    concurrentTxOnBranch(SNAPSHOT);
+  }
+
+  @Test
+  public void concurrentTxOnBranchWithSerializable() {
+    concurrentTxOnBranch(SERIALIZABLE);
+  }
+
+  private void concurrentTxOnBranch(CatalogTransaction.IsolationLevel isolationLevel) {
+    String branch = "branch";
+    TableIdentifier identifier = TableIdentifier.of("ns", "tbl");
+    Table one = catalog().createTable(identifier, SCHEMA);
+    one.newFastAppend().appendFile(FILE_A).commit();
+    one.manageSnapshots().createBranch(branch, one.currentSnapshot().snapshotId()).commit();
+
+    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    Catalog txCatalog = catalogTransaction.asCatalog();
+
+    // perform updates outside catalog TX but before table has been read inside the catalog TX
+    one.newAppend().appendFile(FILE_C).appendFile(FILE_D).toBranch(branch).commit();
+
+    TableMetadata metadata = ((BaseTable) one).operations().refresh();
+    Snapshot snapshotOnBranch = metadata.snapshot(metadata.ref(branch).snapshotId());
+    assertThat(snapshotOnBranch).isNotNull();
+    assertThat(snapshotOnBranch.summary().get(SnapshotSummary.ADDED_FILES_PROP)).isEqualTo("2");
+    assertThat(snapshotOnBranch.summary().get(SnapshotSummary.ADDED_RECORDS_PROP)).isEqualTo("2");
+    assertThat(snapshotOnBranch.summary().get(SnapshotSummary.TOTAL_DATA_FILES_PROP))
+        .isEqualTo("3");
+
+    // this should not fail with any isolation level
+    txCatalog
+        .loadTable(identifier)
+        .newAppend()
+        .appendFile(FILE_A)
+        .appendFile(FILE_B)
+        .toBranch(branch)
+        .commit();
+
+    catalogTransaction.commitTransaction();
+
+    metadata = ((BaseTable) one).operations().refresh();
+    snapshotOnBranch = metadata.snapshot(metadata.ref(branch).snapshotId());
+    assertThat(snapshotOnBranch).isNotNull();
+    assertThat(snapshotOnBranch.summary().get(SnapshotSummary.ADDED_FILES_PROP)).isEqualTo("2");
+    assertThat(snapshotOnBranch.summary().get(SnapshotSummary.ADDED_RECORDS_PROP)).isEqualTo("2");
+    assertThat(snapshotOnBranch.summary().get(SnapshotSummary.TOTAL_DATA_FILES_PROP))
+        .isEqualTo("5");
+  }
+
+  @Test
+  public void readTableAfterLoadTableInsideTxOnBranch() {
+    readTableAfterLoadTableInsideTxOnBranch(SNAPSHOT);
+  }
+
+  @Test
+  public void readTableAfterLoadTableInsideTxOnBranchWithSerializable() {
+    readTableAfterLoadTableInsideTxOnBranch(SERIALIZABLE);
+  }
+
+  private void readTableAfterLoadTableInsideTxOnBranch(
+      CatalogTransaction.IsolationLevel isolationLevel) {
+    String branch = "branch";
+    for (String tbl : Arrays.asList("a", "b")) {
+      Table table = catalog().createTable(TableIdentifier.of("ns", tbl), SCHEMA);
+      table.newFastAppend().appendFile(FILE_A).commit();
+      table.manageSnapshots().createBranch(branch, table.currentSnapshot().snapshotId()).commit();
+    }
+
+    TableIdentifier first = TableIdentifier.of("ns", "a");
+    TableIdentifier second = TableIdentifier.of("ns", "b");
+    Table two = catalog().loadTable(second);
+
+    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    Catalog txCatalog = catalogTransaction.asCatalog();
+
+    txCatalog.loadTable(first).newAppend().appendFile(FILE_D).toBranch(branch).commit();
+    assertThat(Iterables.size(txCatalog.loadTable(first).newScan().useRef(branch).planFiles()))
+        .isEqualTo(2);
+    assertThat(Iterables.size(txCatalog.loadTable(second).newScan().useRef(branch).planFiles()))
+        .isEqualTo(1);
+
+    two.newFastAppend().appendFile(FILE_B).toBranch(branch).commit();
+
+    // this should not be allowed with SERIALIZABLE after the table has been already read
+    // within the catalog TX, but is allowed with SNAPSHOT
+    // catalog TX should still the version of the table it initially read (with 1 file)
+    assertThat(Iterables.size(txCatalog.loadTable(second).newScan().useRef(branch).planFiles()))
+        .isEqualTo(1);
+
+    if (SERIALIZABLE == isolationLevel) {
+      Assertions.assertThatThrownBy(catalogTransaction::commitTransaction)
+          .isInstanceOf(ValidationException.class)
+          .hasMessage(
+              "SERIALIZABLE isolation violation: Found table metadata updates to table 'ns.a' after it was read on branch 'branch'");
+
+      assertThat(Iterables.size(catalog().loadTable(first).newScan().useRef(branch).planFiles()))
+          .isEqualTo(1);
+      assertThat(Iterables.size(catalog().loadTable(second).newScan().useRef(branch).planFiles()))
+          .isEqualTo(2);
+    } else {
+      catalogTransaction.commitTransaction();
+
+      assertThat(Iterables.size(catalog().loadTable(first).newScan().useRef(branch).planFiles()))
+          .isEqualTo(2);
+      assertThat(Iterables.size(catalog().loadTable(second).newScan().useRef(branch).planFiles()))
+          .isEqualTo(2);
+    }
+  }
+
+  @Test
+  public void txAgainstDifferentBranches() {
+    txAgainstDifferentBranchesWithSerializable(SNAPSHOT);
+  }
+
+  @Test
+  public void txAgainstDifferentBranchesWithSerializable() {
+    txAgainstDifferentBranchesWithSerializable(SERIALIZABLE);
+  }
+
+  private void txAgainstDifferentBranchesWithSerializable(
+      CatalogTransaction.IsolationLevel isolationLevel) {
+    TableIdentifier identifier = TableIdentifier.of("ns", "table");
+    catalog().createTable(identifier, SCHEMA);
+    String branchA = "branchA";
+    String branchB = "branchB";
+
+    Table table = catalog().loadTable(identifier);
+    table.newFastAppend().appendFile(FILE_A).commit();
+    table.manageSnapshots().createBranch(branchA, table.currentSnapshot().snapshotId()).commit();
+
+    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    Catalog txCatalog = catalogTransaction.asCatalog();
+    txCatalog
+        .loadTable(identifier)
+        .manageSnapshots()
+        .createBranch(branchB, table.currentSnapshot().snapshotId())
+        .commit();
+    txCatalog.loadTable(identifier).newFastAppend().appendFile(FILE_D).toBranch(branchB).commit();
+
+    table.newFastAppend().appendFile(FILE_B).appendFile(FILE_C).toBranch(branchA).commit();
+
+    catalogTransaction.commitTransaction();
+
+    assertThat(
+            Iterables.size(catalog().loadTable(identifier).newScan().useRef(branchA).planFiles()))
+        .isEqualTo(3);
+
+    assertThat(
+            Iterables.size(catalog().loadTable(identifier).newScan().useRef(branchB).planFiles()))
+        .isEqualTo(2);
   }
 }

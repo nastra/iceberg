@@ -66,9 +66,6 @@ public interface CatalogTransaction {
    */
   void commitTransaction();
 
-  /** Rolls back any pending changes across tables. */
-  void rollback();
-
   /**
    * Returns this catalog transaction as a {@link Catalog} API so that any actions that are called
    * through this API are participating in this catalog transaction.
