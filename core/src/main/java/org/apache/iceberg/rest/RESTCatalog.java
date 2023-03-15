@@ -265,7 +265,7 @@ public class RESTCatalog
   }
 
   @Override
-  public CatalogTransaction startTransaction(IsolationLevel isolationLevel) {
-    return catalogTxDelegate.startTransaction(isolationLevel);
+  public CatalogTransaction createTransaction(IsolationLevel isolationLevel) {
+    return catalogTxDelegate.createTransaction(isolationLevel);
   }
 }

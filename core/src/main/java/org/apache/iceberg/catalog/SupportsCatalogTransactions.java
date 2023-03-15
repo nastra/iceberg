@@ -31,10 +31,10 @@ public interface SupportsCatalogTransactions {
   Set<IsolationLevel> supportedIsolationLevels();
 
   /**
-   * Start a new {@link CatalogTransaction} with the given {@link IsolationLevel}.
+   * Create a new {@link CatalogTransaction} with the given {@link IsolationLevel}.
    *
    * @param isolationLevel The isolation level to use.
    * @return A new {@link CatalogTransaction}.
    */
-  CatalogTransaction startTransaction(IsolationLevel isolationLevel);
+  CatalogTransaction createTransaction(IsolationLevel isolationLevel);
 }

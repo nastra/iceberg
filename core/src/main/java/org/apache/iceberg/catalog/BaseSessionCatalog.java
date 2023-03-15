@@ -171,7 +171,7 @@ public abstract class BaseSessionCatalog implements SessionCatalog {
     }
 
     @Override
-    public CatalogTransaction startTransaction(CatalogTransaction.IsolationLevel isolationLevel) {
+    public CatalogTransaction createTransaction(CatalogTransaction.IsolationLevel isolationLevel) {
       Preconditions.checkState(
           BaseSessionCatalog.this instanceof RESTSessionCatalog,
           "Only RESTSessionCatalog currently supports CatalogTransactions");

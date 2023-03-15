@@ -90,7 +90,7 @@ public abstract class CatalogTransactionTests<
 
   @Test
   public void multipleCommits() {
-    CatalogTransaction catalogTx = catalog().startTransaction(SERIALIZABLE);
+    CatalogTransaction catalogTx = catalog().createTransaction(SERIALIZABLE);
     catalogTx.commitTransaction();
     assertThatThrownBy(catalogTx::commitTransaction)
         .isInstanceOf(IllegalStateException.class)
@@ -99,7 +99,7 @@ public abstract class CatalogTransactionTests<
 
   @Test
   public void invalidIsolationLevel() {
-    assertThatThrownBy(() -> catalog().startTransaction(null))
+    assertThatThrownBy(() -> catalog().createTransaction(null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
             String.format(
@@ -124,7 +124,7 @@ public abstract class CatalogTransactionTests<
     Table one = catalog().loadTable(identifier);
     TableMetadata base = ((BaseTable) one).operations().current();
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
     Catalog txCatalog = catalogTransaction.asCatalog();
     txCatalog.loadTable(identifier).newAppend().appendFile(FILE_A).appendFile(FILE_B).commit();
 
@@ -168,7 +168,7 @@ public abstract class CatalogTransactionTests<
     TableMetadata baseMetadataTwo = ((BaseTable) two).operations().current();
     TableMetadata baseMetadataThree = ((BaseTable) three).operations().current();
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
     Catalog txCatalog = catalogTransaction.asCatalog();
 
     txCatalog.loadTable(first).newFastAppend().appendFile(FILE_A).appendFile(FILE_B).commit();
@@ -238,7 +238,7 @@ public abstract class CatalogTransactionTests<
     TableMetadata baseMetadataTwo = ((BaseTable) two).operations().current();
     TableMetadata baseMetadataThree = ((BaseTable) three).operations().current();
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
     Catalog txCatalog = catalogTransaction.asCatalog();
     txCatalog.loadTable(first).newAppend().appendFile(FILE_A).appendFile(FILE_B).commit();
     assertThat(baseMetadataOne).isSameAs(((BaseTable) one).operations().refresh());
@@ -309,7 +309,7 @@ public abstract class CatalogTransactionTests<
     TableMetadata baseMetadataTwo = ((BaseTable) two).operations().current();
     TableMetadata baseMetadataThree = ((BaseTable) three).operations().current();
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
     Catalog txCatalog = catalogTransaction.asCatalog();
     txCatalog.loadTable(first).newAppend().appendFile(FILE_A).appendFile(FILE_B).commit();
     assertThat(baseMetadataOne).isSameAs(((BaseTable) one).operations().refresh());
@@ -374,7 +374,7 @@ public abstract class CatalogTransactionTests<
     catalog().createTable(identifier, SCHEMA);
     assertThat(catalog().tableExists(identifier)).isTrue();
 
-    CatalogTransaction catalogTx = catalog().startTransaction(isolationLevel);
+    CatalogTransaction catalogTx = catalog().createTransaction(isolationLevel);
     Catalog txCatalog = catalogTx.asCatalog();
 
     String column = "new_col";
@@ -417,7 +417,7 @@ public abstract class CatalogTransactionTests<
     TableIdentifier second = TableIdentifier.of("ns", "b");
     Table two = catalog().loadTable(second);
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
     Catalog txCatalog = catalogTransaction.asCatalog();
     txCatalog.loadTable(first).newAppend().appendFile(FILE_A).appendFile(FILE_D).commit();
     assertThat(Iterables.size(txCatalog.loadTable(first).newScan().planFiles())).isEqualTo(2);
@@ -461,7 +461,7 @@ public abstract class CatalogTransactionTests<
     catalog().createTable(identifier, SCHEMA);
     Table one = catalog().loadTable(identifier);
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
     Catalog txCatalog = catalogTransaction.asCatalog();
 
     // perform updates outside catalog TX but before table has been read inside the catalog TX
@@ -496,7 +496,7 @@ public abstract class CatalogTransactionTests<
     Table one = catalog().loadTable(first);
     Table two = catalog().loadTable(second);
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(SERIALIZABLE);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(SERIALIZABLE);
     Catalog txCatalog = catalogTransaction.asCatalog();
 
     assertThat(Iterables.size(txCatalog.loadTable(first).newScan().planFiles())).isEqualTo(0);
@@ -531,7 +531,7 @@ public abstract class CatalogTransactionTests<
     Table one = catalog().loadTable(first);
     Table two = catalog().loadTable(second);
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(SERIALIZABLE);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(SERIALIZABLE);
     Catalog txCatalog = catalogTransaction.asCatalog();
 
     assertThat(Iterables.size(txCatalog.loadTable(first).newScan().useRef(branch).planFiles()))
@@ -580,7 +580,7 @@ public abstract class CatalogTransactionTests<
     one.newFastAppend().appendFile(FILE_A).commit();
     one.manageSnapshots().createBranch(branch, one.currentSnapshot().snapshotId()).commit();
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
     Catalog txCatalog = catalogTransaction.asCatalog();
 
     // perform updates outside catalog TX but before table has been read inside the catalog TX
@@ -637,7 +637,7 @@ public abstract class CatalogTransactionTests<
     TableIdentifier second = TableIdentifier.of("ns", "b");
     Table two = catalog().loadTable(second);
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
     Catalog txCatalog = catalogTransaction.asCatalog();
 
     txCatalog.loadTable(first).newAppend().appendFile(FILE_D).toBranch(branch).commit();
@@ -695,7 +695,7 @@ public abstract class CatalogTransactionTests<
     table.newFastAppend().appendFile(FILE_A).commit();
     table.manageSnapshots().createBranch(branchA, table.currentSnapshot().snapshotId()).commit();
 
-    CatalogTransaction catalogTransaction = catalog().startTransaction(isolationLevel);
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
     Catalog txCatalog = catalogTransaction.asCatalog();
     txCatalog
         .loadTable(identifier)
