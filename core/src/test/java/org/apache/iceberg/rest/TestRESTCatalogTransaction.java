@@ -18,13 +18,18 @@
  */
 package org.apache.iceberg.rest;
 
+import static org.apache.iceberg.catalog.CatalogTransaction.IsolationLevel.SERIALIZABLE;
+import static org.apache.iceberg.catalog.CatalogTransaction.IsolationLevel.SNAPSHOT;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.UUID;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.iceberg.CatalogProperties;
+import org.apache.iceberg.catalog.Catalog;
+import org.apache.iceberg.catalog.CatalogTransaction;
 import org.apache.iceberg.catalog.CatalogTransactionTests;
 import org.apache.iceberg.catalog.SessionCatalog;
+import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.jdbc.JdbcCatalog;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.eclipse.jetty.server.Server;
@@ -90,7 +95,7 @@ public class TestRESTCatalogTransaction extends CatalogTransactionTests<RESTCata
     this.catalog =
         new RESTCatalog(
             context,
-            (config) -> HTTPClient.builder().uri(config.get(CatalogProperties.URI)).build());
+            (config) -> HTTPClient.builder(config).uri(config.get(CatalogProperties.URI)).build());
     catalog.setConf(new Configuration());
     catalog.initialize(
         "prod",
@@ -138,5 +143,39 @@ public class TestRESTCatalogTransaction extends CatalogTransactionTests<RESTCata
                     null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Invalid isolation level: null");
+  }
+
+  @Test
+  public void overwriteFilter() {
+    overwriteFilter(SNAPSHOT);
+  }
+
+  @Test
+  public void overwriteFilterWithSerializable() {
+    overwriteFilter(SERIALIZABLE);
+  }
+
+  private void overwriteFilter(CatalogTransaction.IsolationLevel isolationLevel) {
+    TableIdentifier identifier = TableIdentifier.of("ns", "table");
+    catalog().createTable(identifier, SCHEMA);
+    catalog().loadTable(identifier).newFastAppend().appendFile(FILE_D).commit();
+
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
+    Catalog txCatalog = catalogTransaction.asCatalog();
+    txCatalog
+        .loadTable(identifier)
+        .newOverwrite()
+        .addFile(FILE_B)
+        // .overwriteByRowFilter(Expressions.equal("data", "0"))
+        .commit();
+
+    catalog()
+        .loadTable(identifier)
+        .newOverwrite()
+        // .overwriteByRowFilter(Expressions.equal("data", "0"))
+        .addFile(FILE_A)
+        .commit();
+
+    catalogTransaction.commitTransaction();
   }
 }

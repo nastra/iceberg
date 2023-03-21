@@ -23,16 +23,28 @@ import java.io.IOException;
 import java.util.Map;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.iceberg.CatalogProperties;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.SupportsNamespaces;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.hadoop.HadoopCatalog;
+import org.apache.iceberg.inmemory.InMemoryCatalog;
+import org.apache.iceberg.inmemory.InMemoryFileIO;
+import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
+import org.apache.iceberg.rest.RESTCatalog;
+import org.apache.iceberg.rest.RESTCatalogAdapter;
+import org.apache.iceberg.rest.RESTCatalogServlet;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
+import org.sparkproject.jetty.server.Server;
+import org.sparkproject.jetty.server.handler.gzip.GzipHandler;
+import org.sparkproject.jetty.servlet.ServletContextHandler;
+import org.sparkproject.jetty.servlet.ServletHolder;
 
 public abstract class SparkTestBaseWithCatalog extends SparkTestBase {
   private static File warehouse = null;
@@ -52,13 +64,21 @@ public abstract class SparkTestBaseWithCatalog extends SparkTestBase {
     }
   }
 
+  @After
+  public void after() throws Exception {
+    if (null != server) {
+      server.stop();
+    }
+  }
+
   @Rule public TemporaryFolder temp = new TemporaryFolder();
 
   protected final String catalogName;
-  protected final Catalog validationCatalog;
+  protected Catalog validationCatalog;
   protected final SupportsNamespaces validationNamespaceCatalog;
   protected final TableIdentifier tableIdent = TableIdentifier.of(Namespace.of("default"), "table");
   protected final String tableName;
+  Server server;
 
   public SparkTestBaseWithCatalog() {
     this(SparkCatalogConfig.HADOOP);
@@ -77,22 +97,64 @@ public abstract class SparkTestBaseWithCatalog extends SparkTestBase {
             : catalog;
     this.validationNamespaceCatalog = (SupportsNamespaces) validationCatalog;
 
+    Catalog backendCatalog = new InMemoryCatalog();
+    backendCatalog.initialize("in-memory-catalog", ImmutableMap.of());
+    RESTCatalogAdapter adaptor = new RESTCatalogAdapter(backendCatalog);
+
+    RESTCatalogServlet servlet = new RESTCatalogServlet(adaptor);
+    ServletContextHandler servletContext =
+        new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+    servletContext.setContextPath("/");
+    ServletHolder servletHolder = new ServletHolder(servlet);
+    servletHolder.setInitParameter("javax.ws.rs.Application", "ServiceListPublic");
+    servletContext.addServlet(servletHolder, "/*");
+    servletContext.setVirtualHosts(null);
+    servletContext.setGzipHandler(new GzipHandler());
+
+    server = new Server(8181);
+    server.setHandler(servletContext);
+    try {
+      server.start();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
+    Catalog restCatalog = new RESTCatalog();
+    restCatalog.initialize(
+        "prod",
+        ImmutableMap.of(
+            CatalogProperties.URI,
+            server.getURI().toString(),
+            "credential",
+            "catalog:12345",
+            CatalogProperties.FILE_IO_IMPL,
+            InMemoryFileIO.class.getName()));
+
     spark.conf().set("spark.sql.catalog." + catalogName, implementation);
     config.forEach(
         (key, value) -> spark.conf().set("spark.sql.catalog." + catalogName + "." + key, value));
 
-    if (config.get("type").equalsIgnoreCase("hadoop")) {
+    if (null != config.get("type") && config.get("type").equalsIgnoreCase("hadoop")) {
       spark.conf().set("spark.sql.catalog." + catalogName + ".warehouse", "file:" + warehouse);
     }
 
+    this.validationCatalog = restCatalog;
+
     this.tableName =
-        (catalogName.equals("spark_catalog") ? "" : catalogName + ".") + "default.table";
+        ((catalogName.equals("spark_catalog") || catalogName.equals("rest_catalog"))
+                ? ""
+                : catalogName + ".")
+            + "default.table";
 
     sql("CREATE NAMESPACE IF NOT EXISTS default");
   }
 
   protected String tableName(String name) {
-    return (catalogName.equals("spark_catalog") ? "" : catalogName + ".") + "default." + name;
+    return ((catalogName.equals("spark_catalog") || catalogName.equals("rest_catalog"))
+            ? ""
+            : catalogName + ".")
+        + "default."
+        + name;
   }
 
   protected String commitTarget() {

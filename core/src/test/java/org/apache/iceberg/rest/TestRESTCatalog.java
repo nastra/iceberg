@@ -27,7 +27,6 @@ import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -50,8 +49,9 @@ import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.catalog.CatalogTests;
 import org.apache.iceberg.catalog.SessionCatalog;
 import org.apache.iceberg.catalog.TableIdentifier;
+import org.apache.iceberg.inmemory.InMemoryCatalog;
+import org.apache.iceberg.inmemory.InMemoryFileIO;
 import org.apache.iceberg.io.CloseableIterable;
-import org.apache.iceberg.jdbc.JdbcCatalog;
 import org.apache.iceberg.metrics.MetricsReport;
 import org.apache.iceberg.metrics.MetricsReporter;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
@@ -86,27 +86,13 @@ public class TestRESTCatalog extends CatalogTests<RESTCatalog> {
   @TempDir public Path temp;
 
   private RESTCatalog restCatalog;
-  private JdbcCatalog backendCatalog;
+  private InMemoryCatalog backendCatalog;
   private Server httpServer;
 
   @BeforeEach
   public void createCatalog() throws Exception {
-    File warehouse = temp.toFile();
-    Configuration conf = new Configuration();
-
-    this.backendCatalog = new JdbcCatalog();
-    backendCatalog.setConf(conf);
-    Map<String, String> backendCatalogProperties =
-        ImmutableMap.of(
-            CatalogProperties.WAREHOUSE_LOCATION,
-            warehouse.getAbsolutePath(),
-            CatalogProperties.URI,
-            "jdbc:sqlite:file::memory:?ic" + UUID.randomUUID().toString().replace("-", ""),
-            JdbcCatalog.PROPERTY_PREFIX + "username",
-            "user",
-            JdbcCatalog.PROPERTY_PREFIX + "password",
-            "password");
-    backendCatalog.initialize("backend", backendCatalogProperties);
+    this.backendCatalog = new InMemoryCatalog();
+    this.backendCatalog.initialize("in-memory-catalog", ImmutableMap.of());
 
     Map<String, String> catalogHeaders =
         ImmutableMap.of("Authorization", "Bearer client-credentials-token:sub=catalog");
@@ -167,11 +153,15 @@ public class TestRESTCatalog extends CatalogTests<RESTCatalog> {
         new RESTCatalog(
             context,
             (config) -> HTTPClient.builder(config).uri(config.get(CatalogProperties.URI)).build());
-    restCatalog.setConf(conf);
     restCatalog.initialize(
         "prod",
         ImmutableMap.of(
-            CatalogProperties.URI, httpServer.getURI().toString(), "credential", "catalog:12345"));
+            CatalogProperties.URI,
+            httpServer.getURI().toString(),
+            "credential",
+            "catalog:12345",
+            CatalogProperties.FILE_IO_IMPL,
+            InMemoryFileIO.class.getName()));
   }
 
   @SuppressWarnings("unchecked")
@@ -1219,7 +1209,6 @@ public class TestRESTCatalog extends CatalogTests<RESTCatalog> {
                 ImmutableMap.of("credential", "user:12345"),
                 ImmutableMap.of()),
             (config) -> HTTPClient.builder(config).uri(config.get(CatalogProperties.URI)).build());
-    restCatalog.setConf(new Configuration());
     restCatalog.initialize(
         "prod",
         ImmutableMap.of(
@@ -1228,7 +1217,9 @@ public class TestRESTCatalog extends CatalogTests<RESTCatalog> {
             "credential",
             "catalog:12345",
             CatalogProperties.METRICS_REPORTER_IMPL,
-            CustomMetricsReporter.class.getName()));
+            CustomMetricsReporter.class.getName(),
+            CatalogProperties.FILE_IO_IMPL,
+            InMemoryFileIO.class.getName()));
 
     restCatalog.buildTable(TABLE, SCHEMA).create();
     Table table = restCatalog.loadTable(TABLE);

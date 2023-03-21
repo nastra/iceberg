@@ -19,6 +19,8 @@
 package org.apache.iceberg.spark;
 
 import java.util.Map;
+import org.apache.iceberg.CatalogProperties;
+import org.apache.iceberg.inmemory.InMemoryFileIO;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 
 public enum SparkCatalogConfig {
@@ -41,7 +43,21 @@ public enum SparkCatalogConfig {
           "parquet-enabled", "true",
           "cache-enabled",
               "false" // Spark will delete tables using v1, leaving the cache out of sync
-          ));
+          )),
+  REST(
+      "spark_catalog",
+      SparkCatalog.class.getName(),
+      ImmutableMap.of(
+          "catalog-impl",
+          "org.apache.iceberg.rest.RESTCatalog",
+          "uri",
+          "http://localhost:8181",
+          CatalogProperties.FILE_IO_IMPL,
+          InMemoryFileIO.class.getName(),
+          "cache-enabled",
+          "false",
+          "default-namespace",
+          "default"));
 
   private final String catalogName;
   private final String implementation;

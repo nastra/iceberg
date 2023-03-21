@@ -716,4 +716,36 @@ public abstract class CatalogTransactionTests<
             Iterables.size(catalog().loadTable(identifier).newScan().useRef(branchB).planFiles()))
         .isEqualTo(2);
   }
+
+  @Test
+  public void overwriteFilter() {
+    overwriteFilter(SNAPSHOT);
+  }
+
+  @Test
+  public void overwriteFilterWithSerializable() {
+    overwriteFilter(SERIALIZABLE);
+  }
+
+  private void overwriteFilter(CatalogTransaction.IsolationLevel isolationLevel) {
+    TableIdentifier identifier = TableIdentifier.of("ns", "table");
+    catalog().createTable(identifier, SCHEMA);
+
+    CatalogTransaction catalogTransaction = catalog().createTransaction(isolationLevel);
+    Catalog txCatalog = catalogTransaction.asCatalog();
+    txCatalog
+        .loadTable(identifier)
+        .newOverwrite()
+        // .overwriteByRowFilter(Expressions.equal("data", "0"))
+        .commit();
+
+    catalog()
+        .loadTable(identifier)
+        .newOverwrite()
+        // .overwriteByRowFilter(Expressions.equal("data", "0"))
+        .addFile(FILE_A)
+        .commit();
+
+    catalogTransaction.commitTransaction();
+  }
 }
