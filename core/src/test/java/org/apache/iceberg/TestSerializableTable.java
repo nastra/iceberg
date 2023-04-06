@@ -25,6 +25,7 @@ import static org.apache.iceberg.types.Types.NestedField.required;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import org.apache.iceberg.metrics.CompositeMetricsReporter;
 import org.apache.iceberg.metrics.MetricsReport;
 import org.apache.iceberg.metrics.MetricsReporter;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
@@ -74,7 +75,9 @@ public class TestSerializableTable {
   }
 
   private void assertSerializedMetricsReporter(MetricsReporter expected, MetricsReporter actual) {
-    Assertions.assertThat(actual).isNotNull().isInstanceOf(TestMetricsReporter.class);
+    Assertions.assertThat(actual).isNotNull().isInstanceOf(CompositeMetricsReporter.class);
+    Assertions.assertThat(((CompositeMetricsReporter) actual).metricsReporters())
+        .hasExactlyElementsOfTypes(TestMetricsReporter.class);
     Assertions.assertThat(actual.properties()).isEqualTo(expected.properties());
     Assertions.assertThat(actual.properties()).containsEntry("key1", "value1");
   }

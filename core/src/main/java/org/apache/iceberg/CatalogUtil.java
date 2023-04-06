@@ -35,10 +35,12 @@ import org.apache.iceberg.exceptions.ValidationException;
 import org.apache.iceberg.hadoop.Configurable;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.SupportsBulkOperations;
+import org.apache.iceberg.metrics.CompositeMetricsReporter;
 import org.apache.iceberg.metrics.LoggingMetricsReporter;
 import org.apache.iceberg.metrics.MetricsReporter;
 import org.apache.iceberg.relocated.com.google.common.base.Joiner;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
+import org.apache.iceberg.relocated.com.google.common.base.Splitter;
 import org.apache.iceberg.relocated.com.google.common.collect.Iterables;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.relocated.com.google.common.collect.MapMaker;
@@ -51,6 +53,7 @@ import org.slf4j.LoggerFactory;
 
 public class CatalogUtil {
   private static final Logger LOG = LoggerFactory.getLogger(CatalogUtil.class);
+  private static final Splitter COMMA = Splitter.on(',');
 
   /**
    * Shortcut catalog property to load a catalog implementation through a short type name, instead
@@ -420,6 +423,11 @@ public class CatalogUtil {
       return LoggingMetricsReporter.instance();
     }
 
+    return loadSingleMetricsReporter(properties, impl);
+  }
+
+  private static MetricsReporter loadSingleMetricsReporter(
+      Map<String, String> properties, String impl) {
     LOG.info("Loading custom MetricsReporter implementation: {}", impl);
     DynConstructors.Ctor<MetricsReporter> ctor;
     try {
@@ -447,5 +455,41 @@ public class CatalogUtil {
     reporter.initialize(properties);
 
     return reporter;
+  }
+
+  /**
+   * Initializes a {@link CompositeMetricsReporter} that supports loading multiple custom {@link
+   * MetricsReporter} implementations
+   *
+   * <p>Each custom {@link MetricsReporter} implementation must have a no-arg constructor.
+   *
+   * @param properties catalog properties where the {@link CatalogProperties#METRICS_REPORTER_IMPL}
+   *     contains a comma-separated list of custom metric reporter class names.
+   * @return A {@link CompositeMetricsReporter} with all custom metrics reporters initialized.
+   * @throws IllegalArgumentException if class path not found or right constructor not found or the
+   *     loaded class cannot be cast to the given interface type
+   */
+  public static CompositeMetricsReporter loadCompositeMetricsReporter(
+      Map<String, String> properties) {
+    String impl = properties.get(CatalogProperties.METRICS_REPORTER_IMPL);
+    CompositeMetricsReporter compositeMetricsReporter = new CompositeMetricsReporter();
+    compositeMetricsReporter.initialize(properties);
+
+    if (impl == null) {
+      return compositeMetricsReporter.register(LoggingMetricsReporter.instance());
+    }
+
+    List<String> reporters = COMMA.splitToList(impl);
+    if (reporters.size() == 1) {
+      return compositeMetricsReporter.register(loadMetricsReporter(properties));
+    }
+
+    LOG.info("Loading multiple MetricsReporter implementations: {}", impl);
+
+    for (String reporterClass : reporters) {
+      compositeMetricsReporter.register(loadSingleMetricsReporter(properties, reporterClass));
+    }
+
+    return compositeMetricsReporter;
   }
 }

@@ -57,18 +57,18 @@ import org.apache.iceberg.exceptions.NoSuchTableException;
 import org.apache.iceberg.hadoop.Configurable;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.ResolvingFileIO;
-import org.apache.iceberg.metrics.MetricsReport;
-import org.apache.iceberg.metrics.MetricsReporter;
+import org.apache.iceberg.metrics.CompositeMetricsReporter;
+import org.apache.iceberg.metrics.LoggingMetricsReporter;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
+import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.rest.auth.OAuth2Properties;
 import org.apache.iceberg.rest.auth.OAuth2Util;
 import org.apache.iceberg.rest.auth.OAuth2Util.AuthSession;
 import org.apache.iceberg.rest.requests.CreateNamespaceRequest;
 import org.apache.iceberg.rest.requests.CreateTableRequest;
 import org.apache.iceberg.rest.requests.RenameTableRequest;
-import org.apache.iceberg.rest.requests.ReportMetricsRequest;
 import org.apache.iceberg.rest.requests.UpdateNamespacePropertiesRequest;
 import org.apache.iceberg.rest.responses.ConfigResponse;
 import org.apache.iceberg.rest.responses.CreateNamespaceResponse;
@@ -107,8 +107,7 @@ public class RESTSessionCatalog extends BaseSessionCatalog
   private SnapshotMode snapshotMode = null;
   private Object conf = null;
   private FileIO io = null;
-  private MetricsReporter reporter = null;
-  private boolean reportingViaRestEnabled;
+  private CompositeMetricsReporter reporter = null;
 
   // a lazy thread pool for token refresh
   private volatile ScheduledExecutorService refreshExecutor = null;
@@ -200,10 +199,18 @@ public class RESTSessionCatalog extends BaseSessionCatalog
                     mergedProps, REST_SNAPSHOT_LOADING_MODE, SnapshotMode.ALL.name())
                 .toUpperCase(Locale.US));
 
-    this.reporter = CatalogUtil.loadMetricsReporter(mergedProps);
+    Map<String, String> metricsReporterProperties = Maps.newHashMap(mergedProps);
+    if (PropertyUtil.propertyAsBoolean(mergedProps, REST_METRICS_REPORTING_ENABLED, true)) {
+      String metricsReporterImpl =
+          mergedProps.getOrDefault(
+              CatalogProperties.METRICS_REPORTER_IMPL, LoggingMetricsReporter.class.getName());
+      metricsReporterProperties.put(
+          CatalogProperties.METRICS_REPORTER_IMPL,
+          String.format("%s,%s", metricsReporterImpl, RESTMetricsReporter.class.getName()));
+    }
 
-    this.reportingViaRestEnabled =
-        PropertyUtil.propertyAsBoolean(mergedProps, REST_METRICS_REPORTING_ENABLED, true);
+    this.reporter = CatalogUtil.loadCompositeMetricsReporter(metricsReporterProperties);
+
     super.initialize(name, mergedProps);
   }
 
@@ -348,35 +355,12 @@ public class RESTSessionCatalog extends BaseSessionCatalog
             tableMetadata);
 
     TableIdentifier tableIdentifier = loadedIdent;
-    BaseTable table =
-        new BaseTable(
-            ops,
-            fullTableName(loadedIdent),
-            report -> reportMetrics(tableIdentifier, report, session::headers));
+    BaseTable table = new BaseTable(ops, fullTableName(loadedIdent), reporter);
     if (metadataType != null) {
       return MetadataTableUtils.createMetadataTableInstance(table, metadataType);
     }
 
     return table;
-  }
-
-  private void reportMetrics(
-      TableIdentifier tableIdentifier,
-      MetricsReport report,
-      Supplier<Map<String, String>> headers) {
-    try {
-      reporter.report(report);
-      if (reportingViaRestEnabled) {
-        client.post(
-            paths.metrics(tableIdentifier),
-            ReportMetricsRequest.of(report),
-            null,
-            headers,
-            ErrorHandlers.defaultErrorHandler());
-      }
-    } catch (Exception e) {
-      LOG.warn("Failed to report metrics to REST endpoint for table {}", tableIdentifier, e);
-    }
   }
 
   @Override
@@ -497,6 +481,10 @@ public class RESTSessionCatalog extends BaseSessionCatalog
 
     if (client != null) {
       client.close();
+    }
+
+    if (null != reporter) {
+      reporter.close();
     }
   }
 
@@ -623,8 +611,7 @@ public class RESTSessionCatalog extends BaseSessionCatalog
               createChanges(meta),
               meta);
 
-      return Transactions.createTableTransaction(
-          fullName, ops, meta, report -> reportMetrics(ident, report, session::headers));
+      return Transactions.createTableTransaction(fullName, ops, meta, reporter);
     }
 
     @Override
@@ -674,8 +661,7 @@ public class RESTSessionCatalog extends BaseSessionCatalog
               changes.build(),
               base);
 
-      return Transactions.replaceTableTransaction(
-          fullName, ops, replacement, report -> reportMetrics(ident, report, session::headers));
+      return Transactions.replaceTableTransaction(fullName, ops, replacement, reporter);
     }
 
     @Override

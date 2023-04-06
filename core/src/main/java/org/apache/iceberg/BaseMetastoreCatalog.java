@@ -307,7 +307,7 @@ public abstract class BaseMetastoreCatalog implements Catalog {
 
   private MetricsReporter metricsReporter() {
     if (metricsReporter == null) {
-      metricsReporter = CatalogUtil.loadMetricsReporter(properties());
+      metricsReporter = CatalogUtil.loadCompositeMetricsReporter(properties());
     }
 
     return metricsReporter;

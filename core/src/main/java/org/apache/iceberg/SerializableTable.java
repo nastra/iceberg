@@ -257,7 +257,8 @@ public class SerializableTable implements Table, Serializable {
     if (lazyMetricsReporter == null) {
       synchronized (this) {
         if (lazyMetricsReporter == null) {
-          lazyMetricsReporter = CatalogUtil.loadMetricsReporter(this.metricsReporterProperties);
+          lazyMetricsReporter =
+              CatalogUtil.loadCompositeMetricsReporter(this.metricsReporterProperties);
         }
       }
     }
