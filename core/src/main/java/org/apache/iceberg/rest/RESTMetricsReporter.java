@@ -27,6 +27,7 @@ import org.apache.iceberg.metrics.MetricsReporter;
 import org.apache.iceberg.metrics.ScanReport;
 import org.apache.iceberg.relocated.com.google.common.base.Splitter;
 import org.apache.iceberg.rest.requests.ReportMetricsRequest;
+import org.apache.iceberg.util.SerializableFunction;
 import org.apache.iceberg.util.SerializableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,14 +36,23 @@ public class RESTMetricsReporter implements MetricsReporter {
   private static final Logger LOG = LoggerFactory.getLogger(RESTMetricsReporter.class);
   private static final Splitter DOT = Splitter.on('.');
 
-  private final RESTClient client;
+  private transient volatile RESTClient client;
   private final ResourcePaths paths;
   private final Map<String, String> headers;
+  private final SerializableFunction<Map<String, String>, RESTClient> clientBuilder;
+  private final Map<String, String> properties;
 
-  public RESTMetricsReporter(RESTClient client, ResourcePaths paths, Map<String, String> headers) {
+  public RESTMetricsReporter(
+      RESTClient client,
+      ResourcePaths paths,
+      Map<String, String> headers,
+      SerializableFunction<Map<String, String>, RESTClient> clientBuilder,
+      Map<String, String> properties) {
     this.client = client;
     this.paths = paths;
     this.headers = SerializableMap.copyOf(headers);
+    this.clientBuilder = clientBuilder;
+    this.properties = SerializableMap.copyOf(properties);
   }
 
   @Override
@@ -66,16 +76,30 @@ public class RESTMetricsReporter implements MetricsReporter {
       }
 
       if (null != tableIdentifier) {
-        client.post(
-            paths.metrics(tableIdentifier),
-            ReportMetricsRequest.of(report),
-            null,
-            headers,
-            ErrorHandlers.defaultErrorHandler());
+        client()
+            .post(
+                paths.metrics(tableIdentifier),
+                ReportMetricsRequest.of(report),
+                null,
+                headers,
+                ErrorHandlers.defaultErrorHandler());
       }
     } catch (Exception e) {
       LOG.warn("Failed to report metrics to REST endpoint for table {}", tableIdentifier, e);
     }
+  }
+
+  private RESTClient client() {
+    // we lazy init the client in case RESTMetricsReporter was deserialized
+    if (null == client) {
+      synchronized (RESTMetricsReporter.class) {
+        if (null == client) {
+          client = clientBuilder.apply(properties);
+        }
+      }
+    }
+
+    return client;
   }
 
   private TableIdentifier identifierWithoutCatalog(String tableNameWithCatalog) {

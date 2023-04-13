@@ -51,42 +51,12 @@ public class TestScanPlanningAndReporting extends TableTestBase {
 
     MetricsReporter first = report -> {};
     MetricsReporter second = report -> {};
-    context = context.reportWith(first).reportWith(second);
 
-    // LoggingMetricsReporter shouldn't be included by default
-    assertThat(context.metricsReporter()).isInstanceOf(CompositeMetricsReporter.class);
-    CompositeMetricsReporter composite = (CompositeMetricsReporter) context.metricsReporter();
-    assertThat(composite.metricsReporters()).hasSize(2).containsExactlyInAnyOrder(first, second);
+    // we're overriding the default LoggingMetricsReporter in this case
+    context = context.reportWith(first);
+    assertThat(context.metricsReporter()).isSameAs(first);
 
-    // LoggingMetricsReporter should only be included when explicitly specified
-    context = new TableScanContext();
-    context =
-        context.reportWith(first).reportWith(second).reportWith(LoggingMetricsReporter.instance());
-    assertThat(context.metricsReporter()).isInstanceOf(CompositeMetricsReporter.class);
-
-    composite = (CompositeMetricsReporter) context.metricsReporter();
-    assertThat(composite.metricsReporters())
-        .hasSize(3)
-        .containsExactlyInAnyOrder(LoggingMetricsReporter.instance(), first, second);
-  }
-
-  @Test
-  public void scanContextWithCompositeReporter() {
-    MetricsReporter first = report -> {};
-    MetricsReporter second = report -> {};
-
-    CompositeMetricsReporter firstComposite = new CompositeMetricsReporter();
-    firstComposite.register(first);
-
-    TableScanContext context = new TableScanContext().reportWith(firstComposite);
-    assertThat(context.metricsReporter()).isInstanceOf(CompositeMetricsReporter.class);
-
-    CompositeMetricsReporter secondComposite = new CompositeMetricsReporter();
-    secondComposite.register(first).register(second);
-
-    context = context.reportWith(secondComposite);
-
-    // LoggingMetricsReporter shouldn't be included by default
+    context = context.reportWith(second);
     assertThat(context.metricsReporter()).isInstanceOf(CompositeMetricsReporter.class);
     CompositeMetricsReporter composite = (CompositeMetricsReporter) context.metricsReporter();
     assertThat(composite.metricsReporters()).hasSize(2).containsExactlyInAnyOrder(first, second);

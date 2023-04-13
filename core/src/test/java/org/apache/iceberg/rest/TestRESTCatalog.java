@@ -44,9 +44,11 @@ import org.apache.iceberg.DataFiles;
 import org.apache.iceberg.FileScanTask;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.Schema;
+import org.apache.iceberg.SerializableTable;
 import org.apache.iceberg.SnapshotRef;
 import org.apache.iceberg.Table;
 import org.apache.iceberg.TableMetadata;
+import org.apache.iceberg.TestHelpers;
 import org.apache.iceberg.catalog.CatalogTests;
 import org.apache.iceberg.catalog.SessionCatalog;
 import org.apache.iceberg.catalog.TableIdentifier;
@@ -61,6 +63,7 @@ import org.apache.iceberg.rest.RESTSessionCatalog.SnapshotMode;
 import org.apache.iceberg.rest.auth.AuthSessionUtil;
 import org.apache.iceberg.rest.auth.OAuth2Properties;
 import org.apache.iceberg.rest.auth.OAuth2Util;
+import org.apache.iceberg.rest.requests.ReportMetricsRequest;
 import org.apache.iceberg.rest.responses.ConfigResponse;
 import org.apache.iceberg.rest.responses.ErrorResponse;
 import org.apache.iceberg.rest.responses.LoadTableResponse;
@@ -87,6 +90,7 @@ public class TestRESTCatalog extends CatalogTests<RESTCatalog> {
 
   private RESTCatalog restCatalog;
   private JdbcCatalog backendCatalog;
+  private RESTCatalogAdapter adaptor;
   private Server httpServer;
 
   @BeforeEach
@@ -113,34 +117,35 @@ public class TestRESTCatalog extends CatalogTests<RESTCatalog> {
     Map<String, String> contextHeaders =
         ImmutableMap.of("Authorization", "Bearer client-credentials-token:sub=user");
 
-    RESTCatalogAdapter adaptor =
-        new RESTCatalogAdapter(backendCatalog) {
-          @Override
-          public <T extends RESTResponse> T execute(
-              RESTCatalogAdapter.HTTPMethod method,
-              String path,
-              Map<String, String> queryParams,
-              Object body,
-              Class<T> responseType,
-              Map<String, String> headers,
-              Consumer<ErrorResponse> errorHandler) {
-            // this doesn't use a Mockito spy because this is used for catalog tests, which have
-            // different method calls
-            if (!"v1/oauth/tokens".equals(path)) {
-              if ("v1/config".equals(path) || path.endsWith("/metrics")) {
-                assertThat(headers).containsAllEntriesOf(catalogHeaders);
-              } else {
-                assertThat(headers).containsAllEntriesOf(contextHeaders);
+    adaptor =
+        Mockito.spy(
+            new RESTCatalogAdapter(backendCatalog) {
+              @Override
+              public <T extends RESTResponse> T execute(
+                  RESTCatalogAdapter.HTTPMethod method,
+                  String path,
+                  Map<String, String> queryParams,
+                  Object body,
+                  Class<T> responseType,
+                  Map<String, String> headers,
+                  Consumer<ErrorResponse> errorHandler) {
+                // this doesn't use a Mockito spy because this is used for catalog tests, which have
+                // different method calls
+                if (!"v1/oauth/tokens".equals(path)) {
+                  if ("v1/config".equals(path) || path.endsWith("/metrics")) {
+                    assertThat(headers).containsAllEntriesOf(catalogHeaders);
+                  } else {
+                    assertThat(headers).containsAllEntriesOf(contextHeaders);
+                  }
+                }
+                Object request = roundTripSerialize(body, "request");
+                T response =
+                    super.execute(
+                        method, path, queryParams, request, responseType, headers, errorHandler);
+                T responseAfterSerialization = roundTripSerialize(response, "response");
+                return responseAfterSerialization;
               }
-            }
-            Object request = roundTripSerialize(body, "request");
-            T response =
-                super.execute(
-                    method, path, queryParams, request, responseType, headers, errorHandler);
-            T responseAfterSerialization = roundTripSerialize(response, "response");
-            return responseAfterSerialization;
-          }
-        };
+            });
 
     RESTCatalogServlet servlet = new RESTCatalogServlet(adaptor);
     ServletContextHandler servletContext =
@@ -1744,6 +1749,45 @@ public class TestRESTCatalog extends CatalogTests<RESTCatalog> {
             any(),
             eq(ConfigResponse.class),
             eq(catalogHeaders),
+            any());
+  }
+
+  @Test
+  public void testScanReportingOnSerializableTable() throws IOException {
+    Table table = catalog().buildTable(TABLE, SCHEMA).create();
+    table
+        .newFastAppend()
+        .appendFile(
+            DataFiles.builder(PartitionSpec.unpartitioned())
+                .withPath("/path/to/data-a.parquet")
+                .withFileSizeInBytes(10)
+                .withRecordCount(2)
+                .build())
+        .commit();
+
+    table = catalog().loadTable(TABLE);
+    Mockito.reset(adaptor);
+
+    try (CloseableIterable<FileScanTask> tasks = table.newScan().planFiles()) {
+      assertThat(tasks.iterator()).hasNext();
+    }
+
+    Table serializableTable =
+        TestHelpers.KryoHelpers.roundTripSerialize(SerializableTable.copyOf(table));
+    try (CloseableIterable<FileScanTask> tasks = serializableTable.newScan().planFiles()) {
+      assertThat(tasks.iterator()).hasNext();
+    }
+
+    // once we serialize the table, we should still be able to receive metrics reports via REST
+    ResourcePaths paths = ResourcePaths.forCatalogProperties(Maps.newHashMap());
+    verify(adaptor, times(2))
+        .execute(
+            eq(HTTPMethod.POST),
+            eq(paths.metrics(TABLE)),
+            any(),
+            any(ReportMetricsRequest.class),
+            any(),
+            any(),
             any());
   }
 }

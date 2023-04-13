@@ -18,12 +18,13 @@
  */
 package org.apache.iceberg.rest;
 
+import java.io.Serializable;
 import java.util.Map;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.relocated.com.google.common.base.Joiner;
 
-public class ResourcePaths {
+public class ResourcePaths implements Serializable {
   private static final Joiner SLASH = Joiner.on("/").skipNulls();
   private static final String PREFIX = "prefix";
 

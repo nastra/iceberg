@@ -24,9 +24,9 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import org.apache.iceberg.expressions.Expression;
 import org.apache.iceberg.expressions.Expressions;
-import org.apache.iceberg.metrics.CompositeMetricsReporter;
 import org.apache.iceberg.metrics.LoggingMetricsReporter;
 import org.apache.iceberg.metrics.MetricsReporter;
+import org.apache.iceberg.metrics.MetricsReporters;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.util.ThreadPools;
@@ -360,20 +360,13 @@ final class TableScanContext {
   }
 
   TableScanContext reportWith(MetricsReporter reporter) {
-    CompositeMetricsReporter compositeReporter;
-    if (metricsReporter instanceof CompositeMetricsReporter) {
-      compositeReporter = (CompositeMetricsReporter) metricsReporter;
+    MetricsReporter configured;
+    if (LoggingMetricsReporter.class.equals(metricsReporter.getClass())) {
+      // we're overriding the default LoggingMetricsReporter
+      configured = reporter;
     } else {
-      compositeReporter = new CompositeMetricsReporter();
-      // typically one wants to override the default LoggingMetricsReporter, so we don't include it
-      // here. LoggingMetricsReporter can still be enabled by passing it explicitly to
-      // reportWith(..)
-      if (!(metricsReporter instanceof LoggingMetricsReporter)) {
-        compositeReporter.register(metricsReporter);
-      }
+      configured = MetricsReporters.combine(metricsReporter, reporter);
     }
-
-    compositeReporter.register(reporter);
 
     return new TableScanContext(
         snapshotId,
@@ -388,6 +381,6 @@ final class TableScanContext {
         toSnapshotId,
         planExecutor,
         fromSnapshotInclusive,
-        compositeReporter);
+        configured);
   }
 }

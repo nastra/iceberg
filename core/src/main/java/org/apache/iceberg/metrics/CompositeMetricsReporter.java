@@ -18,63 +18,29 @@
  */
 package org.apache.iceberg.metrics;
 
-import java.util.List;
-import java.util.Map;
-import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
-import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
-import org.apache.iceberg.relocated.com.google.common.collect.Maps;
-import org.apache.iceberg.util.SerializableMap;
+import org.apache.iceberg.util.SerializableSet;
+import org.immutables.value.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * A composite {@link MetricsReporter} that allows registering multiple {@link MetricsReporter}
- * instances. All registered {@link MetricsReporter} will be notified once a new {@link
- * MetricsReport} is available.
- */
-public class CompositeMetricsReporter implements MetricsReporter {
-  private static final Logger LOG = LoggerFactory.getLogger(CompositeMetricsReporter.class);
-  private final Map<Class<?>, MetricsReporter> metricsReporters;
+@Value.Immutable
+public interface CompositeMetricsReporter extends MetricsReporter {
+  Logger LOG = LoggerFactory.getLogger(CompositeMetricsReporter.class);
 
-  public CompositeMetricsReporter() {
-    metricsReporters = SerializableMap.copyOf(Maps.newConcurrentMap());
-  }
-
-  public CompositeMetricsReporter register(MetricsReporter reporter) {
-    Preconditions.checkArgument(null != reporter, "Invalid metrics reporter: null");
-
-    if (reporter instanceof CompositeMetricsReporter) {
-      ((CompositeMetricsReporter) reporter)
-          .metricsReporters()
-          .forEach(r -> metricsReporters.putIfAbsent(r.getClass(), r));
-    } else {
-      metricsReporters.putIfAbsent(reporter.getClass(), reporter);
-    }
-
-    return this;
-  }
+  SerializableSet<MetricsReporter> metricsReporters();
 
   @Override
-  public void report(MetricsReport report) {
-    Preconditions.checkArgument(null != report, "Invalid metrics report: null");
-
-    metricsReporters
-        .values()
-        .forEach(
-            reporter -> {
-              try {
-                reporter.report(report);
-              } catch (Exception e) {
-                LOG.warn(
-                    "Could not report {} to {}",
-                    report.getClass().getName(),
-                    reporter.getClass().getName(),
-                    e);
-              }
-            });
-  }
-
-  public List<MetricsReporter> metricsReporters() {
-    return ImmutableList.copyOf(metricsReporters.values());
+  default void report(MetricsReport report) {
+    for (MetricsReporter reporter : metricsReporters()) {
+      try {
+        reporter.report(report);
+      } catch (Exception e) {
+        LOG.warn(
+            "Could not report {} to {}",
+            report.getClass().getName(),
+            reporter.getClass().getName(),
+            e);
+      }
+    }
   }
 }

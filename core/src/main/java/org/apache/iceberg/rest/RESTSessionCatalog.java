@@ -33,7 +33,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import org.apache.iceberg.BaseTable;
 import org.apache.iceberg.CatalogProperties;
@@ -79,6 +78,7 @@ import org.apache.iceberg.rest.responses.OAuthTokenResponse;
 import org.apache.iceberg.rest.responses.UpdateNamespacePropertiesResponse;
 import org.apache.iceberg.util.EnvironmentUtil;
 import org.apache.iceberg.util.PropertyUtil;
+import org.apache.iceberg.util.SerializableFunction;
 import org.apache.iceberg.util.ThreadPools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +96,7 @@ public class RESTSessionCatalog extends BaseSessionCatalog
           OAuth2Properties.SAML2_TOKEN_TYPE,
           OAuth2Properties.SAML1_TOKEN_TYPE);
 
-  private final Function<Map<String, String>, RESTClient> clientBuilder;
+  private final SerializableFunction<Map<String, String>, RESTClient> clientBuilder;
   private final BiFunction<SessionContext, Map<String, String>, FileIO> ioBuilder;
   private Cache<String, AuthSession> sessions = null;
   private AuthSession catalogAuth = null;
@@ -125,7 +125,7 @@ public class RESTSessionCatalog extends BaseSessionCatalog
   }
 
   public RESTSessionCatalog(
-      Function<Map<String, String>, RESTClient> clientBuilder,
+      SerializableFunction<Map<String, String>, RESTClient> clientBuilder,
       BiFunction<SessionContext, Map<String, String>, FileIO> ioBuilder) {
     Preconditions.checkNotNull(clientBuilder, "Invalid client builder: null");
     this.clientBuilder = clientBuilder;
@@ -203,7 +203,9 @@ public class RESTSessionCatalog extends BaseSessionCatalog
     if (PropertyUtil.propertyAsBoolean(mergedProps, REST_METRICS_REPORTING_ENABLED, true)) {
       this.reporter =
           MetricsReporters.combine(
-              this.reporter, new RESTMetricsReporter(client, paths, catalogAuth.headers()));
+              this.reporter,
+              new RESTMetricsReporter(
+                  client, paths, catalogAuth.headers(), clientBuilder, mergedProps));
     }
 
     super.initialize(name, mergedProps);
