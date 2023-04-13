@@ -59,6 +59,7 @@ import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.ResolvingFileIO;
 import org.apache.iceberg.metrics.MetricsReport;
 import org.apache.iceberg.metrics.MetricsReporter;
+import org.apache.iceberg.metrics.MetricsReporters;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
@@ -68,7 +69,6 @@ import org.apache.iceberg.rest.auth.OAuth2Util.AuthSession;
 import org.apache.iceberg.rest.requests.CreateNamespaceRequest;
 import org.apache.iceberg.rest.requests.CreateTableRequest;
 import org.apache.iceberg.rest.requests.RenameTableRequest;
-import org.apache.iceberg.rest.requests.ReportMetricsRequest;
 import org.apache.iceberg.rest.requests.UpdateNamespacePropertiesRequest;
 import org.apache.iceberg.rest.responses.ConfigResponse;
 import org.apache.iceberg.rest.responses.CreateNamespaceResponse;
@@ -364,18 +364,12 @@ public class RESTSessionCatalog extends BaseSessionCatalog
       TableIdentifier tableIdentifier,
       MetricsReport report,
       Supplier<Map<String, String>> headers) {
-    try {
+    if (reportingViaRestEnabled) {
+      MetricsReporters.combine(
+              reporter, new RESTMetricsReporter(client, paths.metrics(tableIdentifier), headers))
+          .report(report);
+    } else {
       reporter.report(report);
-      if (reportingViaRestEnabled) {
-        client.post(
-            paths.metrics(tableIdentifier),
-            ReportMetricsRequest.of(report),
-            null,
-            headers,
-            ErrorHandlers.defaultErrorHandler());
-      }
-    } catch (Exception e) {
-      LOG.warn("Failed to report metrics to REST endpoint for table {}", tableIdentifier, e);
     }
   }
 
