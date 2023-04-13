@@ -57,8 +57,8 @@ import org.apache.iceberg.exceptions.NoSuchTableException;
 import org.apache.iceberg.hadoop.Configurable;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.io.ResolvingFileIO;
-import org.apache.iceberg.metrics.MetricsReport;
 import org.apache.iceberg.metrics.MetricsReporter;
+import org.apache.iceberg.metrics.MetricsReporters;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
@@ -68,7 +68,6 @@ import org.apache.iceberg.rest.auth.OAuth2Util.AuthSession;
 import org.apache.iceberg.rest.requests.CreateNamespaceRequest;
 import org.apache.iceberg.rest.requests.CreateTableRequest;
 import org.apache.iceberg.rest.requests.RenameTableRequest;
-import org.apache.iceberg.rest.requests.ReportMetricsRequest;
 import org.apache.iceberg.rest.requests.UpdateNamespacePropertiesRequest;
 import org.apache.iceberg.rest.responses.ConfigResponse;
 import org.apache.iceberg.rest.responses.CreateNamespaceResponse;
@@ -108,7 +107,6 @@ public class RESTSessionCatalog extends BaseSessionCatalog
   private Object conf = null;
   private FileIO io = null;
   private MetricsReporter reporter = null;
-  private boolean reportingViaRestEnabled;
 
   // a lazy thread pool for token refresh
   private volatile ScheduledExecutorService refreshExecutor = null;
@@ -202,8 +200,12 @@ public class RESTSessionCatalog extends BaseSessionCatalog
 
     this.reporter = CatalogUtil.loadMetricsReporter(mergedProps);
 
-    this.reportingViaRestEnabled =
-        PropertyUtil.propertyAsBoolean(mergedProps, REST_METRICS_REPORTING_ENABLED, true);
+    if (PropertyUtil.propertyAsBoolean(mergedProps, REST_METRICS_REPORTING_ENABLED, true)) {
+      this.reporter =
+          MetricsReporters.combine(
+              this.reporter, new RESTMetricsReporter(client, paths, catalogAuth.headers()));
+    }
+
     super.initialize(name, mergedProps);
   }
 
@@ -347,36 +349,12 @@ public class RESTSessionCatalog extends BaseSessionCatalog
             tableFileIO(context, response.config()),
             tableMetadata);
 
-    TableIdentifier tableIdentifier = loadedIdent;
-    BaseTable table =
-        new BaseTable(
-            ops,
-            fullTableName(loadedIdent),
-            report -> reportMetrics(tableIdentifier, report, session::headers));
+    BaseTable table = new BaseTable(ops, fullTableName(loadedIdent), reporter);
     if (metadataType != null) {
       return MetadataTableUtils.createMetadataTableInstance(table, metadataType);
     }
 
     return table;
-  }
-
-  private void reportMetrics(
-      TableIdentifier tableIdentifier,
-      MetricsReport report,
-      Supplier<Map<String, String>> headers) {
-    try {
-      reporter.report(report);
-      if (reportingViaRestEnabled) {
-        client.post(
-            paths.metrics(tableIdentifier),
-            ReportMetricsRequest.of(report),
-            null,
-            headers,
-            ErrorHandlers.defaultErrorHandler());
-      }
-    } catch (Exception e) {
-      LOG.warn("Failed to report metrics to REST endpoint for table {}", tableIdentifier, e);
-    }
   }
 
   @Override
@@ -602,8 +580,7 @@ public class RESTSessionCatalog extends BaseSessionCatalog
               tableFileIO(context, response.config()),
               response.tableMetadata());
 
-      return new BaseTable(
-          ops, fullTableName(ident), report -> reportMetrics(ident, report, session::headers));
+      return new BaseTable(ops, fullTableName(ident), reporter);
     }
 
     @Override
@@ -624,8 +601,7 @@ public class RESTSessionCatalog extends BaseSessionCatalog
               createChanges(meta),
               meta);
 
-      return Transactions.createTableTransaction(
-          fullName, ops, meta, report -> reportMetrics(ident, report, session::headers));
+      return Transactions.createTableTransaction(fullName, ops, meta, reporter);
     }
 
     @Override
@@ -675,8 +651,7 @@ public class RESTSessionCatalog extends BaseSessionCatalog
               changes.build(),
               base);
 
-      return Transactions.replaceTableTransaction(
-          fullName, ops, replacement, report -> reportMetrics(ident, report, session::headers));
+      return Transactions.replaceTableTransaction(fullName, ops, replacement, reporter);
     }
 
     @Override
