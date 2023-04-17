@@ -64,7 +64,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("UnnecessaryAnonymousClass")
-abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT>, TableMetadataDiffAccess {
+abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
   private static final Logger LOG = LoggerFactory.getLogger(SnapshotProducer.class);
   static final Set<ManifestFile> EMPTY_SET = Sets.newHashSet();
 
@@ -363,7 +363,19 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT>, TableMe
           .countAttempts(commitMetrics().attempts())
           .run(
               taskOps -> {
-                TableMetadata updated = updatedMetadata(newSnapshotId::set).updated();
+                Snapshot newSnapshot = apply();
+                newSnapshotId.set(newSnapshot.snapshotId());
+                TableMetadata.Builder update = TableMetadata.buildFrom(base);
+                if (base.snapshot(newSnapshot.snapshotId()) != null) {
+                  // this is a rollback operation
+                  update.setBranchSnapshot(newSnapshot.snapshotId(), targetBranch);
+                } else if (stageOnly) {
+                  update.addSnapshot(newSnapshot);
+                } else {
+                  update.setBranchSnapshot(newSnapshot, targetBranch);
+                }
+
+                TableMetadata updated = update.build();
                 if (updated.changes().isEmpty()) {
                   // do not commit if the metadata has not changed. for example, this may happen
                   // when setting the current
@@ -416,28 +428,6 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT>, TableMe
     } catch (Throwable e) {
       LOG.warn("Failed to notify event listeners", e);
     }
-  }
-
-  @Override
-  public TableMetadataDiff tableMetadataDiff() {
-    return updatedMetadata(id -> {});
-  }
-
-  private TableMetadataDiff updatedMetadata(Consumer<Long> snapshotIdConsumer) {
-    TableMetadata original = base;
-    Snapshot newSnapshot = apply();
-    snapshotIdConsumer.accept(newSnapshot.snapshotId());
-    TableMetadata.Builder update = TableMetadata.buildFrom(base);
-    if (base.snapshot(newSnapshot.snapshotId()) != null) {
-      // this is a rollback operation
-      update.setBranchSnapshot(newSnapshot.snapshotId(), targetBranch);
-    } else if (stageOnly) {
-      update.addSnapshot(newSnapshot);
-    } else {
-      update.setBranchSnapshot(newSnapshot, targetBranch);
-    }
-
-    return ImmutableTableMetadataDiff.builder().base(original).updated(update.build()).build();
   }
 
   private void notifyListeners() {

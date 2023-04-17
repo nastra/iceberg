@@ -51,6 +51,7 @@ import org.apache.iceberg.Transactions;
 import org.apache.iceberg.catalog.BaseSessionCatalog;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.Namespace;
+import org.apache.iceberg.catalog.TableCommit;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.exceptions.NoSuchNamespaceException;
 import org.apache.iceberg.exceptions.NoSuchTableException;
@@ -888,6 +889,33 @@ public class RESTSessionCatalog extends BaseSessionCatalog
                     .requirements(update.requirements())
                     .updates(update.updates())
                     .build()));
+
+    client.post(
+        paths.commitTransaction(),
+        builder.build(),
+        null,
+        headers(context),
+        ErrorHandlers.tableCommitHandler());
+  }
+
+  public void multiTableCommit(SessionContext context, List<TableCommit> commits) {
+    ImmutableCommitTransactionRequest.Builder builder = ImmutableCommitTransactionRequest.builder();
+
+    for (TableCommit commit : commits) {
+      List<MetadataUpdate> metadataUpdates = commit.updated().changes();
+      UpdateTableRequest.Builder updateTableBuilder = UpdateTableRequest.builderFor(commit.base());
+      metadataUpdates.forEach(updateTableBuilder::update);
+      UpdateTableRequest updateTableRequest = updateTableBuilder.build();
+
+      ImmutableCommitTableRequest commitTableRequest =
+          ImmutableCommitTableRequest.builder()
+              .identifier(commit.identifier())
+              .requirements(updateTableRequest.requirements())
+              .updates(metadataUpdates)
+              .build();
+
+      builder.addTableChanges(commitTableRequest);
+    }
 
     client.post(
         paths.commitTransaction(),

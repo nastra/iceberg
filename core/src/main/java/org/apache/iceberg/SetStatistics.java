@@ -24,7 +24,7 @@ import java.util.Optional;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 
-public class SetStatistics implements UpdateStatistics, TableMetadataDiffAccess {
+public class SetStatistics implements UpdateStatistics {
   private final TableOperations ops;
   private final Map<Long, Optional<StatisticsFile>> statisticsToSet = Maps.newHashMap();
 
@@ -52,7 +52,9 @@ public class SetStatistics implements UpdateStatistics, TableMetadataDiffAccess 
 
   @Override
   public void commit() {
-    ops.commit(ops.current(), tableMetadataDiff().updated());
+    TableMetadata base = ops.current();
+    TableMetadata newMetadata = internalApply(base);
+    ops.commit(base, newMetadata);
   }
 
   private TableMetadata internalApply(TableMetadata base) {
@@ -66,13 +68,5 @@ public class SetStatistics implements UpdateStatistics, TableMetadataDiffAccess 
           }
         });
     return builder.build();
-  }
-
-  @Override
-  public TableMetadataDiff tableMetadataDiff() {
-    return ImmutableTableMetadataDiff.builder()
-        .base(ops.current())
-        .updated(internalApply(ops.current()))
-        .build();
   }
 }

@@ -30,7 +30,6 @@ import org.apache.iceberg.DeleteFiles;
 import org.apache.iceberg.ExpireSnapshots;
 import org.apache.iceberg.HasTableOperations;
 import org.apache.iceberg.ManageSnapshots;
-import org.apache.iceberg.MetadataUpdate;
 import org.apache.iceberg.OverwriteFiles;
 import org.apache.iceberg.PendingUpdate;
 import org.apache.iceberg.ReplacePartitions;
@@ -41,7 +40,6 @@ import org.apache.iceberg.RowDelta;
 import org.apache.iceberg.SnapshotRef;
 import org.apache.iceberg.Table;
 import org.apache.iceberg.TableMetadata;
-import org.apache.iceberg.TableMetadataDiffAccess;
 import org.apache.iceberg.TableOperations;
 import org.apache.iceberg.TableScan;
 import org.apache.iceberg.Transaction;
@@ -53,14 +51,15 @@ import org.apache.iceberg.UpdateSchema;
 import org.apache.iceberg.UpdateStatistics;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.CatalogTransaction;
+import org.apache.iceberg.catalog.ImmutableTableCommit;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.SessionCatalog;
+import org.apache.iceberg.catalog.TableCommit;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.exceptions.CommitStateUnknownException;
 import org.apache.iceberg.exceptions.ValidationException;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
-import org.apache.iceberg.rest.requests.UpdateTableRequest;
 import org.apache.iceberg.util.Tasks;
 import org.immutables.value.Value;
 
@@ -99,7 +98,6 @@ public class RESTCatalogTransaction implements CatalogTransaction {
     try {
       Map<TableIdentifier, List<PendingUpdate>> pendingUpdatesByTable = Maps.newHashMap();
       txByTable.forEach((key, value) -> pendingUpdatesByTable.put(key, value.pendingUpdates()));
-      Map<TableIdentifier, UpdateTableRequest> updatesByTable = Maps.newHashMap();
 
       // write skew is not possible in read-only transactions, so we should only perform that check
       // if there were any pending updates
@@ -107,32 +105,22 @@ public class RESTCatalogTransaction implements CatalogTransaction {
         validateSerializableIsolation();
       }
 
-      for (TableIdentifier affectedTable : pendingUpdatesByTable.keySet()) {
-        List<TableMetadataDiffAccess.TableMetadataDiff> tableMetadataDiffs =
-            pendingUpdatesByTable.get(affectedTable).stream()
-                .filter(pendingUpdate -> pendingUpdate instanceof TableMetadataDiffAccess)
-                .map(pendingUpdate -> (TableMetadataDiffAccess) pendingUpdate)
-                .map(TableMetadataDiffAccess::tableMetadataDiff)
-                .collect(Collectors.toList());
-
-        // first one contains the base metadata to create requirements from
-        TableMetadataDiffAccess.TableMetadataDiff firstOne = tableMetadataDiffs.get(0);
-        // the last one contains all metadata updates
-        TableMetadataDiffAccess.TableMetadataDiff lastOne =
-            tableMetadataDiffs.get(tableMetadataDiffs.size() - 1);
-
-        List<MetadataUpdate> metadataUpdates = lastOne.updated().changes();
-
-        UpdateTableRequest.Builder builder = UpdateTableRequest.builderFor(firstOne.base());
-        metadataUpdates.forEach(builder::update);
-        UpdateTableRequest updateTableRequest = builder.build();
-        updatesByTable.put(affectedTable, updateTableRequest);
-      }
+      List<TableCommit> tableCommits =
+          txByTable.entrySet().stream()
+              .filter(e -> e.getValue() instanceof BaseTransaction)
+              .map(
+                  e ->
+                      ImmutableTableCommit.builder()
+                          .identifier(e.getKey())
+                          .base(((BaseTransaction) e.getValue()).startMetadata())
+                          .updated(((BaseTransaction) e.getValue()).currentMetadata())
+                          .build())
+              .collect(Collectors.toList());
 
       // TODO: should this be retryable?
-      if (!updatesByTable.isEmpty()) {
+      if (!tableCommits.isEmpty()) {
         // only commit if there were change
-        sessionCatalog.commitCatalogTransaction(context, updatesByTable);
+        sessionCatalog.multiTableCommit(context, tableCommits);
       }
 
       // TODO: we should probably be refreshing metadata from all affected tables after the TX
@@ -196,6 +184,7 @@ public class RESTCatalogTransaction implements CatalogTransaction {
   }
 
   private void rollback() {
+    // TODO: remove rollback calls
     Tasks.foreach(txByTable.values()).run(Transaction::rollback);
     txByTable.clear();
     initiallyReadTableMetadataByRef.clear();

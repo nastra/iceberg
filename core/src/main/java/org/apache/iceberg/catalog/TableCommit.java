@@ -16,22 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.iceberg;
+package org.apache.iceberg.catalog;
 
+import org.apache.iceberg.TableMetadata;
 import org.immutables.value.Value;
 
-/**
- * This provides access to {@link TableMetadata} in its base version prior to applying and updates
- * and also in its updated version.
- */
-public interface TableMetadataDiffAccess {
+@Value.Immutable
+public interface TableCommit {
+  TableIdentifier identifier();
 
-  TableMetadataDiff tableMetadataDiff();
+  TableMetadata base();
 
-  @Value.Immutable
-  interface TableMetadataDiff {
-    TableMetadata base();
-
-    TableMetadata updated();
-  }
+  TableMetadata updated();
 }

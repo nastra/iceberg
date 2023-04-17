@@ -57,7 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("UnnecessaryAnonymousClass")
-class RemoveSnapshots implements ExpireSnapshots, TableMetadataDiffAccess {
+class RemoveSnapshots implements ExpireSnapshots {
   private static final Logger LOG = LoggerFactory.getLogger(RemoveSnapshots.class);
 
   // Creates an executor service that runs each task in the thread that invokes execute/submit.
@@ -303,7 +303,8 @@ class RemoveSnapshots implements ExpireSnapshots, TableMetadataDiffAccess {
         .onlyRetryOn(CommitFailedException.class)
         .run(
             item -> {
-              ops.commit(base, tableMetadataDiff().updated());
+              TableMetadata updated = internalApply();
+              ops.commit(base, updated);
             });
     LOG.info("Committed snapshot changes");
 
@@ -335,13 +336,5 @@ class RemoveSnapshots implements ExpireSnapshots, TableMetadataDiffAccess {
                 ops.io(), deleteExecutorService, planExecutorService, deleteFunc);
 
     cleanupStrategy.cleanFiles(base, current);
-  }
-
-  @Override
-  public TableMetadataDiff tableMetadataDiff() {
-    return ImmutableTableMetadataDiff.builder()
-        .base(ops.current())
-        .updated(internalApply())
-        .build();
   }
 }

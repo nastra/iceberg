@@ -108,7 +108,11 @@ public class BaseTransaction implements Transaction {
   }
 
   public TableMetadata startMetadata() {
-    return current;
+    return this.base;
+  }
+
+  public TableMetadata currentMetadata() {
+    return this.current;
   }
 
   public TableOperations underlyingOps() {

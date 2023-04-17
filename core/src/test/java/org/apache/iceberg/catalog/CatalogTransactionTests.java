@@ -725,6 +725,7 @@ public abstract class CatalogTransactionTests<
   }
 
   private void overwriteFilter(CatalogTransaction.IsolationLevel isolationLevel) {
+    // FIXME: tests currently fail
     TableIdentifier identifier = TableIdentifier.of("ns", "table");
     catalog().createTable(identifier, SCHEMA);
 
