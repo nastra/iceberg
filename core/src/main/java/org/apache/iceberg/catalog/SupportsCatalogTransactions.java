@@ -18,17 +18,9 @@
  */
 package org.apache.iceberg.catalog;
 
-import java.util.Set;
 import org.apache.iceberg.catalog.CatalogTransaction.IsolationLevel;
 
 public interface SupportsCatalogTransactions {
-
-  /**
-   * Get the set of {@link IsolationLevel}s supported by this Catalog.
-   *
-   * @return A set of isolation levels supported.
-   */
-  Set<IsolationLevel> supportedIsolationLevels();
 
   /**
    * Create a new {@link CatalogTransaction} with the given {@link IsolationLevel}.

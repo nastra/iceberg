@@ -101,10 +101,7 @@ public abstract class CatalogTransactionTests<
   public void invalidIsolationLevel() {
     assertThatThrownBy(() -> catalog().createTransaction(null))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage(
-            String.format(
-                "Invalid isolation level 'null'. Supported isolation levels: %s",
-                catalog().supportedIsolationLevels()));
+        .hasMessage("Invalid isolation level: null");
   }
 
   @Test

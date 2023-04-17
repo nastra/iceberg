@@ -260,11 +260,6 @@ public class RESTCatalog
   }
 
   @Override
-  public Set<IsolationLevel> supportedIsolationLevels() {
-    return catalogTxDelegate.supportedIsolationLevels();
-  }
-
-  @Override
   public CatalogTransaction createTransaction(IsolationLevel isolationLevel) {
     return catalogTxDelegate.createTransaction(isolationLevel);
   }

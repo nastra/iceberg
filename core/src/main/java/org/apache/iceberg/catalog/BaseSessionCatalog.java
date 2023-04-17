@@ -164,22 +164,10 @@ public abstract class BaseSessionCatalog implements SessionCatalog {
     }
 
     @Override
-    public Set<CatalogTransaction.IsolationLevel> supportedIsolationLevels() {
-      return ImmutableSet.of(
-          CatalogTransaction.IsolationLevel.SNAPSHOT,
-          CatalogTransaction.IsolationLevel.SERIALIZABLE);
-    }
-
-    @Override
     public CatalogTransaction createTransaction(CatalogTransaction.IsolationLevel isolationLevel) {
       Preconditions.checkState(
           BaseSessionCatalog.this instanceof RESTSessionCatalog,
           "Only RESTSessionCatalog currently supports CatalogTransactions");
-      Preconditions.checkArgument(
-          supportedIsolationLevels().contains(isolationLevel),
-          "Invalid isolation level '%s'. Supported isolation levels: %s",
-          isolationLevel,
-          supportedIsolationLevels());
 
       return new RESTCatalogTransaction(
           this, (RESTSessionCatalog) BaseSessionCatalog.this, context, isolationLevel);
