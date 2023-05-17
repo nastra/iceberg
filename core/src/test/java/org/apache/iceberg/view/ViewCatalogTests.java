@@ -36,6 +36,7 @@ import org.apache.iceberg.exceptions.NoSuchNamespaceException;
 import org.apache.iceberg.exceptions.NoSuchTableException;
 import org.apache.iceberg.exceptions.NoSuchViewException;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
+import org.apache.iceberg.rest.RESTCatalog;
 import org.apache.iceberg.types.Types;
 import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -80,6 +81,7 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
 
     assertThat(view).isNotNull();
     assertThat(catalog().viewExists(identifier)).as("View should exist").isTrue();
+    assertThat(((BaseView) view).operations().current().metadataFileLocation()).isNotNull();
 
     // validate view settings
     assertThat(view.name()).isEqualTo(ViewUtil.fullViewName(catalog().name(), identifier));
@@ -137,6 +139,7 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
 
     assertThat(view).isNotNull();
     assertThat(catalog().viewExists(identifier)).as("View should exist").isTrue();
+    assertThat(((BaseView) view).operations().current().metadataFileLocation()).isNotNull();
 
     // validate view settings
     assertThat(view.name()).isEqualTo(ViewUtil.fullViewName(catalog().name(), identifier));
@@ -502,6 +505,7 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
     assertThat(catalog().viewExists(from)).as("View should exist").isTrue();
 
     ViewMetadata original = ((BaseView) view).operations().current();
+    assertThat(original.metadataFileLocation()).isNotNull();
 
     catalog().renameView(from, to);
 
@@ -787,6 +791,7 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
     View view = useCreateOrReplace ? viewBuilder.createOrReplace() : viewBuilder.create();
 
     assertThat(catalog().viewExists(identifier)).as("View should exist").isTrue();
+    assertThat(((BaseView) view).operations().current().metadataFileLocation()).isNotNull();
 
     ViewVersion viewVersion = view.currentVersion();
     assertThat(viewVersion.representations())
@@ -808,6 +813,7 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
 
     // validate replaced view settings
     assertThat(replacedView.name()).isEqualTo(ViewUtil.fullViewName(catalog().name(), identifier));
+    assertThat(((BaseView) replacedView).operations().current().metadataFileLocation()).isNotNull();
     assertThat(replacedView.properties())
         .containsEntry("prop1", "val1")
         .containsEntry("prop2", "val2")
@@ -1233,9 +1239,14 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
     catalog().dropView(identifier);
     assertThat(catalog().viewExists(identifier)).as("View should not exist").isFalse();
 
+    String expectedMessage =
+        catalog() instanceof RESTCatalog ? "View does not exist: ns.view" : "Cannot commit";
+    Class<?> expectedException =
+        catalog() instanceof RESTCatalog ? NoSuchViewException.class : CommitFailedException.class;
+
     assertThatThrownBy(() -> updateViewProperties.set("key1", "val1").commit())
-        .isInstanceOf(CommitFailedException.class)
-        .hasMessageContaining("Cannot commit");
+        .isInstanceOf(expectedException)
+        .hasMessageContaining(expectedMessage);
   }
 
   @Test
@@ -1263,6 +1274,11 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
     catalog().dropView(identifier);
     assertThat(catalog().viewExists(identifier)).as("View should not exist").isFalse();
 
+    String expectedMessage =
+        catalog() instanceof RESTCatalog ? "View does not exist: ns.view" : "Cannot commit";
+    Class<?> expectedException =
+        catalog() instanceof RESTCatalog ? NoSuchViewException.class : CommitFailedException.class;
+
     assertThatThrownBy(
             () ->
                 replaceViewVersion
@@ -1270,8 +1286,8 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
                     .withSchema(SCHEMA)
                     .withDefaultNamespace(identifier.namespace())
                     .commit())
-        .isInstanceOf(CommitFailedException.class)
-        .hasMessageContaining("Cannot commit");
+        .isInstanceOf(expectedException)
+        .hasMessageContaining(expectedMessage);
   }
 
   @Test

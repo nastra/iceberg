@@ -30,8 +30,10 @@ import org.apache.iceberg.Table;
 import org.apache.iceberg.exceptions.NamespaceNotEmptyException;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableSet;
+import org.apache.iceberg.view.View;
+import org.apache.iceberg.view.ViewBuilder;
 
-public abstract class BaseSessionCatalog implements SessionCatalog {
+public abstract class BaseSessionCatalog implements SessionCatalog, ViewSessionCatalog {
   private final Cache<String, Catalog> catalogs =
       Caffeine.newBuilder().expireAfterAccess(10, TimeUnit.MINUTES).build();
 
@@ -62,7 +64,7 @@ public abstract class BaseSessionCatalog implements SessionCatalog {
     return task.apply(asCatalog(context));
   }
 
-  public class AsCatalog implements Catalog, SupportsNamespaces {
+  public class AsCatalog implements Catalog, SupportsNamespaces, ViewCatalog {
     private final SessionContext context;
 
     private AsCatalog(SessionContext context) {
@@ -82,6 +84,11 @@ public abstract class BaseSessionCatalog implements SessionCatalog {
     @Override
     public TableBuilder buildTable(TableIdentifier ident, Schema schema) {
       return BaseSessionCatalog.this.buildTable(context, ident, schema);
+    }
+
+    @Override
+    public void initialize(String catalogName, Map<String, String> props) {
+      BaseSessionCatalog.this.initialize(catalogName, props);
     }
 
     @Override
@@ -158,6 +165,41 @@ public abstract class BaseSessionCatalog implements SessionCatalog {
     @Override
     public boolean namespaceExists(Namespace namespace) {
       return BaseSessionCatalog.this.namespaceExists(context, namespace);
+    }
+
+    @Override
+    public List<TableIdentifier> listViews(Namespace namespace) {
+      return BaseSessionCatalog.this.listViews(context, namespace);
+    }
+
+    @Override
+    public View loadView(TableIdentifier identifier) {
+      return BaseSessionCatalog.this.loadView(context, identifier);
+    }
+
+    @Override
+    public boolean viewExists(TableIdentifier identifier) {
+      return BaseSessionCatalog.this.viewExists(context, identifier);
+    }
+
+    @Override
+    public ViewBuilder buildView(TableIdentifier identifier) {
+      return BaseSessionCatalog.this.buildView(context, identifier);
+    }
+
+    @Override
+    public boolean dropView(TableIdentifier identifier) {
+      return BaseSessionCatalog.this.dropView(context, identifier);
+    }
+
+    @Override
+    public void renameView(TableIdentifier from, TableIdentifier to) {
+      BaseSessionCatalog.this.renameView(context, from, to);
+    }
+
+    @Override
+    public void invalidateView(TableIdentifier identifier) {
+      BaseSessionCatalog.this.invalidateView(context, identifier);
     }
   }
 }

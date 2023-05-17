@@ -35,17 +35,22 @@ import org.apache.iceberg.catalog.SessionCatalog;
 import org.apache.iceberg.catalog.SupportsNamespaces;
 import org.apache.iceberg.catalog.TableCommit;
 import org.apache.iceberg.catalog.TableIdentifier;
+import org.apache.iceberg.catalog.ViewCatalog;
 import org.apache.iceberg.exceptions.NamespaceNotEmptyException;
 import org.apache.iceberg.exceptions.NoSuchNamespaceException;
 import org.apache.iceberg.hadoop.Configurable;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
+import org.apache.iceberg.view.View;
+import org.apache.iceberg.view.ViewBuilder;
 
-public class RESTCatalog implements Catalog, SupportsNamespaces, Configurable<Object>, Closeable {
+public class RESTCatalog
+    implements Catalog, SupportsNamespaces, Configurable<Object>, Closeable, ViewCatalog {
   private final RESTSessionCatalog sessionCatalog;
   private final Catalog delegate;
   private final SupportsNamespaces nsDelegate;
   private final SessionCatalog.SessionContext context;
+  private final ViewCatalog viewDelegate;
 
   public RESTCatalog() {
     this(
@@ -64,6 +69,7 @@ public class RESTCatalog implements Catalog, SupportsNamespaces, Configurable<Ob
     this.delegate = sessionCatalog.asCatalog(context);
     this.nsDelegate = (SupportsNamespaces) delegate;
     this.context = context;
+    this.viewDelegate = (ViewCatalog) delegate;
   }
 
   @Override
@@ -260,5 +266,40 @@ public class RESTCatalog implements Catalog, SupportsNamespaces, Configurable<Ob
   public void commitTransaction(TableCommit... commits) {
     sessionCatalog.commitTransaction(
         context, ImmutableList.<TableCommit>builder().add(commits).build());
+  }
+
+  @Override
+  public List<TableIdentifier> listViews(Namespace namespace) {
+    return viewDelegate.listViews(namespace);
+  }
+
+  @Override
+  public View loadView(TableIdentifier identifier) {
+    return viewDelegate.loadView(identifier);
+  }
+
+  @Override
+  public ViewBuilder buildView(TableIdentifier identifier) {
+    return viewDelegate.buildView(identifier);
+  }
+
+  @Override
+  public boolean dropView(TableIdentifier identifier) {
+    return viewDelegate.dropView(identifier);
+  }
+
+  @Override
+  public void renameView(TableIdentifier from, TableIdentifier to) {
+    viewDelegate.renameView(from, to);
+  }
+
+  @Override
+  public boolean viewExists(TableIdentifier identifier) {
+    return viewDelegate.viewExists(identifier);
+  }
+
+  @Override
+  public void invalidateView(TableIdentifier identifier) {
+    viewDelegate.invalidateView(identifier);
   }
 }
