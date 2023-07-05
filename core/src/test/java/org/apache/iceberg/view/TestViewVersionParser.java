@@ -19,6 +19,7 @@
 package org.apache.iceberg.view;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -80,6 +81,7 @@ public class TestViewVersionParser {
             .timestampMillis(12345)
             .addRepresentations(firstRepresentation, secondRepresentation)
             .summary(ImmutableMap.of("operation", "create", "user", "some-user"))
+            .defaultNamespace(Namespace.of("one", "two"))
             .schemaId(1)
             .build();
 
@@ -89,7 +91,8 @@ public class TestViewVersionParser {
 
     String expectedViewVersion =
         String.format(
-            "{\"version-id\":1,\"timestamp-ms\":12345,\"schema-id\":1,\"summary\":{\"operation\":\"create\",\"user\":\"some-user\"},\"representations\":%s}",
+            "{\"version-id\":1,\"timestamp-ms\":12345,\"schema-id\":1,\"summary\":{\"operation\":\"create\",\"user\":\"some-user\"},"
+                + "\"default-namespace\":[\"one\",\"two\"],\"representations\":%s}",
             expectedRepresentations);
 
     Assertions.assertThat(ViewVersionParser.toJson(viewVersion))

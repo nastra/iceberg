@@ -18,19 +18,24 @@
  */
 package org.apache.iceberg.view;
 
-import org.immutables.value.Value;
+import org.apache.iceberg.PendingUpdate;
 
-@Value.Immutable
-public interface SQLViewRepresentation extends ViewRepresentation {
+/**
+ * API for replacing a view's version.
+ *
+ * <p>Apply returns the updated view version for validation.
+ *
+ * <p>When committing, these changes will be applied to the current view metadata. Commit conflicts
+ * will be resolved by applying the pending changes to the new view metadata.
+ */
+public interface ReplaceViewVersion
+    extends PendingUpdate<ViewVersion>, VersionBuilder<ReplaceViewVersion> {
 
-  @Override
-  default String type() {
-    return Type.SQL;
-  }
-
-  /** The view query SQL text. */
-  String sql();
-
-  /** The view query SQL dialect. */
-  String dialect();
+  /**
+   * Remove the representation for the given dialect from the view's version.
+   *
+   * @param dialect The dialect for which the view representation should be removed.
+   * @return this for method chaining
+   */
+  ReplaceViewVersion remove(String dialect);
 }

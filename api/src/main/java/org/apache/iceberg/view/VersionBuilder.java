@@ -18,19 +18,27 @@
  */
 package org.apache.iceberg.view;
 
-import org.immutables.value.Value;
+import org.apache.iceberg.catalog.Namespace;
 
-@Value.Immutable
-public interface SQLViewRepresentation extends ViewRepresentation {
-
-  @Override
-  default String type() {
-    return Type.SQL;
+public interface VersionBuilder<T> {
+  /**
+   * Add a view representation for the given dialect and the SQL to the view.
+   *
+   * @param dialect The dialect of the view representation
+   * @param sql The SQL of the view representation
+   * @return this for method chaining
+   */
+  default T withQuery(String dialect, String sql) {
+    return withQuery(dialect, sql, null);
   }
 
-  /** The view query SQL text. */
-  String sql();
-
-  /** The view query SQL dialect. */
-  String dialect();
+  /**
+   * Add a view representation for the given dialect and the SQL to the view.
+   *
+   * @param dialect The dialect of the view representation
+   * @param sql The SQL of the view representation
+   * @param defaultNamespace The default namespace to use when the SQL does not contain a namespace
+   * @return this for method chaining
+   */
+  T withQuery(String dialect, String sql, Namespace defaultNamespace);
 }

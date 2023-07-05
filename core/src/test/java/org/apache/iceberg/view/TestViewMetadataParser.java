@@ -66,7 +66,6 @@ public class TestViewMetadataParser {
                 ImmutableSQLViewRepresentation.builder()
                     .sql("select 'foo' foo")
                     .dialect("spark-sql")
-                    .defaultCatalog("some-catalog")
                     .build())
             .build();
 
@@ -82,7 +81,6 @@ public class TestViewMetadataParser {
             .addRepresentations(
                 ImmutableSQLViewRepresentation.builder()
                     .sql("select 1 id, 'abc' data")
-                    .defaultCatalog("some-catalog")
                     .dialect("spark-sql")
                     .build())
             .build();
