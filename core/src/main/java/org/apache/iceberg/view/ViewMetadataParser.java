@@ -132,7 +132,7 @@ public class ViewMetadataParser {
       historyEntries.add(ViewHistoryEntryParser.fromJson(vLog));
     }
 
-    return ImmutableViewMetadata.builder()
+    return ViewMetadata.builder()
         .location(location)
         .currentVersionId(currentVersionId)
         .properties(properties)

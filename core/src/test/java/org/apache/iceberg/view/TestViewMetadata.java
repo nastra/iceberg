@@ -30,36 +30,31 @@ public class TestViewMetadata {
 
   @Test
   public void nullAndMissingFields() {
-    assertThatThrownBy(() -> ImmutableViewMetadata.builder().build())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage(
-            "Cannot build ViewMetadata, some of required attributes are not set [formatVersion, location, currentSchemaId, currentVersionId]");
+    assertThatThrownBy(() -> ViewMetadata.builder().build())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid location: null");
 
-    assertThatThrownBy(() -> ImmutableViewMetadata.builder().formatVersion(1).build())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage(
-            "Cannot build ViewMetadata, some of required attributes are not set [location, currentSchemaId, currentVersionId]");
+    assertThatThrownBy(() -> ViewMetadata.builder().formatVersion(1).build())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid location: null");
 
-    assertThatThrownBy(
-            () -> ImmutableViewMetadata.builder().formatVersion(1).location("location").build())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage(
-            "Cannot build ViewMetadata, some of required attributes are not set [currentSchemaId, currentVersionId]");
+    assertThatThrownBy(() -> ViewMetadata.builder().formatVersion(1).location("location").build())
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid schema id: null");
 
     assertThatThrownBy(
             () ->
-                ImmutableViewMetadata.builder()
+                ViewMetadata.builder()
                     .formatVersion(1)
                     .location("location")
                     .currentSchemaId(1)
                     .build())
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage(
-            "Cannot build ViewMetadata, some of required attributes are not set [currentVersionId]");
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid view versions: empty");
 
     assertThatThrownBy(
             () ->
-                ImmutableViewMetadata.builder()
+                ViewMetadata.builder()
                     .formatVersion(1)
                     .location("location")
                     .currentSchemaId(1)
@@ -73,7 +68,7 @@ public class TestViewMetadata {
   public void unsupportedFormatVersion() {
     assertThatThrownBy(
             () ->
-                ImmutableViewMetadata.builder()
+                ViewMetadata.builder()
                     .formatVersion(23)
                     .location("location")
                     .currentSchemaId(1)
@@ -87,7 +82,7 @@ public class TestViewMetadata {
   public void emptyViewVersion() {
     assertThatThrownBy(
             () ->
-                ImmutableViewMetadata.builder()
+                ViewMetadata.builder()
                     .formatVersion(1)
                     .location("location")
                     .currentSchemaId(1)
@@ -101,12 +96,12 @@ public class TestViewMetadata {
   public void emptySchemas() {
     assertThatThrownBy(
             () ->
-                ImmutableViewMetadata.builder()
+                ViewMetadata.builder()
                     .formatVersion(1)
                     .location("location")
                     .currentSchemaId(1)
                     .currentVersionId(1)
-                    .addVersions(
+                    .addVersion(
                         ImmutableViewVersion.builder()
                             .schemaId(1)
                             .versionId(1)
@@ -127,12 +122,12 @@ public class TestViewMetadata {
   public void invalidCurrentVersionId() {
     assertThatThrownBy(
             () ->
-                ImmutableViewMetadata.builder()
+                ViewMetadata.builder()
                     .formatVersion(1)
                     .location("location")
                     .currentSchemaId(1)
                     .currentVersionId(23)
-                    .addVersions(
+                    .addVersion(
                         ImmutableViewVersion.builder()
                             .schemaId(1)
                             .versionId(1)
@@ -144,7 +139,7 @@ public class TestViewMetadata {
                             .timestampMillis(23L)
                             .versionId(1)
                             .build())
-                    .addSchemas(
+                    .addSchema(
                         new Schema(1, Types.NestedField.required(1, "x", Types.LongType.get())))
                     .build())
         .isInstanceOf(IllegalArgumentException.class)
@@ -155,12 +150,12 @@ public class TestViewMetadata {
   public void invalidCurrentSchemaId() {
     assertThatThrownBy(
             () ->
-                ImmutableViewMetadata.builder()
+                ViewMetadata.builder()
                     .formatVersion(1)
                     .location("location")
                     .currentSchemaId(23)
                     .currentVersionId(1)
-                    .addVersions(
+                    .addVersion(
                         ImmutableViewVersion.builder()
                             .schemaId(1)
                             .versionId(1)
@@ -172,7 +167,7 @@ public class TestViewMetadata {
                             .timestampMillis(23L)
                             .versionId(1)
                             .build())
-                    .addSchemas(
+                    .addSchema(
                         new Schema(1, Types.NestedField.required(1, "x", Types.LongType.get())))
                     .build())
         .isInstanceOf(IllegalArgumentException.class)
@@ -181,29 +176,29 @@ public class TestViewMetadata {
 
   @Test
   public void invalidVersionHistorySizeToKeep() {
-    ImmutableViewMetadata viewMetadata =
-        ImmutableViewMetadata.builder()
+    ViewMetadata viewMetadata =
+        ViewMetadata.builder()
             // setting history to < 1 shouldn't do anything and only issue a WARN
             .properties(ImmutableMap.of(ViewProperties.VERSION_HISTORY_SIZE, "0"))
             .formatVersion(1)
             .location("location")
             .currentSchemaId(1)
             .currentVersionId(3)
-            .addVersions(
+            .addVersion(
                 ImmutableViewVersion.builder()
                     .schemaId(1)
                     .versionId(1)
                     .timestampMillis(23L)
                     .putSummary("operation", "a")
                     .build())
-            .addVersions(
+            .addVersion(
                 ImmutableViewVersion.builder()
                     .schemaId(1)
                     .versionId(2)
                     .timestampMillis(24L)
                     .putSummary("operation", "b")
                     .build())
-            .addVersions(
+            .addVersion(
                 ImmutableViewVersion.builder()
                     .schemaId(1)
                     .versionId(3)
@@ -214,7 +209,7 @@ public class TestViewMetadata {
                 ImmutableViewHistoryEntry.builder().versionId(1).timestampMillis(23L).build())
             .addHistory(
                 ImmutableViewHistoryEntry.builder().versionId(2).timestampMillis(24L).build())
-            .addSchemas(new Schema(1, Types.NestedField.required(1, "x", Types.LongType.get())))
+            .addSchema(new Schema(1, Types.NestedField.required(1, "x", Types.LongType.get())))
             .build();
 
     assertThat(viewMetadata.versions()).hasSize(3);
@@ -225,26 +220,26 @@ public class TestViewMetadata {
   public void emptyHistory() {
     assertThatThrownBy(
             () ->
-                ImmutableViewMetadata.builder()
+                ViewMetadata.builder()
                     .formatVersion(1)
                     .location("location")
                     .currentSchemaId(1)
                     .currentVersionId(2)
-                    .addVersions(
+                    .addVersion(
                         ImmutableViewVersion.builder()
                             .schemaId(1)
                             .versionId(1)
                             .timestampMillis(23L)
                             .putSummary("operation", "op")
                             .build())
-                    .addVersions(
+                    .addVersion(
                         ImmutableViewVersion.builder()
                             .schemaId(1)
                             .versionId(2)
                             .timestampMillis(24L)
                             .putSummary("operation", "op")
                             .build())
-                    .addSchemas(
+                    .addSchema(
                         new Schema(1, Types.NestedField.required(1, "x", Types.LongType.get())))
                     .build())
         .isInstanceOf(IllegalArgumentException.class)
@@ -253,28 +248,28 @@ public class TestViewMetadata {
 
   @Test
   public void viewHistoryNormalization() {
-    ImmutableViewMetadata viewMetadata =
-        ImmutableViewMetadata.builder()
+    ViewMetadata viewMetadata =
+        ViewMetadata.builder()
             .properties(ImmutableMap.of(ViewProperties.VERSION_HISTORY_SIZE, "1"))
             .formatVersion(1)
             .location("location")
             .currentSchemaId(1)
             .currentVersionId(3)
-            .addVersions(
+            .addVersion(
                 ImmutableViewVersion.builder()
                     .schemaId(1)
                     .versionId(1)
                     .timestampMillis(23L)
                     .putSummary("operation", "a")
                     .build())
-            .addVersions(
+            .addVersion(
                 ImmutableViewVersion.builder()
                     .schemaId(1)
                     .versionId(2)
                     .timestampMillis(24L)
                     .putSummary("operation", "b")
                     .build())
-            .addVersions(
+            .addVersion(
                 ImmutableViewVersion.builder()
                     .schemaId(1)
                     .versionId(3)
@@ -285,7 +280,7 @@ public class TestViewMetadata {
                 ImmutableViewHistoryEntry.builder().versionId(1).timestampMillis(23L).build())
             .addHistory(
                 ImmutableViewHistoryEntry.builder().versionId(2).timestampMillis(24L).build())
-            .addSchemas(new Schema(1, Types.NestedField.required(1, "x", Types.LongType.get())))
+            .addSchema(new Schema(1, Types.NestedField.required(1, "x", Types.LongType.get())))
             .build();
 
     assertThat(viewMetadata.versions()).hasSize(1);

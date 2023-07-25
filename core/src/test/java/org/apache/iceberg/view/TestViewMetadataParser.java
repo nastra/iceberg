@@ -92,7 +92,7 @@ public class TestViewMetadataParser {
 
     String json = readViewMetadataInputFile("org/apache/iceberg/view/ValidViewMetadata.json");
     ViewMetadata expectedViewMetadata =
-        ImmutableViewMetadata.builder()
+        ViewMetadata.builder()
             .currentSchemaId(1)
             .schemas(ImmutableList.of(TEST_SCHEMA))
             .versions(ImmutableList.of(version1, version2))
@@ -107,6 +107,7 @@ public class TestViewMetadataParser {
     assertThat(actual)
         .usingRecursiveComparison()
         .ignoringFieldsOfTypes(Schema.class)
+        .ignoringCollectionOrderInFields("changes")
         .isEqualTo(expectedViewMetadata);
     for (Schema schema : expectedViewMetadata.schemas()) {
       assertThat(schema.sameSchema(actual.schemasById().get(schema.schemaId()))).isTrue();
@@ -116,6 +117,7 @@ public class TestViewMetadataParser {
     assertThat(actual)
         .usingRecursiveComparison()
         .ignoringFieldsOfTypes(Schema.class)
+        .ignoringCollectionOrderInFields("changes")
         .isEqualTo(expectedViewMetadata);
     for (Schema schema : expectedViewMetadata.schemas()) {
       assertThat(schema.sameSchema(actual.schemasById().get(schema.schemaId()))).isTrue();
