@@ -230,6 +230,11 @@
             <property name="illegalClasses" value="org.apache.parquet.Preconditions"/>
             <message key="import.illegal" value="Use Preconditions from bundled-guava module instead."/>
         </module>
+        <module name="IllegalImport">
+            <property name="id" value="ImmutablesClasses"/>
+            <property name="illegalPkgs" value="org.immutables"/>
+            <message key="import.illegal" value="Using org.immutables is not allowed"/>
+        </module>
         <module name="IllegalInstantiation"> <!-- Java Coding Guidelines: Never instantiate primitive types -->
             <property name="classes" value="java.lang.Boolean"/>
             <property name="classes" value="java.lang.Byte"/>
