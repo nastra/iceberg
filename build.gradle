@@ -986,6 +986,6 @@ String getJavadocVersion() {
 
 apply from: 'jmh.gradle'
 apply from: 'baseline.gradle'
-apply from: 'deploy.gradle'
+apply from: 'tabular.gradle'
 apply from: 'tasks.gradle'
 
