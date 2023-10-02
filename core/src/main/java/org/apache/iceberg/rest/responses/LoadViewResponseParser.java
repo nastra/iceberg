@@ -68,6 +68,7 @@ public class LoadViewResponseParser {
 
     String metadataLocation = JsonUtil.getString(METADATA_LOCATION, json);
     ViewMetadata metadata = ViewMetadataParser.fromJson(JsonUtil.get(METADATA, json));
+
     if (null == metadata.metadataFileLocation()) {
       metadata = ViewMetadata.buildFrom(metadata).setMetadataLocation(metadataLocation).build();
     }

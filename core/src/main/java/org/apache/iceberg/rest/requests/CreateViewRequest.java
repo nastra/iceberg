@@ -18,15 +18,25 @@
  */
 package org.apache.iceberg.rest.requests;
 
+import java.util.Map;
+import javax.annotation.Nullable;
+import org.apache.iceberg.Schema;
 import org.apache.iceberg.rest.RESTRequest;
-import org.apache.iceberg.view.ViewMetadata;
+import org.apache.iceberg.view.ViewVersion;
 import org.immutables.value.Value;
 
 @Value.Immutable
 public interface CreateViewRequest extends RESTRequest {
   String name();
 
-  ViewMetadata metadata();
+  @Nullable
+  String location();
+
+  Schema schema();
+
+  ViewVersion viewVersion();
+
+  Map<String, String> properties();
 
   @Override
   default void validate() {

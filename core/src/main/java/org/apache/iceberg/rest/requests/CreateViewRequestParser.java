@@ -21,14 +21,20 @@ package org.apache.iceberg.rest.requests;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
+import org.apache.iceberg.Schema;
+import org.apache.iceberg.SchemaParser;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.util.JsonUtil;
-import org.apache.iceberg.view.ViewMetadataParser;
+import org.apache.iceberg.view.ViewVersion;
+import org.apache.iceberg.view.ViewVersionParser;
 
 public class CreateViewRequestParser {
 
   private static final String NAME = "name";
-  private static final String METADATA = "metadata";
+  private static final String LOCATION = "location";
+  private static final String SCHEMA = "schema";
+  private static final String VIEW_VERSION = "view-version";
+  private static final String PROPERTIES = "properties";
 
   private CreateViewRequestParser() {}
 
@@ -47,8 +53,19 @@ public class CreateViewRequestParser {
 
     gen.writeStringField(NAME, request.name());
 
-    gen.writeFieldName(METADATA);
-    ViewMetadataParser.toJson(request.metadata(), gen);
+    if (null != request.location()) {
+      gen.writeStringField(LOCATION, request.location());
+    }
+
+    gen.writeFieldName(VIEW_VERSION);
+    ViewVersionParser.toJson(request.viewVersion(), gen);
+
+    gen.writeFieldName(SCHEMA);
+    SchemaParser.toJson(request.schema(), gen);
+
+    if (!request.properties().isEmpty()) {
+      JsonUtil.writeStringMap(PROPERTIES, request.properties(), gen);
+    }
 
     gen.writeEndObject();
   }
@@ -60,9 +77,23 @@ public class CreateViewRequestParser {
   public static CreateViewRequest fromJson(JsonNode json) {
     Preconditions.checkArgument(null != json, "Cannot parse create view request from null object");
 
-    return ImmutableCreateViewRequest.builder()
-        .name(JsonUtil.getString(NAME, json))
-        .metadata(ViewMetadataParser.fromJson(JsonUtil.get(METADATA, json)))
-        .build();
+    String name = JsonUtil.getString(NAME, json);
+    String location = JsonUtil.getStringOrNull(LOCATION, json);
+
+    ViewVersion viewVersion = ViewVersionParser.fromJson(JsonUtil.get(VIEW_VERSION, json));
+    Schema schema = SchemaParser.fromJson(JsonUtil.get(SCHEMA, json));
+
+    ImmutableCreateViewRequest.Builder builder =
+        ImmutableCreateViewRequest.builder()
+            .name(name)
+            .location(location)
+            .viewVersion(viewVersion)
+            .schema(schema);
+
+    if (json.has(PROPERTIES)) {
+      builder.properties(JsonUtil.getStringMap(PROPERTIES, json));
+    }
+
+    return builder.build();
   }
 }

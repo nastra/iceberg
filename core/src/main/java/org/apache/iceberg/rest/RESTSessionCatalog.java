@@ -1070,11 +1070,12 @@ public class RESTSessionCatalog extends BaseSessionCatalog
   private class RESTViewBuilder implements ViewBuilder {
     private final SessionContext context;
     private final TableIdentifier identifier;
-    private final ImmutableViewVersion.Builder viewVersionBuilder = ImmutableViewVersion.builder();
     private final Map<String, String> properties = Maps.newHashMap();
     private final List<ViewRepresentation> representations = Lists.newArrayList();
     private Namespace defaultNamespace = null;
+    private String defaultCatalog = null;
     private Schema schema = null;
+    private String location = null;
 
     private RESTViewBuilder(SessionContext context, TableIdentifier identifier) {
       checkViewIdentifierIsValid(identifier);
@@ -1085,7 +1086,6 @@ public class RESTSessionCatalog extends BaseSessionCatalog
     @Override
     public ViewBuilder withSchema(Schema newSchema) {
       this.schema = newSchema;
-      viewVersionBuilder.schemaId(newSchema.schemaId());
       return this;
     }
 
@@ -1097,8 +1097,8 @@ public class RESTSessionCatalog extends BaseSessionCatalog
     }
 
     @Override
-    public ViewBuilder withDefaultCatalog(String defaultCatalog) {
-      viewVersionBuilder.defaultCatalog(defaultCatalog);
+    public ViewBuilder withDefaultCatalog(String catalog) {
+      this.defaultCatalog = catalog;
       return this;
     }
 
@@ -1121,6 +1121,12 @@ public class RESTSessionCatalog extends BaseSessionCatalog
     }
 
     @Override
+    public ViewBuilder withLocation(String newLocation) {
+      this.location = newLocation;
+      return this;
+    }
+
+    @Override
     public View create() {
       Preconditions.checkState(
           !representations.isEmpty(), "Cannot create view without specifying a query");
@@ -1129,25 +1135,23 @@ public class RESTSessionCatalog extends BaseSessionCatalog
           null != defaultNamespace, "Cannot create view without specifying a default namespace");
 
       ViewVersion viewVersion =
-          viewVersionBuilder
+          ImmutableViewVersion.builder()
               .versionId(1)
-              .timestampMillis(System.currentTimeMillis())
+              .schemaId(schema.schemaId())
               .addAllRepresentations(representations)
               .defaultNamespace(defaultNamespace)
+              .defaultCatalog(defaultCatalog)
+              .timestampMillis(System.currentTimeMillis())
               .putSummary("operation", "create")
-              .build();
-
-      ViewMetadata viewMetadata =
-          ViewMetadata.builder()
-              .setProperties(properties)
-              .setLocation("dummy")
-              .setCurrentVersion(viewVersion, schema)
               .build();
 
       CreateViewRequest request =
           ImmutableCreateViewRequest.builder()
-              .metadata(viewMetadata)
               .name(identifier.name())
+              .location(location)
+              .schema(schema)
+              .viewVersion(viewVersion)
+              .properties(properties)
               .build();
 
       LoadViewResponse response =
@@ -1162,19 +1166,33 @@ public class RESTSessionCatalog extends BaseSessionCatalog
     }
 
     @Override
+    public View createOrReplace() {
+      try {
+        return replace(loadView());
+      } catch (NoSuchViewException e) {
+        return create();
+      }
+    }
+
+    @Override
     public View replace() {
+      return replace(loadView());
+    }
+
+    private LoadViewResponse loadView() {
+      return client.get(
+          paths.view(identifier),
+          LoadViewResponse.class,
+          headers(context),
+          ErrorHandlers.viewErrorHandler());
+    }
+
+    private View replace(LoadViewResponse response) {
       Preconditions.checkState(
           !representations.isEmpty(), "Cannot replace view without specifying a query");
       Preconditions.checkState(null != schema, "Cannot replace view without specifying schema");
       Preconditions.checkState(
           null != defaultNamespace, "Cannot replace view without specifying a default namespace");
-
-      LoadViewResponse response =
-          client.get(
-              paths.view(identifier),
-              LoadViewResponse.class,
-              headers(context),
-              ErrorHandlers.viewErrorHandler());
 
       ViewMetadata metadata = response.metadata();
 
@@ -1185,24 +1203,31 @@ public class RESTSessionCatalog extends BaseSessionCatalog
               .orElseGet(metadata::currentVersionId);
 
       ViewVersion viewVersion =
-          viewVersionBuilder
+          ImmutableViewVersion.builder()
               .versionId(maxVersionId + 1)
-              .timestampMillis(System.currentTimeMillis())
+              .schemaId(schema.schemaId())
               .addAllRepresentations(representations)
               .defaultNamespace(defaultNamespace)
+              .defaultCatalog(defaultCatalog)
+              .timestampMillis(System.currentTimeMillis())
               .putSummary("operation", "replace")
               .build();
 
-      ViewMetadata replacement =
+      ViewMetadata.Builder builder =
           ViewMetadata.buildFrom(metadata)
               .setProperties(properties)
-              .setCurrentVersion(viewVersion, schema)
-              .build();
+              .setCurrentVersion(viewVersion, schema);
+
+      if (null != location) {
+        builder.setLocation(location);
+      }
+
+      ViewMetadata replacement = builder.build();
 
       UpdateTableRequest request =
           UpdateTableRequest.create(identifier, ImmutableList.of(), replacement.changes());
 
-      response =
+      LoadViewResponse viewResponse =
           client.post(
               paths.view(identifier),
               request,
@@ -1210,7 +1235,7 @@ public class RESTSessionCatalog extends BaseSessionCatalog
               headers(context),
               ErrorHandlers.viewErrorHandler());
 
-      return viewFromResponse(response);
+      return viewFromResponse(viewResponse);
     }
 
     private BaseView viewFromResponse(LoadViewResponse response) {
@@ -1226,20 +1251,6 @@ public class RESTSessionCatalog extends BaseSessionCatalog
       trackFileIO(ops);
 
       return new BaseView(ops, ViewUtil.fullViewName(name(), identifier));
-    }
-
-    @Override
-    public View createOrReplace() {
-      try {
-        client.get(
-            paths.view(identifier),
-            LoadViewResponse.class,
-            headers(context),
-            ErrorHandlers.viewErrorHandler());
-        return replace();
-      } catch (NoSuchViewException e) {
-        return create();
-      }
     }
   }
 }

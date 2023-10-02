@@ -18,11 +18,9 @@
  */
 package org.apache.iceberg.rest;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
-import org.apache.iceberg.MetadataUpdate;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
@@ -32,17 +30,11 @@ import org.apache.iceberg.view.ViewMetadata;
 import org.apache.iceberg.view.ViewOperations;
 
 class RESTViewOperations implements ViewOperations {
-  enum UpdateType {
-    CREATE,
-    REPLACE
-  }
 
   private final RESTClient client;
   private final String path;
   private final Supplier<Map<String, String>> headers;
-  private final List<MetadataUpdate> createChanges;
   private final FileIO io;
-  private UpdateType updateType;
   private ViewMetadata current;
 
   RESTViewOperations(
@@ -51,28 +43,12 @@ class RESTViewOperations implements ViewOperations {
       Supplier<Map<String, String>> headers,
       FileIO io,
       ViewMetadata current) {
-    this(client, path, headers, io, ImmutableList.of(), UpdateType.REPLACE, current);
-  }
-
-  RESTViewOperations(
-      RESTClient client,
-      String path,
-      Supplier<Map<String, String>> headers,
-      FileIO io,
-      List<MetadataUpdate> createChanges,
-      UpdateType updateType,
-      ViewMetadata current) {
+    Preconditions.checkArgument(null != current, "Invalid view metadata: null");
     this.client = client;
     this.path = path;
     this.headers = headers;
     this.io = io;
-    this.createChanges = createChanges;
-    this.updateType = updateType;
-    if (updateType == UpdateType.CREATE) {
-      this.current = null;
-    } else {
-      this.current = current;
-    }
+    this.current = current;
   }
 
   @Override
@@ -88,27 +64,15 @@ class RESTViewOperations implements ViewOperations {
 
   @Override
   public void commit(ViewMetadata base, ViewMetadata metadata) {
-    List<MetadataUpdate> updates =
-        ImmutableList.<MetadataUpdate>builder()
-            .addAll(createChanges)
-            .addAll(metadata.changes())
-            .build();
+    // this is only used for replacing view metadata
+    Preconditions.checkState(base != null, "Invalid base metadata: null");
 
-    if (UpdateType.CREATE == updateType) {
-      Preconditions.checkState(
-          base == null, "Invalid base metadata for create, expected null: %s", base);
-    } else {
-      Preconditions.checkState(base != null, "Invalid base metadata: null");
-    }
-
-    UpdateTableRequest request = UpdateTableRequest.create(null, ImmutableList.of(), updates);
+    UpdateTableRequest request =
+        UpdateTableRequest.create(null, ImmutableList.of(), metadata.changes());
 
     LoadViewResponse response =
         client.post(
             path, request, LoadViewResponse.class, headers, ErrorHandlers.viewCommitHandler());
-
-    // all future commits should replace the view
-    this.updateType = UpdateType.REPLACE;
 
     updateCurrentMetadata(response);
   }
@@ -118,8 +82,7 @@ class RESTViewOperations implements ViewOperations {
   }
 
   private ViewMetadata updateCurrentMetadata(LoadViewResponse response) {
-    if (current == null
-        || !Objects.equals(current.metadataFileLocation(), response.metadataLocation())) {
+    if (!Objects.equals(current.metadataFileLocation(), response.metadataLocation())) {
       this.current = response.metadata();
     }
 

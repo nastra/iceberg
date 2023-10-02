@@ -24,9 +24,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.catalog.Namespace;
+import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.types.Types;
 import org.apache.iceberg.view.ImmutableViewVersion;
-import org.apache.iceberg.view.ViewMetadata;
+import org.apache.iceberg.view.ViewVersionParser;
 import org.junit.jupiter.api.Test;
 
 public class TestCreateViewRequestParser {
@@ -40,28 +41,48 @@ public class TestCreateViewRequestParser {
     assertThatThrownBy(() -> CreateViewRequestParser.fromJson((JsonNode) null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Cannot parse create view request from null object");
+
+    assertThatThrownBy(() -> CreateViewRequestParser.fromJson("{}"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Cannot parse missing string: name");
   }
 
   @Test
   public void missingFields() {
-    assertThatThrownBy(() -> CreateViewRequestParser.fromJson("{}"))
+    assertThatThrownBy(() -> CreateViewRequestParser.fromJson("{\"x\": \"val\"}"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Cannot parse missing string: name");
 
     assertThatThrownBy(() -> CreateViewRequestParser.fromJson("{\"name\": \"view-name\"}"))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Cannot parse missing field: metadata");
+        .hasMessage("Cannot parse missing field: view-version");
+
+    String viewVersion =
+        ViewVersionParser.toJson(
+            ImmutableViewVersion.builder()
+                .schemaId(0)
+                .versionId(1)
+                .timestampMillis(23L)
+                .putSummary("operation", "create")
+                .defaultNamespace(Namespace.of("ns1"))
+                .build());
+
+    assertThatThrownBy(
+            () ->
+                CreateViewRequestParser.fromJson(
+                    String.format(
+                        "{\"name\": \"view-name\", \"location\": \"loc\", \"view-version\": %s}",
+                        viewVersion)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Cannot parse missing field: schema");
   }
 
   @Test
   public void roundTripSerde() {
-    String uuid = "386b9f01-002b-4d8c-b77f-42c3fd3b7c9b";
-    ViewMetadata viewMetadata =
-        ViewMetadata.builder()
-            .assignUUID(uuid)
-            .setLocation("location")
-            .addSchema(new Schema(Types.NestedField.required(1, "x", Types.LongType.get())))
-            .addVersion(
+    CreateViewRequest request =
+        ImmutableCreateViewRequest.builder()
+            .name("view-name")
+            .viewVersion(
                 ImmutableViewVersion.builder()
                     .schemaId(0)
                     .versionId(1)
@@ -69,84 +90,37 @@ public class TestCreateViewRequestParser {
                     .putSummary("operation", "create")
                     .defaultNamespace(Namespace.of("ns1"))
                     .build())
-            .addVersion(
-                ImmutableViewVersion.builder()
-                    .schemaId(0)
-                    .versionId(2)
-                    .timestampMillis(24L)
-                    .putSummary("operation", "replace")
-                    .defaultNamespace(Namespace.of("ns2"))
-                    .build())
-            .addVersion(
-                ImmutableViewVersion.builder()
-                    .schemaId(0)
-                    .versionId(3)
-                    .timestampMillis(25L)
-                    .putSummary("operation", "replace")
-                    .defaultNamespace(Namespace.of("ns3"))
-                    .build())
-            .setCurrentVersionId(3)
+            .location("location")
+            .schema(new Schema(Types.NestedField.required(1, "x", Types.LongType.get())))
+            .properties(ImmutableMap.of("key1", "val1"))
             .build();
 
-    CreateViewRequest request =
-        ImmutableCreateViewRequest.builder().name("view-name").metadata(viewMetadata).build();
     String expectedJson =
         "{\n"
             + "  \"name\" : \"view-name\",\n"
-            + "  \"metadata\" : {\n"
-            + "    \"view-uuid\" : \"386b9f01-002b-4d8c-b77f-42c3fd3b7c9b\",\n"
-            + "    \"format-version\" : 1,\n"
-            + "    \"location\" : \"location\",\n"
-            + "    \"properties\" : { },\n"
-            + "    \"schemas\" : [ {\n"
-            + "      \"type\" : \"struct\",\n"
-            + "      \"schema-id\" : 0,\n"
-            + "      \"fields\" : [ {\n"
-            + "        \"id\" : 1,\n"
-            + "        \"name\" : \"x\",\n"
-            + "        \"required\" : true,\n"
-            + "        \"type\" : \"long\"\n"
-            + "      } ]\n"
-            + "    } ],\n"
-            + "    \"current-version-id\" : 3,\n"
-            + "    \"versions\" : [ {\n"
-            + "      \"version-id\" : 1,\n"
-            + "      \"timestamp-ms\" : 23,\n"
-            + "      \"schema-id\" : 0,\n"
-            + "      \"summary\" : {\n"
-            + "        \"operation\" : \"create\"\n"
-            + "      },\n"
-            + "      \"default-namespace\" : [ \"ns1\" ],\n"
-            + "      \"representations\" : [ ]\n"
-            + "    }, {\n"
-            + "      \"version-id\" : 2,\n"
-            + "      \"timestamp-ms\" : 24,\n"
-            + "      \"schema-id\" : 0,\n"
-            + "      \"summary\" : {\n"
-            + "        \"operation\" : \"replace\"\n"
-            + "      },\n"
-            + "      \"default-namespace\" : [ \"ns2\" ],\n"
-            + "      \"representations\" : [ ]\n"
-            + "    }, {\n"
-            + "      \"version-id\" : 3,\n"
-            + "      \"timestamp-ms\" : 25,\n"
-            + "      \"schema-id\" : 0,\n"
-            + "      \"summary\" : {\n"
-            + "        \"operation\" : \"replace\"\n"
-            + "      },\n"
-            + "      \"default-namespace\" : [ \"ns3\" ],\n"
-            + "      \"representations\" : [ ]\n"
-            + "    } ],\n"
-            + "    \"version-log\" : [ {\n"
-            + "      \"timestamp-ms\" : 23,\n"
-            + "      \"version-id\" : 1\n"
-            + "    }, {\n"
-            + "      \"timestamp-ms\" : 24,\n"
-            + "      \"version-id\" : 2\n"
-            + "    }, {\n"
-            + "      \"timestamp-ms\" : 25,\n"
-            + "      \"version-id\" : 3\n"
+            + "  \"location\" : \"location\",\n"
+            + "  \"view-version\" : {\n"
+            + "    \"version-id\" : 1,\n"
+            + "    \"timestamp-ms\" : 23,\n"
+            + "    \"schema-id\" : 0,\n"
+            + "    \"summary\" : {\n"
+            + "      \"operation\" : \"create\"\n"
+            + "    },\n"
+            + "    \"default-namespace\" : [ \"ns1\" ],\n"
+            + "    \"representations\" : [ ]\n"
+            + "  },\n"
+            + "  \"schema\" : {\n"
+            + "    \"type\" : \"struct\",\n"
+            + "    \"schema-id\" : 0,\n"
+            + "    \"fields\" : [ {\n"
+            + "      \"id\" : 1,\n"
+            + "      \"name\" : \"x\",\n"
+            + "      \"required\" : true,\n"
+            + "      \"type\" : \"long\"\n"
             + "    } ]\n"
+            + "  },\n"
+            + "  \"properties\" : {\n"
+            + "    \"key1\" : \"val1\"\n"
             + "  }\n"
             + "}";
 

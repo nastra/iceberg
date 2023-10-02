@@ -1452,7 +1452,7 @@ components:
       required: true
       schema:
         type: string
-      example: "sales-view"
+      example: "sales"
 
   ##############################
   # Application Schema Objects #

@@ -133,7 +133,7 @@ public class RESTCatalogAdapter implements RESTClient {
         CreateTableRequest.class,
         LoadTableResponse.class),
     LOAD_TABLE(
-        HTTPMethod.GET, "v1/namespaces/{namespace}/tables/{table}", null, LoadTableResponse.class),
+        HTTPMethod.GET, "v1/namespaces/{namespace}/tables/{name}", null, LoadTableResponse.class),
     REGISTER_TABLE(
         HTTPMethod.POST,
         "v1/namespaces/{namespace}/register",
@@ -141,21 +141,21 @@ public class RESTCatalogAdapter implements RESTClient {
         LoadTableResponse.class),
     UPDATE_TABLE(
         HTTPMethod.POST,
-        "v1/namespaces/{namespace}/tables/{table}",
+        "v1/namespaces/{namespace}/tables/{name}",
         UpdateTableRequest.class,
         LoadTableResponse.class),
-    DROP_TABLE(HTTPMethod.DELETE, "v1/namespaces/{namespace}/tables/{table}"),
+    DROP_TABLE(HTTPMethod.DELETE, "v1/namespaces/{namespace}/tables/{name}"),
     RENAME_TABLE(HTTPMethod.POST, "v1/tables/rename", RenameTableRequest.class, null),
     REPORT_METRICS(
         HTTPMethod.POST,
-        "v1/namespaces/{namespace}/tables/{table}/metrics",
+        "v1/namespaces/{namespace}/tables/{name}/metrics",
         ReportMetricsRequest.class,
         null),
     COMMIT_TRANSACTION(
         HTTPMethod.POST, "v1/transactions/commit", CommitTransactionRequest.class, null),
     LIST_VIEWS(HTTPMethod.GET, "v1/namespaces/{namespace}/views", null, ListTablesResponse.class),
     LOAD_VIEW(
-        HTTPMethod.GET, "v1/namespaces/{namespace}/views/{view}", null, LoadViewResponse.class),
+        HTTPMethod.GET, "v1/namespaces/{namespace}/views/{name}", null, LoadViewResponse.class),
     CREATE_VIEW(
         HTTPMethod.POST,
         "v1/namespaces/{namespace}/views",
@@ -163,11 +163,11 @@ public class RESTCatalogAdapter implements RESTClient {
         LoadViewResponse.class),
     UPDATE_VIEW(
         HTTPMethod.POST,
-        "v1/namespaces/{namespace}/views/{view}",
+        "v1/namespaces/{namespace}/views/{name}",
         UpdateTableRequest.class,
         LoadViewResponse.class),
     RENAME_VIEW(HTTPMethod.POST, "v1/views/rename", RenameTableRequest.class, null),
-    DROP_VIEW(HTTPMethod.DELETE, "v1/namespaces/{namespace}/views/{view}");
+    DROP_VIEW(HTTPMethod.DELETE, "v1/namespaces/{namespace}/views/{name}");
 
     private final HTTPMethod method;
     private final int requiredLength;
@@ -432,7 +432,7 @@ public class RESTCatalogAdapter implements RESTClient {
       case LOAD_VIEW:
         {
           if (null != viewCatalog) {
-            TableIdentifier ident = viewIdentFromPathVars(vars);
+            TableIdentifier ident = identFromPathVars(vars);
             return castResponse(responseType, CatalogHandlers.loadView(viewCatalog, ident));
           }
           break;
@@ -441,7 +441,7 @@ public class RESTCatalogAdapter implements RESTClient {
       case UPDATE_VIEW:
         {
           if (null != viewCatalog) {
-            TableIdentifier ident = viewIdentFromPathVars(vars);
+            TableIdentifier ident = identFromPathVars(vars);
             UpdateTableRequest request = castRequest(UpdateTableRequest.class, body);
             return castResponse(
                 responseType, CatalogHandlers.updateView(viewCatalog, ident, request));
@@ -462,7 +462,7 @@ public class RESTCatalogAdapter implements RESTClient {
       case DROP_VIEW:
         {
           if (null != viewCatalog) {
-            CatalogHandlers.dropView(viewCatalog, viewIdentFromPathVars(vars));
+            CatalogHandlers.dropView(viewCatalog, identFromPathVars(vars));
             return null;
           }
           break;
@@ -647,11 +647,6 @@ public class RESTCatalogAdapter implements RESTClient {
 
   private static TableIdentifier identFromPathVars(Map<String, String> pathVars) {
     return TableIdentifier.of(
-        namespaceFromPathVars(pathVars), RESTUtil.decodeString(pathVars.get("table")));
-  }
-
-  private static TableIdentifier viewIdentFromPathVars(Map<String, String> pathVars) {
-    return TableIdentifier.of(
-        namespaceFromPathVars(pathVars), RESTUtil.decodeString(pathVars.get("view")));
+        namespaceFromPathVars(pathVars), RESTUtil.decodeString(pathVars.get("name")));
   }
 }

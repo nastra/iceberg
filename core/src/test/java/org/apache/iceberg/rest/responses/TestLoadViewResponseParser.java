@@ -41,11 +41,15 @@ public class TestLoadViewResponseParser {
     assertThatThrownBy(() -> LoadViewResponseParser.fromJson((JsonNode) null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Cannot parse load view response from null object");
+
+    assertThatThrownBy(() -> LoadViewResponseParser.fromJson("{}"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Cannot parse missing string: metadata-location");
   }
 
   @Test
   public void missingFields() {
-    assertThatThrownBy(() -> LoadViewResponseParser.fromJson("{}"))
+    assertThatThrownBy(() -> LoadViewResponseParser.fromJson("{\"x\": \"val\"}"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Cannot parse missing string: metadata-location");
 
@@ -264,76 +268,6 @@ public class TestLoadViewResponseParser {
             + "  \"config\" : {\n"
             + "    \"key1\" : \"val1\",\n"
             + "    \"key2\" : \"val2\"\n"
-            + "  }\n"
-            + "}";
-
-    String json = LoadViewResponseParser.toJson(response, true);
-    assertThat(json).isEqualTo(expectedJson);
-    // can't do an equality comparison because Schema doesn't implement equals/hashCode
-    assertThat(LoadViewResponseParser.toJson(LoadViewResponseParser.fromJson(json), true))
-        .isEqualTo(expectedJson);
-  }
-
-  @Test
-  public void roundTripSerdeWithMetadataLocation() {
-    String uuid = "386b9f01-002b-4d8c-b77f-42c3fd3b7c9b";
-    ViewMetadata viewMetadata =
-        ViewMetadata.buildFrom(
-                ViewMetadata.builder()
-                    .assignUUID(uuid)
-                    .setLocation("location")
-                    .addSchema(new Schema(Types.NestedField.required(1, "x", Types.LongType.get())))
-                    .addVersion(
-                        ImmutableViewVersion.builder()
-                            .schemaId(0)
-                            .versionId(1)
-                            .timestampMillis(23L)
-                            .putSummary("operation", "create")
-                            .defaultNamespace(Namespace.of("ns1"))
-                            .build())
-                    .setCurrentVersionId(1)
-                    .build())
-            .setMetadataLocation("metadata-location")
-            .build();
-
-    LoadViewResponse response =
-        ImmutableLoadViewResponse.builder()
-            .metadata(viewMetadata)
-            .metadataLocation("metadata-location")
-            .build();
-    String expectedJson =
-        "{\n"
-            + "  \"metadata-location\" : \"metadata-location\",\n"
-            + "  \"metadata\" : {\n"
-            + "    \"view-uuid\" : \"386b9f01-002b-4d8c-b77f-42c3fd3b7c9b\",\n"
-            + "    \"format-version\" : 1,\n"
-            + "    \"location\" : \"location\",\n"
-            + "    \"properties\" : { },\n"
-            + "    \"schemas\" : [ {\n"
-            + "      \"type\" : \"struct\",\n"
-            + "      \"schema-id\" : 0,\n"
-            + "      \"fields\" : [ {\n"
-            + "        \"id\" : 1,\n"
-            + "        \"name\" : \"x\",\n"
-            + "        \"required\" : true,\n"
-            + "        \"type\" : \"long\"\n"
-            + "      } ]\n"
-            + "    } ],\n"
-            + "    \"current-version-id\" : 1,\n"
-            + "    \"versions\" : [ {\n"
-            + "      \"version-id\" : 1,\n"
-            + "      \"timestamp-ms\" : 23,\n"
-            + "      \"schema-id\" : 0,\n"
-            + "      \"summary\" : {\n"
-            + "        \"operation\" : \"create\"\n"
-            + "      },\n"
-            + "      \"default-namespace\" : [ \"ns1\" ],\n"
-            + "      \"representations\" : [ ]\n"
-            + "    } ],\n"
-            + "    \"version-log\" : [ {\n"
-            + "      \"timestamp-ms\" : 23,\n"
-            + "      \"version-id\" : 1\n"
-            + "    } ]\n"
             + "  }\n"
             + "}";
 

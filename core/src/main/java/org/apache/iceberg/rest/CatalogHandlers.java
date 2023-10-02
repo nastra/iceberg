@@ -76,6 +76,7 @@ import org.apache.iceberg.view.View;
 import org.apache.iceberg.view.ViewBuilder;
 import org.apache.iceberg.view.ViewMetadata;
 import org.apache.iceberg.view.ViewOperations;
+import org.apache.iceberg.view.ViewRepresentation;
 
 public class CatalogHandlers {
   private static final Schema EMPTY_SCHEMA = new Schema();
@@ -386,7 +387,7 @@ public class CatalogHandlers {
     return ops.current();
   }
 
-  public static BaseView baseView(View view) {
+  private static BaseView baseView(View view) {
     Preconditions.checkArgument(view instanceof BaseView, "View must be a BaseView");
     return (BaseView) view;
   }
@@ -399,18 +400,31 @@ public class CatalogHandlers {
       ViewCatalog catalog, Namespace namespace, CreateViewRequest request) {
     request.validate();
 
-    ViewMetadata viewMetadata = request.metadata();
     ViewBuilder viewBuilder =
         catalog
             .buildView(TableIdentifier.of(namespace, request.name()))
-            .withSchema(viewMetadata.schema())
-            .withProperties(viewMetadata.properties())
-            .withDefaultNamespace(viewMetadata.currentVersion().defaultNamespace())
-            .withDefaultCatalog(viewMetadata.currentVersion().defaultCatalog());
-    viewMetadata.currentVersion().representations().stream()
-        .filter(r -> r instanceof SQLViewRepresentation)
-        .map(r -> (SQLViewRepresentation) r)
+            .withSchema(request.schema())
+            .withProperties(request.properties())
+            .withDefaultNamespace(request.viewVersion().defaultNamespace())
+            .withDefaultCatalog(request.viewVersion().defaultCatalog())
+            .withLocation(request.location());
+
+    Set<String> unsupportedRepresentations =
+        request.viewVersion().representations().stream()
+            .filter(r -> !(r instanceof SQLViewRepresentation))
+            .map(ViewRepresentation::type)
+            .collect(Collectors.toSet());
+
+    if (!unsupportedRepresentations.isEmpty()) {
+      throw new IllegalStateException(
+          String.format("Found unsupported view representations: %s", unsupportedRepresentations));
+    }
+
+    request.viewVersion().representations().stream()
+        .filter(SQLViewRepresentation.class::isInstance)
+        .map(SQLViewRepresentation.class::cast)
         .forEach(r -> viewBuilder.withQuery(r.dialect(), r.sql()));
+
     View view = viewBuilder.create();
 
     return viewResponse(view);
@@ -466,6 +480,14 @@ public class CatalogHandlers {
               taskOps -> {
                 ViewMetadata base = isRetry.get() ? taskOps.refresh() : taskOps.current();
                 isRetry.set(true);
+
+                // validate requirements
+                try {
+                  request.requirements().forEach(requirement -> requirement.validate(base));
+                } catch (CommitFailedException e) {
+                  // wrap and rethrow outside of tasks to avoid unnecessary retry
+                  throw new ValidationFailureException(e);
+                }
 
                 // apply changes
                 ViewMetadata.Builder metadataBuilder = ViewMetadata.buildFrom(base);

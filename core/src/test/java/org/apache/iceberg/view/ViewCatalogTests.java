@@ -228,8 +228,9 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
                     .withQuery(trino.dialect(), trino.sql())
                     .withQuery(trino.dialect(), trino.sql())
                     .create())
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid view version: Cannot add multiple queries for dialect trino");
+        .isInstanceOf(Exception.class)
+        .hasMessageContaining(
+            "Invalid view version: Cannot add multiple queries for dialect trino");
   }
 
   @Test
@@ -1460,9 +1461,14 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
     catalog().dropView(identifier);
     assertThat(catalog().viewExists(identifier)).as("View should not exist").isFalse();
 
+    String expectedMessage =
+        catalog() instanceof RESTCatalog ? "View does not exist: ns.view" : "Cannot commit";
+    Class<?> expectedException =
+        catalog() instanceof RESTCatalog ? NoSuchViewException.class : CommitFailedException.class;
+
     // the view was already dropped concurrently
     assertThatThrownBy(() -> updateViewLocation.setLocation("new-location").commit())
-        .isInstanceOf(CommitFailedException.class)
-        .hasMessageContaining("Cannot commit");
+        .isInstanceOf(expectedException)
+        .hasMessageContaining(expectedMessage);
   }
 }
