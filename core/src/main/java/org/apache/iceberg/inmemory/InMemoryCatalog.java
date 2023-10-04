@@ -165,6 +165,10 @@ public class InMemoryCatalog extends BaseMetastoreViewCatalog
         throw new AlreadyExistsException("Cannot rename %s to %s. Table already exists", from, to);
       }
 
+      if (views.containsKey(to)) {
+        throw new AlreadyExistsException("Cannot rename %s to %s. View already exists", from, to);
+      }
+
       tables.put(to, fromLocation);
       tables.remove(from);
     }

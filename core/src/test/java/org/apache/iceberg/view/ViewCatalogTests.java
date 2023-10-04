@@ -670,6 +670,41 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
   }
 
   @Test
+  public void renameTableTargetAlreadyExistsAsView() {
+    Assumptions.assumeThat(tableCatalog())
+        .as("Only valid for catalogs that support tables")
+        .isNotNull();
+
+    TableIdentifier viewIdentifier = TableIdentifier.of("ns", "view");
+    TableIdentifier tableIdentifier = TableIdentifier.of("ns", "table");
+
+    if (requiresNamespaceCreate()) {
+      catalog().createNamespace(tableIdentifier.namespace());
+    }
+
+    assertThat(tableCatalog().tableExists(tableIdentifier)).as("Table should not exist").isFalse();
+
+    tableCatalog().buildTable(tableIdentifier, SCHEMA).create();
+
+    assertThat(tableCatalog().tableExists(tableIdentifier)).as("Table should exist").isTrue();
+
+    assertThat(catalog().viewExists(viewIdentifier)).as("View should not exist").isFalse();
+
+    catalog()
+        .buildView(viewIdentifier)
+        .withSchema(SCHEMA)
+        .withDefaultNamespace(viewIdentifier.namespace())
+        .withQuery("spark", "select * from ns.tbl")
+        .create();
+
+    assertThat(catalog().viewExists(viewIdentifier)).as("View should exist").isTrue();
+
+    assertThatThrownBy(() -> tableCatalog().renameTable(tableIdentifier, viewIdentifier))
+        .isInstanceOf(AlreadyExistsException.class)
+        .hasMessageContaining("Cannot rename ns.table to ns.view. View already exists");
+  }
+
+  @Test
   public void listViews() {
     Namespace ns1 = Namespace.of("ns1");
     Namespace ns2 = Namespace.of("ns2");
