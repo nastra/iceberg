@@ -116,5 +116,5 @@ public interface ViewSessionCatalog {
    * @param name a custom name for the catalog
    * @param properties catalog properties
    */
-  default void initialize(String name, Map<String, String> properties) {}
+  void initialize(String name, Map<String, String> properties);
 }

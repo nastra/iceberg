@@ -50,7 +50,7 @@ public class RESTCatalog
   private final Catalog delegate;
   private final SupportsNamespaces nsDelegate;
   private final SessionCatalog.SessionContext context;
-  private final ViewCatalog viewDelegate;
+  private final ViewCatalog viewSessionCatalog;
 
   public RESTCatalog() {
     this(
@@ -69,7 +69,7 @@ public class RESTCatalog
     this.delegate = sessionCatalog.asCatalog(context);
     this.nsDelegate = (SupportsNamespaces) delegate;
     this.context = context;
-    this.viewDelegate = (ViewCatalog) delegate;
+    this.viewSessionCatalog = sessionCatalog.asViewCatalog(context);
   }
 
   @Override
@@ -270,36 +270,36 @@ public class RESTCatalog
 
   @Override
   public List<TableIdentifier> listViews(Namespace namespace) {
-    return viewDelegate.listViews(namespace);
+    return viewSessionCatalog.listViews(namespace);
   }
 
   @Override
   public View loadView(TableIdentifier identifier) {
-    return viewDelegate.loadView(identifier);
+    return viewSessionCatalog.loadView(identifier);
   }
 
   @Override
   public ViewBuilder buildView(TableIdentifier identifier) {
-    return viewDelegate.buildView(identifier);
+    return viewSessionCatalog.buildView(identifier);
   }
 
   @Override
   public boolean dropView(TableIdentifier identifier) {
-    return viewDelegate.dropView(identifier);
+    return viewSessionCatalog.dropView(identifier);
   }
 
   @Override
   public void renameView(TableIdentifier from, TableIdentifier to) {
-    viewDelegate.renameView(from, to);
+    viewSessionCatalog.renameView(from, to);
   }
 
   @Override
   public boolean viewExists(TableIdentifier identifier) {
-    return viewDelegate.viewExists(identifier);
+    return viewSessionCatalog.viewExists(identifier);
   }
 
   @Override
   public void invalidateView(TableIdentifier identifier) {
-    viewDelegate.invalidateView(identifier);
+    viewSessionCatalog.invalidateView(identifier);
   }
 }
