@@ -884,7 +884,7 @@ paths:
         406:
           $ref: '#/components/responses/UnsupportedOperationResponse'
         409:
-          description: Conflict - The target table identifier to rename to already exists
+          description: Conflict - The target identifier to rename to already exists as a table or view
           content:
             application/json:
               schema:
@@ -1153,7 +1153,7 @@ paths:
         Load a view from the catalog.
 
 
-        The response contains both configuration and table metadata. The configuration, if non-empty is used
+        The response contains both configuration and view metadata. The configuration, if non-empty is used
         as additional configuration for the view that overrides catalog configuration. For example, this
         configuration may change the FileIO implementation to be used for the view.
 
@@ -1380,7 +1380,7 @@ paths:
           description:
             Not Found
             - NoSuchViewException, view to rename does not exist
-            - NoSuchNamespaceException, The target namespace of the new table identifier does not exist
+            - NoSuchNamespaceException, The target namespace of the new identifier does not exist
           content:
             application/json:
               schema:
@@ -1393,7 +1393,7 @@ paths:
         406:
           $ref: '#/components/responses/UnsupportedOperationResponse'
         409:
-          description: Conflict - The target view identifier to rename to already exists
+          description: Conflict - The target identifier to rename to already exists as a table or view
           content:
             application/json:
               schema:
@@ -2094,14 +2094,16 @@ components:
     ViewMetadata:
       type: object
       required:
+        - view-uuid
         - format-version
         - location
         - current-version-id
         - versions
         - version-log
         - schemas
-        - properties
       properties:
+        view-uuid:
+          type: string
         format-version:
           type: integer
           minimum: 1
@@ -2358,6 +2360,7 @@ components:
 
     ViewUpdate:
       anyOf:
+        - $ref: '#/components/schemas/AssignUUIDUpdate'
         - $ref: '#/components/schemas/UpgradeFormatVersionUpdate'
         - $ref: '#/components/schemas/AddSchemaUpdate'
         - $ref: '#/components/schemas/SetLocationUpdate'
@@ -2538,12 +2541,22 @@ components:
       type: object
       required:
         - name
-        - metadata
+        - schema
+        - view-version
+        - properties
       properties:
         name:
           type: string
-        metadata:
-          $ref: '#/components/schemas/ViewMetadata'
+        location:
+          type: string
+        schema:
+          $ref: '#/components/schemas/Schema'
+        view-version:
+          $ref: '#/components/schemas/ViewVersion'
+        properties:
+          type: object
+          additionalProperties:
+            type: string
 
     LoadViewResult:
       description: |

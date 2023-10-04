@@ -666,13 +666,14 @@ class TableMetadata(BaseModel):
 
 
 class ViewMetadata(BaseModel):
+    view_uuid: str = Field(..., alias='view-uuid')
     format_version: int = Field(..., alias='format-version', ge=1, le=1)
     location: str
     current_version_id: int = Field(..., alias='current-version-id')
     versions: List[ViewVersion]
     version_log: List[ViewHistoryEntry] = Field(..., alias='version-log')
     schemas: List[Schema]
-    properties: Dict[str, str]
+    properties: Optional[Dict[str, str]] = None
 
 
 class AddSchemaUpdate(BaseUpdate):
@@ -706,6 +707,7 @@ class TableUpdate(BaseModel):
 
 class ViewUpdate(BaseModel):
     __root__: Union[
+        AssignUUIDUpdate,
         UpgradeFormatVersionUpdate,
         AddSchemaUpdate,
         SetLocationUpdate,
@@ -786,7 +788,10 @@ class CreateTableRequest(BaseModel):
 
 class CreateViewRequest(BaseModel):
     name: str
-    metadata: ViewMetadata
+    location: Optional[str] = None
+    schema_: Schema = Field(..., alias='schema')
+    view_version: ViewVersion = Field(..., alias='view-version')
+    properties: Dict[str, str]
 
 
 class LoadViewResult(BaseModel):
@@ -863,4 +868,5 @@ TableMetadata.update_forward_refs()
 ViewMetadata.update_forward_refs()
 AddSchemaUpdate.update_forward_refs()
 CreateTableRequest.update_forward_refs()
+CreateViewRequest.update_forward_refs()
 ReportMetricsRequest2.update_forward_refs()

@@ -1233,7 +1233,7 @@ public class RESTSessionCatalog extends BaseViewSessionCatalog
               request,
               LoadViewResponse.class,
               headers(context),
-              ErrorHandlers.viewErrorHandler());
+              ErrorHandlers.viewCommitHandler());
 
       return viewFromResponse(viewResponse);
     }
