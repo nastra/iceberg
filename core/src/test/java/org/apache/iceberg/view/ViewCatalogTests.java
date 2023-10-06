@@ -61,6 +61,10 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
     return false;
   }
 
+  protected boolean overridesRequestedLocation() {
+    return false;
+  }
+
   @Test
   public void basicCreateView() {
     TableIdentifier identifier = TableIdentifier.of("ns", "view");
@@ -141,9 +145,14 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
     assertThat(catalog().viewExists(identifier)).as("View should exist").isTrue();
     assertThat(((BaseView) view).operations().current().metadataFileLocation()).isNotNull();
 
+    if (!overridesRequestedLocation()) {
+      assertThat(view.location()).isEqualTo("file://tmp/ns/view");
+    } else {
+      assertThat(view.location()).isNotNull();
+    }
+
     // validate view settings
     assertThat(view.name()).isEqualTo(ViewUtil.fullViewName(catalog().name(), identifier));
-    assertThat(view.location()).isEqualTo("file://tmp/ns/view");
     assertThat(view.properties()).containsEntry("prop1", "val1").containsEntry("prop2", "val2");
     assertThat(view.history())
         .hasSize(1)
@@ -1413,7 +1422,12 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
             .create();
 
     assertThat(catalog().viewExists(identifier)).as("View should exist").isTrue();
-    assertThat(view.location()).isEqualTo("file://tmp/ns/view");
+
+    if (!overridesRequestedLocation()) {
+      assertThat(view.location()).isEqualTo("file://tmp/ns/view");
+    } else {
+      assertThat(view.location()).isNotNull();
+    }
 
     view =
         catalog()
@@ -1424,7 +1438,11 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
             .withLocation("file://updated_tmp/ns/view")
             .replace();
 
-    assertThat(view.location()).isEqualTo("file://updated_tmp/ns/view");
+    if (!overridesRequestedLocation()) {
+      assertThat(view.location()).isEqualTo("file://updated_tmp/ns/view");
+    } else {
+      assertThat(view.location()).isNotNull();
+    }
 
     assertThat(catalog().dropView(identifier)).isTrue();
     assertThat(catalog().viewExists(identifier)).as("View should not exist").isFalse();
@@ -1450,13 +1468,21 @@ public abstract class ViewCatalogTests<C extends ViewCatalog & SupportsNamespace
             .create();
 
     assertThat(catalog().viewExists(identifier)).as("View should exist").isTrue();
-    assertThat(view.location()).isEqualTo("file://tmp/ns/view");
+    if (!overridesRequestedLocation()) {
+      assertThat(view.location()).isEqualTo("file://tmp/ns/view");
+    } else {
+      assertThat(view.location()).isNotNull();
+    }
 
     view.updateLocation().setLocation("file://updated_tmp/ns/view").commit();
 
     View updatedView = catalog().loadView(identifier);
 
-    assertThat(updatedView.location()).isEqualTo("file://updated_tmp/ns/view");
+    if (!overridesRequestedLocation()) {
+      assertThat(updatedView.location()).isEqualTo("file://updated_tmp/ns/view");
+    } else {
+      assertThat(view.location()).isNotNull();
+    }
 
     // history and view versions should stay the same after updating view properties
     assertThat(updatedView.history()).hasSize(1).isEqualTo(view.history());
