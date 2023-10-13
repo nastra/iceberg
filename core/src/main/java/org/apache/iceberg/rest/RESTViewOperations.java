@@ -21,9 +21,9 @@ package org.apache.iceberg.rest;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+import org.apache.iceberg.UpdateRequirements;
 import org.apache.iceberg.io.FileIO;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
-import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.rest.requests.UpdateTableRequest;
 import org.apache.iceberg.rest.responses.LoadViewResponse;
 import org.apache.iceberg.view.ViewMetadata;
@@ -68,7 +68,8 @@ class RESTViewOperations implements ViewOperations {
     Preconditions.checkState(base != null, "Invalid base metadata: null");
 
     UpdateTableRequest request =
-        UpdateTableRequest.create(null, ImmutableList.of(), metadata.changes());
+        UpdateTableRequest.create(
+            null, UpdateRequirements.forReplaceView(base, metadata.changes()), metadata.changes());
 
     LoadViewResponse response =
         client.post(

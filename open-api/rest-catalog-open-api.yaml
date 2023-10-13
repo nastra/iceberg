@@ -2375,7 +2375,9 @@ components:
 
         - `assert-create` - the table must not already exist; used for create transactions
 
-        - `assert-table-uuid` - the table UUID must match the requirement's `uuid`
+        - `assert-table-uuid` - the table UUID must match the requirement's `uuid` (deprecated, use `assert-uuid` instead)
+
+        - `assert-uuid` - the table UUID must match the requirement's `uuid`
 
         - `assert-ref-snapshot-id` - the table branch or tag identified by the requirement's `ref` must reference the requirement's `snapshot-id`; if `snapshot-id` is `null` or missing, the ref must not already exist
 
@@ -2397,6 +2399,7 @@ components:
           enum:
             - assert-create
             - assert-table-uuid
+            - assert-uuid
             - assert-ref-snapshot-id
             - assert-last-assigned-field-id
             - assert-current-schema-id
@@ -2420,6 +2423,22 @@ components:
           type: integer
         default-sort-order-id:
           type: integer
+
+    ViewRequirement:
+      description:
+        Assertions from the client that must be valid for the commit to succeed. Assertions are identified by `type` -
+
+        - `assert-uuid` - the view UUID must match the requirement's `uuid`
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - assert-uuid
+        uuid:
+          type: string
 
     LoadTableResult:
       description: |
@@ -2487,6 +2506,10 @@ components:
         identifier:
           description: View identifier to update
           $ref: '#/components/schemas/TableIdentifier'
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ViewRequirement'
         updates:
           type: array
           items:

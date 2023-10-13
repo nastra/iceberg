@@ -48,6 +48,7 @@ import org.apache.iceberg.Table;
 import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.Transaction;
 import org.apache.iceberg.Transactions;
+import org.apache.iceberg.UpdateRequirements;
 import org.apache.iceberg.catalog.BaseViewSessionCatalog;
 import org.apache.iceberg.catalog.Catalog;
 import org.apache.iceberg.catalog.Namespace;
@@ -1225,7 +1226,10 @@ public class RESTSessionCatalog extends BaseViewSessionCatalog
       ViewMetadata replacement = builder.build();
 
       UpdateTableRequest request =
-          UpdateTableRequest.create(identifier, ImmutableList.of(), replacement.changes());
+          UpdateTableRequest.create(
+              identifier,
+              UpdateRequirements.forReplaceView(metadata, replacement.changes()),
+              replacement.changes());
 
       LoadViewResponse viewResponse =
           client.post(

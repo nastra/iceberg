@@ -340,7 +340,8 @@ class TableRequirement(BaseModel):
     """
     Assertions from the client that must be valid for the commit to succeed. Assertions are identified by `type` -
     - `assert-create` - the table must not already exist; used for create transactions
-    - `assert-table-uuid` - the table UUID must match the requirement's `uuid`
+    - `assert-table-uuid` - the table UUID must match the requirement's `uuid` (deprecated, use `assert-uuid` instead)
+    - `assert-uuid` - the table UUID must match the requirement's `uuid`
     - `assert-ref-snapshot-id` - the table branch or tag identified by the requirement's `ref` must reference the requirement's `snapshot-id`; if `snapshot-id` is `null` or missing, the ref must not already exist
     - `assert-last-assigned-field-id` - the table's last assigned column id must match the requirement's `last-assigned-field-id`
     - `assert-current-schema-id` - the table's current schema id must match the requirement's `current-schema-id`
@@ -352,6 +353,7 @@ class TableRequirement(BaseModel):
     type: Literal[
         'assert-create',
         'assert-table-uuid',
+        'assert-uuid',
         'assert-ref-snapshot-id',
         'assert-last-assigned-field-id',
         'assert-current-schema-id',
@@ -369,6 +371,16 @@ class TableRequirement(BaseModel):
     )
     default_spec_id: Optional[int] = Field(None, alias='default-spec-id')
     default_sort_order_id: Optional[int] = Field(None, alias='default-sort-order-id')
+
+
+class ViewRequirement(BaseModel):
+    """
+    Assertions from the client that must be valid for the commit to succeed. Assertions are identified by `type` -
+    - `assert-uuid` - the view UUID must match the requirement's `uuid`
+    """
+
+    type: Literal['assert-uuid']
+    uuid: Optional[str] = None
 
 
 class RegisterTableRequest(BaseModel):
@@ -769,6 +781,7 @@ class CommitViewRequest(BaseModel):
     identifier: Optional[TableIdentifier] = Field(
         None, description='View identifier to update'
     )
+    requirements: Optional[List[ViewRequirement]] = None
     updates: List[ViewUpdate]
 
 
