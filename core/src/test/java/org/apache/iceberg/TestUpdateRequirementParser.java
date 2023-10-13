@@ -40,21 +40,40 @@ public class TestUpdateRequirementParser {
   }
 
   @Test
-  public void testAssertUUIDFromJson() {
+  public void testAssertTableUUIDFromJson() {
     String requirementType = UpdateRequirementParser.ASSERT_TABLE_UUID;
     String uuid = "2cc52516-5e73-41f2-b139-545d41a4e151";
     String json = String.format("{\"type\":\"assert-table-uuid\",\"uuid\":\"%s\"}", uuid);
-    UpdateRequirement expected = new UpdateRequirement.AssertTableUUID(uuid);
+    UpdateRequirement expected = new UpdateRequirement.AssertUUID(uuid);
+    assertEquals(requirementType, expected, UpdateRequirementParser.fromJson(json));
+  }
+
+  @Test
+  public void testAssertTableUUIDToJson() {
+    String uuid = "2cc52516-5e73-41f2-b139-545d41a4e151";
+    String expected = String.format("{\"type\":\"assert-table-uuid\",\"uuid\":\"%s\"}", uuid);
+    UpdateRequirement actual = new UpdateRequirement.AssertTableUUID(uuid);
+    Assertions.assertThat(UpdateRequirementParser.toJson(actual))
+        .as("AssertUUID should convert to the correct JSON value")
+        .isEqualTo(expected);
+  }
+
+  @Test
+  public void testAssertUUIDFromJson() {
+    String requirementType = UpdateRequirementParser.ASSERT_TABLE_UUID;
+    String uuid = "2cc52516-5e73-41f2-b139-545d41a4e151";
+    String json = String.format("{\"type\":\"assert-uuid\",\"uuid\":\"%s\"}", uuid);
+    UpdateRequirement expected = new UpdateRequirement.AssertUUID(uuid);
     assertEquals(requirementType, expected, UpdateRequirementParser.fromJson(json));
   }
 
   @Test
   public void testAssertUUIDToJson() {
     String uuid = "2cc52516-5e73-41f2-b139-545d41a4e151";
-    String expected = String.format("{\"type\":\"assert-table-uuid\",\"uuid\":\"%s\"}", uuid);
-    UpdateRequirement actual = new UpdateRequirement.AssertTableUUID(uuid);
+    String expected = String.format("{\"type\":\"assert-uuid\",\"uuid\":\"%s\"}", uuid);
+    UpdateRequirement actual = new UpdateRequirement.AssertUUID(uuid);
     Assertions.assertThat(UpdateRequirementParser.toJson(actual))
-        .as("AssertTableUUID should convert to the correct JSON value")
+        .as("AssertUUID should convert to the correct JSON value")
         .isEqualTo(expected);
   }
 
@@ -258,9 +277,9 @@ public class TestUpdateRequirementParser {
       String requirementType, UpdateRequirement expected, UpdateRequirement actual) {
     switch (requirementType) {
       case UpdateRequirementParser.ASSERT_TABLE_UUID:
-        compareAssertTableUUID(
-            (UpdateRequirement.AssertTableUUID) expected,
-            (UpdateRequirement.AssertTableUUID) actual);
+      case UpdateRequirementParser.ASSERT_UUID:
+        compareAssertUUID(
+            (UpdateRequirement.AssertUUID) expected, (UpdateRequirement.AssertUUID) actual);
         break;
       case UpdateRequirementParser.ASSERT_TABLE_DOES_NOT_EXIST:
         // Don't cast here as the function explicitly tests that the types are correct, given that
@@ -303,8 +322,8 @@ public class TestUpdateRequirementParser {
     }
   }
 
-  private static void compareAssertTableUUID(
-      UpdateRequirement.AssertTableUUID expected, UpdateRequirement.AssertTableUUID actual) {
+  private static void compareAssertUUID(
+      UpdateRequirement.AssertUUID expected, UpdateRequirement.AssertUUID actual) {
     Assertions.assertThat(actual.uuid())
         .as("UUID from JSON should not be null")
         .isNotNull()

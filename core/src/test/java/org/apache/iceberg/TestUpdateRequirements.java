@@ -80,11 +80,11 @@ public class TestUpdateRequirements {
   public void emptyUpdatesForUpdateAndReplaceTable() {
     assertThat(UpdateRequirements.forReplaceTable(metadata, ImmutableList.of()))
         .hasSize(1)
-        .hasOnlyElementsOfType(UpdateRequirement.AssertTableUUID.class);
+        .hasOnlyElementsOfType(UpdateRequirement.AssertUUID.class);
 
     assertThat(UpdateRequirements.forUpdateTable(metadata, ImmutableList.of()))
         .hasSize(1)
-        .hasOnlyElementsOfType(UpdateRequirement.AssertTableUUID.class);
+        .hasOnlyElementsOfType(UpdateRequirement.AssertUUID.class);
   }
 
   @Test
@@ -107,11 +107,9 @@ public class TestUpdateRequirements {
                 new MetadataUpdate.AssignUUID(UUID.randomUUID().toString())));
     requirements.forEach(req -> req.validate(metadata));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfType(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfType(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
   }
 
   @Test
@@ -136,11 +134,9 @@ public class TestUpdateRequirements {
             metadata, ImmutableList.of(new MetadataUpdate.UpgradeFormatVersion(2)));
     requirements.forEach(req -> req.validate(metadata));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfType(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfType(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
   }
 
   @Test
@@ -159,10 +155,9 @@ public class TestUpdateRequirements {
     assertThat(requirements)
         .hasSize(2)
         .hasOnlyElementsOfTypes(
-            UpdateRequirement.AssertTableUUID.class,
-            UpdateRequirement.AssertLastAssignedFieldId.class);
+            UpdateRequirement.AssertUUID.class, UpdateRequirement.AssertLastAssignedFieldId.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
 
     assertThat(requirements)
         .element(1)
@@ -206,9 +201,9 @@ public class TestUpdateRequirements {
     assertThat(requirements)
         .hasSize(2)
         .hasOnlyElementsOfTypes(
-            UpdateRequirement.AssertTableUUID.class, UpdateRequirement.AssertCurrentSchemaID.class);
+            UpdateRequirement.AssertUUID.class, UpdateRequirement.AssertCurrentSchemaID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
 
     assertThat(requirements)
         .element(1)
@@ -260,10 +255,10 @@ public class TestUpdateRequirements {
     assertThat(requirements)
         .hasSize(2)
         .hasOnlyElementsOfTypes(
-            UpdateRequirement.AssertTableUUID.class,
+            UpdateRequirement.AssertUUID.class,
             UpdateRequirement.AssertLastAssignedPartitionId.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
 
     assertThat(requirements)
         .element(1)
@@ -304,9 +299,9 @@ public class TestUpdateRequirements {
     assertThat(requirements)
         .hasSize(2)
         .hasOnlyElementsOfTypes(
-            UpdateRequirement.AssertTableUUID.class, UpdateRequirement.AssertDefaultSpecID.class);
+            UpdateRequirement.AssertUUID.class, UpdateRequirement.AssertDefaultSpecID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
 
     assertThat(requirements)
         .element(1)
@@ -340,11 +335,9 @@ public class TestUpdateRequirements {
             metadata, ImmutableList.of(new MetadataUpdate.AddSortOrder(SortOrder.unsorted())));
     requirements.forEach(req -> req.validate(metadata));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfTypes(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfTypes(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
   }
 
   @Test
@@ -363,10 +356,9 @@ public class TestUpdateRequirements {
     assertThat(requirements)
         .hasSize(2)
         .hasOnlyElementsOfTypes(
-            UpdateRequirement.AssertTableUUID.class,
-            UpdateRequirement.AssertDefaultSortOrderID.class);
+            UpdateRequirement.AssertUUID.class, UpdateRequirement.AssertDefaultSortOrderID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
 
     assertThat(requirements)
         .element(1)
@@ -397,22 +389,18 @@ public class TestUpdateRequirements {
             ImmutableList.of(new MetadataUpdate.SetStatistics(0L, mock(StatisticsFile.class))));
     requirements.forEach(req -> req.validate(metadata));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfTypes(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfTypes(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
 
     requirements =
         UpdateRequirements.forUpdateTable(
             metadata, ImmutableList.of(new MetadataUpdate.RemoveStatistics(0L)));
     requirements.forEach(req -> req.validate(metadata));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfTypes(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfTypes(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
   }
 
   @Test
@@ -422,21 +410,17 @@ public class TestUpdateRequirements {
             metadata, ImmutableList.of(new MetadataUpdate.AddSnapshot(mock(Snapshot.class))));
     requirements.forEach(req -> req.validate(metadata));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfTypes(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfTypes(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
 
     requirements =
         UpdateRequirements.forUpdateTable(
             metadata, ImmutableList.of(new MetadataUpdate.RemoveSnapshot(0L)));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfTypes(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfTypes(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
   }
 
   @Test
@@ -462,9 +446,9 @@ public class TestUpdateRequirements {
     assertThat(requirements)
         .hasSize(2)
         .hasOnlyElementsOfTypes(
-            UpdateRequirement.AssertTableUUID.class, UpdateRequirement.AssertRefSnapshotID.class);
+            UpdateRequirement.AssertUUID.class, UpdateRequirement.AssertRefSnapshotID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
 
     UpdateRequirement.AssertRefSnapshotID assertRefSnapshotID =
         (UpdateRequirement.AssertRefSnapshotID) requirements.get(1);
@@ -476,11 +460,9 @@ public class TestUpdateRequirements {
             metadata, ImmutableList.of(new MetadataUpdate.RemoveSnapshot(0L)));
     requirements.forEach(req -> req.validate(metadata));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfTypes(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfTypes(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
   }
 
   @Test
@@ -534,11 +516,9 @@ public class TestUpdateRequirements {
             ImmutableList.of(new MetadataUpdate.SetProperties(ImmutableMap.of("test", "test"))));
     requirements.forEach(req -> req.validate(metadata));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfTypes(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfTypes(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
 
     requirements =
         UpdateRequirements.forUpdateTable(
@@ -546,11 +526,9 @@ public class TestUpdateRequirements {
             ImmutableList.of(new MetadataUpdate.RemoveProperties(Sets.newHashSet("test"))));
     requirements.forEach(req -> req.validate(metadata));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfTypes(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfTypes(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
   }
 
   @Test
@@ -560,18 +538,16 @@ public class TestUpdateRequirements {
             metadata, ImmutableList.of(new MetadataUpdate.SetLocation("location")));
     requirements.forEach(req -> req.validate(metadata));
 
-    assertThat(requirements)
-        .hasSize(1)
-        .hasOnlyElementsOfTypes(UpdateRequirement.AssertTableUUID.class);
+    assertThat(requirements).hasSize(1).hasOnlyElementsOfTypes(UpdateRequirement.AssertUUID.class);
 
-    assertTableUUID(requirements);
+    assertUUID(requirements);
   }
 
-  private void assertTableUUID(List<UpdateRequirement> requirements) {
+  private void assertUUID(List<UpdateRequirement> requirements) {
     assertThat(requirements)
         .element(0)
-        .asInstanceOf(InstanceOfAssertFactories.type(UpdateRequirement.AssertTableUUID.class))
-        .extracting(UpdateRequirement.AssertTableUUID::uuid)
+        .asInstanceOf(InstanceOfAssertFactories.type(UpdateRequirement.AssertUUID.class))
+        .extracting(UpdateRequirement.AssertUUID::uuid)
         .isEqualTo(metadata.uuid());
   }
 }

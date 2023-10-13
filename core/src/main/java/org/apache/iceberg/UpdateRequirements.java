@@ -41,7 +41,7 @@ public class UpdateRequirements {
     Preconditions.checkArgument(null != base, "Invalid table metadata: null");
     Preconditions.checkArgument(null != metadataUpdates, "Invalid metadata updates: null");
     Builder builder = new Builder(base, true);
-    builder.require(new UpdateRequirement.AssertTableUUID(base.uuid()));
+    builder.require(new UpdateRequirement.AssertUUID(base.uuid()));
     metadataUpdates.forEach(builder::update);
     return builder.build();
   }
@@ -51,7 +51,7 @@ public class UpdateRequirements {
     Preconditions.checkArgument(null != base, "Invalid table metadata: null");
     Preconditions.checkArgument(null != metadataUpdates, "Invalid metadata updates: null");
     Builder builder = new Builder(base, false);
-    builder.require(new UpdateRequirement.AssertTableUUID(base.uuid()));
+    builder.require(new UpdateRequirement.AssertUUID(base.uuid()));
     metadataUpdates.forEach(builder::update);
     return builder.build();
   }

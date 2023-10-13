@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.iceberg.MetadataUpdate;
+import org.apache.iceberg.UpdateRequirement;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.junit.jupiter.api.Test;
@@ -123,7 +124,7 @@ public class TestUpdateTableRequestParser {
         UpdateTableRequest.create(
             TableIdentifier.of("ns1", "table1"),
             ImmutableList.of(
-                new org.apache.iceberg.UpdateRequirement.AssertTableUUID(uuid),
+                new org.apache.iceberg.UpdateRequirement.AssertUUID(uuid),
                 new org.apache.iceberg.UpdateRequirement.AssertTableDoesNotExist()),
             ImmutableList.of(
                 new MetadataUpdate.AssignUUID(uuid), new MetadataUpdate.SetCurrentSchema(23)));
@@ -135,7 +136,7 @@ public class TestUpdateTableRequestParser {
             + "    \"name\" : \"table1\"\n"
             + "  },\n"
             + "  \"requirements\" : [ {\n"
-            + "    \"type\" : \"assert-table-uuid\",\n"
+            + "    \"type\" : \"assert-uuid\",\n"
             + "    \"uuid\" : \"2cc52516-5e73-41f2-b139-545d41a4e151\"\n"
             + "  }, {\n"
             + "    \"type\" : \"assert-create\"\n"
@@ -164,7 +165,7 @@ public class TestUpdateTableRequestParser {
     UpdateTableRequest request =
         new UpdateTableRequest(
             ImmutableList.of(
-                new org.apache.iceberg.UpdateRequirement.AssertTableUUID(uuid),
+                new UpdateRequirement.AssertUUID(uuid),
                 new org.apache.iceberg.UpdateRequirement.AssertTableDoesNotExist()),
             ImmutableList.of(
                 new MetadataUpdate.AssignUUID(uuid), new MetadataUpdate.SetCurrentSchema(23)));
@@ -172,7 +173,7 @@ public class TestUpdateTableRequestParser {
     String expectedJson =
         "{\n"
             + "  \"requirements\" : [ {\n"
-            + "    \"type\" : \"assert-table-uuid\",\n"
+            + "    \"type\" : \"assert-uuid\",\n"
             + "    \"uuid\" : \"2cc52516-5e73-41f2-b139-545d41a4e151\"\n"
             + "  }, {\n"
             + "    \"type\" : \"assert-create\"\n"

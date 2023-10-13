@@ -35,6 +35,7 @@ public class UpdateRequirementParser {
 
   // assertion types
   static final String ASSERT_TABLE_UUID = "assert-table-uuid";
+  static final String ASSERT_UUID = "assert-uuid";
   static final String ASSERT_TABLE_DOES_NOT_EXIST = "assert-create";
   static final String ASSERT_REF_SNAPSHOT_ID = "assert-ref-snapshot-id";
   static final String ASSERT_LAST_ASSIGNED_FIELD_ID = "assert-last-assigned-field-id";
@@ -43,7 +44,7 @@ public class UpdateRequirementParser {
   static final String ASSERT_DEFAULT_SPEC_ID = "assert-default-spec-id";
   static final String ASSERT_DEFAULT_SORT_ORDER_ID = "assert-default-sort-order-id";
 
-  // AssertTableUUID
+  // AssertTableUUID / AssertUUID
   private static final String UUID = "uuid";
 
   // AssertRefSnapshotID
@@ -68,6 +69,7 @@ public class UpdateRequirementParser {
   private static final Map<Class<? extends UpdateRequirement>, String> TYPES =
       ImmutableMap.<Class<? extends UpdateRequirement>, String>builder()
           .put(UpdateRequirement.AssertTableUUID.class, ASSERT_TABLE_UUID)
+          .put(UpdateRequirement.AssertUUID.class, ASSERT_UUID)
           .put(UpdateRequirement.AssertTableDoesNotExist.class, ASSERT_TABLE_DOES_NOT_EXIST)
           .put(UpdateRequirement.AssertRefSnapshotID.class, ASSERT_REF_SNAPSHOT_ID)
           .put(UpdateRequirement.AssertLastAssignedFieldId.class, ASSERT_LAST_ASSIGNED_FIELD_ID)
@@ -99,7 +101,13 @@ public class UpdateRequirementParser {
         // No fields beyond the requirement itself
         break;
       case ASSERT_TABLE_UUID:
-        writeAssertTableUUID((UpdateRequirement.AssertTableUUID) updateRequirement, generator);
+        writeAssertUUID(
+            new UpdateRequirement.AssertUUID(
+                ((UpdateRequirement.AssertTableUUID) updateRequirement).uuid()),
+            generator);
+        break;
+      case ASSERT_UUID:
+        writeAssertUUID((UpdateRequirement.AssertUUID) updateRequirement, generator);
         break;
       case ASSERT_REF_SNAPSHOT_ID:
         writeAssertRefSnapshotId(
@@ -158,7 +166,8 @@ public class UpdateRequirementParser {
       case ASSERT_TABLE_DOES_NOT_EXIST:
         return readAssertTableDoesNotExist(jsonNode);
       case ASSERT_TABLE_UUID:
-        return readAssertTableUUID(jsonNode);
+      case ASSERT_UUID:
+        return readAssertUUID(jsonNode);
       case ASSERT_REF_SNAPSHOT_ID:
         return readAssertRefSnapshotId(jsonNode);
       case ASSERT_LAST_ASSIGNED_FIELD_ID:
@@ -177,8 +186,8 @@ public class UpdateRequirementParser {
     }
   }
 
-  private static void writeAssertTableUUID(
-      UpdateRequirement.AssertTableUUID requirement, JsonGenerator gen) throws IOException {
+  private static void writeAssertUUID(UpdateRequirement.AssertUUID requirement, JsonGenerator gen)
+      throws IOException {
     gen.writeStringField(UUID, requirement.uuid());
   }
 
@@ -226,9 +235,9 @@ public class UpdateRequirementParser {
     return new UpdateRequirement.AssertTableDoesNotExist();
   }
 
-  private static UpdateRequirement readAssertTableUUID(JsonNode node) {
+  private static UpdateRequirement readAssertUUID(JsonNode node) {
     String uuid = JsonUtil.getString(UUID, node);
-    return new UpdateRequirement.AssertTableUUID(uuid);
+    return new UpdateRequirement.AssertUUID(uuid);
   }
 
   private static UpdateRequirement readAssertRefSnapshotId(JsonNode node) {

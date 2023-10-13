@@ -42,6 +42,8 @@ public interface UpdateRequirement {
     }
   }
 
+  /** @deprecated will be removed in 1.6.0, use {@link AssertUUID} instead */
+  @Deprecated
   class AssertTableUUID implements UpdateRequirement {
     private final String uuid;
 
@@ -56,6 +58,35 @@ public interface UpdateRequirement {
 
     @Override
     public void validate(TableMetadata base) {
+      if (!uuid.equalsIgnoreCase(base.uuid())) {
+        throw new CommitFailedException(
+            "Requirement failed: UUID does not match: expected %s != %s", base.uuid(), uuid);
+      }
+    }
+  }
+
+  class AssertUUID implements UpdateRequirement {
+    private final String uuid;
+
+    public AssertUUID(String uuid) {
+      Preconditions.checkArgument(uuid != null, "Invalid required UUID: null");
+      this.uuid = uuid;
+    }
+
+    public String uuid() {
+      return uuid;
+    }
+
+    @Override
+    public void validate(TableMetadata base) {
+      if (!uuid.equalsIgnoreCase(base.uuid())) {
+        throw new CommitFailedException(
+            "Requirement failed: UUID does not match: expected %s != %s", base.uuid(), uuid);
+      }
+    }
+
+    @Override
+    public void validate(ViewMetadata base) {
       if (!uuid.equalsIgnoreCase(base.uuid())) {
         throw new CommitFailedException(
             "Requirement failed: UUID does not match: expected %s != %s", base.uuid(), uuid);

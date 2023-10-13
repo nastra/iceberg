@@ -84,7 +84,7 @@ public class TestCommitTransactionRequestParser {
         UpdateTableRequest.create(
             TableIdentifier.of("ns1", "table1"),
             ImmutableList.of(
-                new UpdateRequirement.AssertTableUUID(uuid),
+                new UpdateRequirement.AssertUUID(uuid),
                 new UpdateRequirement.AssertTableDoesNotExist()),
             ImmutableList.of(
                 new MetadataUpdate.AssignUUID(uuid), new MetadataUpdate.SetCurrentSchema(23)));
@@ -110,7 +110,7 @@ public class TestCommitTransactionRequestParser {
             + "      \"name\" : \"table1\"\n"
             + "    },\n"
             + "    \"requirements\" : [ {\n"
-            + "      \"type\" : \"assert-table-uuid\",\n"
+            + "      \"type\" : \"assert-uuid\",\n"
             + "      \"uuid\" : \"2cc52516-5e73-41f2-b139-545d41a4e151\"\n"
             + "    }, {\n"
             + "      \"type\" : \"assert-create\"\n"
