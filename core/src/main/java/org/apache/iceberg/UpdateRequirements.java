@@ -42,6 +42,7 @@ public class UpdateRequirements {
     Preconditions.checkArgument(null != metadataUpdates, "Invalid metadata updates: null");
     Builder builder = new Builder(base, true);
     builder.require(new UpdateRequirement.AssertTableUUID(base.uuid()));
+    builder.require(new UpdateRequirement.AssertLastSequenceNumber(base.lastSequenceNumber()));
     metadataUpdates.forEach(builder::update);
     return builder.build();
   }

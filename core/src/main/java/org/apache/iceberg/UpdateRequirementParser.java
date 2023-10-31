@@ -42,6 +42,7 @@ public class UpdateRequirementParser {
   static final String ASSERT_LAST_ASSIGNED_PARTITION_ID = "assert-last-assigned-partition-id";
   static final String ASSERT_DEFAULT_SPEC_ID = "assert-default-spec-id";
   static final String ASSERT_DEFAULT_SORT_ORDER_ID = "assert-default-sort-order-id";
+  static final String ASSERT_LAST_SEQUENCE_NUMBER = "assert-last-sequence-number";
 
   // AssertTableUUID
   private static final String UUID = "uuid";
@@ -65,6 +66,9 @@ public class UpdateRequirementParser {
   // AssertDefaultSortOrderID
   private static final String SORT_ORDER_ID = "default-sort-order-id";
 
+  // AssertLastSequenceNumber
+  private static final String LAST_SEQUENCE_NUMBER = "last-sequence-number";
+
   private static final Map<Class<? extends UpdateRequirement>, String> TYPES =
       ImmutableMap.<Class<? extends UpdateRequirement>, String>builder()
           .put(UpdateRequirement.AssertTableUUID.class, ASSERT_TABLE_UUID)
@@ -77,6 +81,7 @@ public class UpdateRequirementParser {
               ASSERT_LAST_ASSIGNED_PARTITION_ID)
           .put(UpdateRequirement.AssertDefaultSpecID.class, ASSERT_DEFAULT_SPEC_ID)
           .put(UpdateRequirement.AssertDefaultSortOrderID.class, ASSERT_DEFAULT_SORT_ORDER_ID)
+          .put(UpdateRequirement.AssertLastSequenceNumber.class, ASSERT_LAST_SEQUENCE_NUMBER)
           .buildOrThrow();
 
   public static String toJson(UpdateRequirement updateRequirement) {
@@ -125,6 +130,10 @@ public class UpdateRequirementParser {
         writeAssertDefaultSortOrderId(
             (UpdateRequirement.AssertDefaultSortOrderID) updateRequirement, generator);
         break;
+      case ASSERT_LAST_SEQUENCE_NUMBER:
+        writeAssertLastSequenceNumber(
+            (UpdateRequirement.AssertLastSequenceNumber) updateRequirement, generator);
+        break;
       default:
         throw new IllegalArgumentException(
             String.format(
@@ -171,6 +180,8 @@ public class UpdateRequirementParser {
         return readAssertDefaultSpecId(jsonNode);
       case ASSERT_DEFAULT_SORT_ORDER_ID:
         return readAssertDefaultSortOrderId(jsonNode);
+      case ASSERT_LAST_SEQUENCE_NUMBER:
+        return readLastSequenceNumber(jsonNode);
       default:
         throw new UnsupportedOperationException(
             String.format("Unrecognized update requirement. Cannot convert to json: %s", type));
@@ -220,6 +231,12 @@ public class UpdateRequirementParser {
     gen.writeNumberField(SORT_ORDER_ID, requirement.sortOrderId());
   }
 
+  private static void writeAssertLastSequenceNumber(
+      UpdateRequirement.AssertLastSequenceNumber requirement, JsonGenerator gen)
+      throws IOException {
+    gen.writeNumberField(LAST_SEQUENCE_NUMBER, requirement.lastSequenceNumber());
+  }
+
   @SuppressWarnings(
       "unused") // Keep same signature in case this requirement class evolves and gets fields
   private static UpdateRequirement readAssertTableDoesNotExist(JsonNode node) {
@@ -260,5 +277,10 @@ public class UpdateRequirementParser {
   private static UpdateRequirement readAssertDefaultSortOrderId(JsonNode node) {
     int sortOrderId = JsonUtil.getInt(SORT_ORDER_ID, node);
     return new UpdateRequirement.AssertDefaultSortOrderID(sortOrderId);
+  }
+
+  private static UpdateRequirement readLastSequenceNumber(JsonNode node) {
+    long lastSequenceNumber = JsonUtil.getLong(LAST_SEQUENCE_NUMBER, node);
+    return new UpdateRequirement.AssertLastSequenceNumber(lastSequenceNumber);
   }
 }

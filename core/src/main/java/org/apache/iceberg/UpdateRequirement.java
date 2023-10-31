@@ -199,4 +199,25 @@ public interface UpdateRequirement {
       }
     }
   }
+
+  class AssertLastSequenceNumber implements UpdateRequirement {
+    private final long lastSequenceNumber;
+
+    public AssertLastSequenceNumber(long lastSequenceNumber) {
+      this.lastSequenceNumber = lastSequenceNumber;
+    }
+
+    public long lastSequenceNumber() {
+      return lastSequenceNumber;
+    }
+
+    @Override
+    public void validate(TableMetadata base) {
+      if (base != null && base.lastSequenceNumber() != lastSequenceNumber) {
+        throw new CommitFailedException(
+            "Requirement failed: last sequence number changed: expected %s != %s",
+            lastSequenceNumber, base.lastSequenceNumber());
+      }
+    }
+  }
 }
