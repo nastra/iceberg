@@ -30,6 +30,7 @@ import org.apache.iceberg.spark.ExtendedParser
 import org.apache.iceberg.spark.ExtendedParser.RawOrderField
 import org.apache.iceberg.spark.Spark3Util
 import org.apache.iceberg.spark.source.SparkTable
+import org.apache.iceberg.spark.source.SparkView
 import org.apache.spark.sql.AnalysisException
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.FunctionIdentifier
@@ -44,6 +45,8 @@ import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.trees.Origin
 import org.apache.spark.sql.connector.catalog.Table
 import org.apache.spark.sql.connector.catalog.TableCatalog
+import org.apache.spark.sql.connector.catalog.View
+import org.apache.spark.sql.connector.catalog.ViewCatalog
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.internal.VariableSubstitution
 import org.apache.spark.sql.types.DataType
@@ -156,6 +159,37 @@ class IcebergSparkSqlExtensionsParser(delegate: ParserInterface) extends ParserI
     }
   }
 
+  object UnresolvedIcebergView {
+
+    def unapply(plan: LogicalPlan): Option[LogicalPlan] = {
+      EliminateSubqueryAliases(plan) match {
+        case UnresolvedRelation(multipartIdentifier, _, _) if isIcebergView(multipartIdentifier) =>
+          Some(plan)
+        case _ =>
+          None
+      }
+    }
+
+    private def isIcebergView(multipartIdent: Seq[String]): Boolean = {
+      val catalogAndIdentifier = Spark3Util.catalogAndIdentifier(SparkSession.active, multipartIdent.asJava)
+      catalogAndIdentifier.catalog match {
+        case viewCatalog: ViewCatalog =>
+          Try(viewCatalog.loadView(catalogAndIdentifier.identifier))
+            .map(isIcebergView)
+            .getOrElse(false)
+
+        case _ =>
+          false
+      }
+    }
+
+    private def isIcebergView(view: View): Boolean = view match {
+      case _: SparkView => true
+      case _ => false
+    }
+  }
+
+
   private def isIcebergCommand(sqlText: String): Boolean = {
     val normalized = sqlText.toLowerCase(Locale.ROOT).trim()
       // Strip simple SQL comments that terminate a line, e.g. comments starting with `--` .
@@ -177,6 +211,7 @@ class IcebergSparkSqlExtensionsParser(delegate: ParserInterface) extends ParserI
             normalized.contains("write unordered") ||
             normalized.contains("set identifier fields") ||
             normalized.contains("drop identifier fields") ||
+//            isViewDdl(normalized) ||
             isSnapshotRefDdl(normalized)))
   }
 
@@ -187,6 +222,14 @@ class IcebergSparkSqlExtensionsParser(delegate: ParserInterface) extends ParserI
       normalized.contains("replace tag") ||
       normalized.contains("drop branch") ||
       normalized.contains("drop tag")
+  }
+
+  private def isViewDdl(normalized: String): Boolean = {
+    normalized.contains("create view") ||
+      normalized.contains("replace view") ||
+      normalized.contains("alter view") ||
+      normalized.contains("drop view") ||
+      normalized.contains("rename view")
   }
 
   protected def parse[T](command: String)(toResult: IcebergSqlExtensionsParser => T): T = {

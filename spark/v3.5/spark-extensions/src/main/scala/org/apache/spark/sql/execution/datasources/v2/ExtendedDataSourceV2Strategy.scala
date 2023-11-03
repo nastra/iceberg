@@ -29,25 +29,32 @@ import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.catalyst.expressions.PredicateHelper
 import org.apache.spark.sql.catalyst.plans.logical.AddPartitionField
+import org.apache.spark.sql.catalyst.plans.logical.AlterV2View
 import org.apache.spark.sql.catalyst.plans.logical.Call
 import org.apache.spark.sql.catalyst.plans.logical.CreateOrReplaceBranch
 import org.apache.spark.sql.catalyst.plans.logical.CreateOrReplaceTag
+import org.apache.spark.sql.catalyst.plans.logical.CreateOrReplaceV2View
 import org.apache.spark.sql.catalyst.plans.logical.DropBranch
 import org.apache.spark.sql.catalyst.plans.logical.DropIdentifierFields
 import org.apache.spark.sql.catalyst.plans.logical.DropPartitionField
 import org.apache.spark.sql.catalyst.plans.logical.DropTag
+import org.apache.spark.sql.catalyst.plans.logical.DropV2View
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.OrderAwareCoalesce
+import org.apache.spark.sql.catalyst.plans.logical.RenameV2View
 import org.apache.spark.sql.catalyst.plans.logical.ReplacePartitionField
 import org.apache.spark.sql.catalyst.plans.logical.SetIdentifierFields
 import org.apache.spark.sql.catalyst.plans.logical.SetWriteDistributionAndOrdering
+import org.apache.spark.sql.connector.catalog.CatalogManager
 import org.apache.spark.sql.connector.catalog.Identifier
 import org.apache.spark.sql.connector.catalog.TableCatalog
+import org.apache.spark.sql.connector.catalog.ViewCatalog
 import org.apache.spark.sql.execution.OrderAwareCoalesceExec
 import org.apache.spark.sql.execution.SparkPlan
 import scala.jdk.CollectionConverters._
 
 case class ExtendedDataSourceV2Strategy(spark: SparkSession) extends Strategy with PredicateHelper {
+  val catalogManager: CatalogManager = spark.sessionState.catalogManager
 
   override def apply(plan: LogicalPlan): Seq[SparkPlan] = plan match {
     case c @ Call(procedure, args) =>
@@ -90,6 +97,24 @@ case class ExtendedDataSourceV2Strategy(spark: SparkSession) extends Strategy wi
     case OrderAwareCoalesce(numPartitions, coalescer, child) =>
       OrderAwareCoalesceExec(numPartitions, coalescer, planLater(child)) :: Nil
 
+    case CreateOrReplaceV2View(
+      IcebergViewCatalogAndIdentifier(catalog, ident), sql, comment, viewSchema, queryColumnNames,
+    columnAliases, columnComments, properties, allowExisting, replace) =>
+      CreateOrReplaceV2ViewExec(catalog, ident, sql, catalogManager.currentCatalog.name,
+        catalogManager.currentNamespace, comment, viewSchema, queryColumnNames,
+        columnAliases, columnComments, properties, allowExisting, replace) :: Nil
+
+    case DropV2View(IcebergViewCatalogAndIdentifier(catalog, ident)) =>
+      DropV2ViewExec(catalog, ident) :: Nil
+
+    case RenameV2View(
+      IcebergViewCatalogAndIdentifier(catalog, oldIdent), IcebergViewCatalogAndIdentifier(_, newIdent)) =>
+      RenameV2ViewExec(catalog, oldIdent, newIdent) :: Nil
+
+    case AlterV2View(
+    IcebergViewCatalogAndIdentifier(catalog, ident), changes) =>
+      AlterV2ViewExec(catalog, ident, changes) :: Nil
+
     case _ => Nil
   }
 
@@ -103,6 +128,20 @@ case class ExtendedDataSourceV2Strategy(spark: SparkSession) extends Strategy wi
 
   private object IcebergCatalogAndIdentifier {
     def unapply(identifier: Seq[String]): Option[(TableCatalog, Identifier)] = {
+      val catalogAndIdentifier = Spark3Util.catalogAndIdentifier(spark, identifier.asJava)
+      catalogAndIdentifier.catalog match {
+        case icebergCatalog: SparkCatalog =>
+          Some((icebergCatalog, catalogAndIdentifier.identifier))
+        case icebergCatalog: SparkSessionCatalog[_] =>
+          Some((icebergCatalog, catalogAndIdentifier.identifier))
+        case _ =>
+          None
+      }
+    }
+  }
+
+  private object IcebergViewCatalogAndIdentifier {
+    def unapply(identifier: Seq[String]): Option[(ViewCatalog, Identifier)] = {
       val catalogAndIdentifier = Spark3Util.catalogAndIdentifier(spark, identifier.asJava)
       catalogAndIdentifier.catalog match {
         case icebergCatalog: SparkCatalog =>
