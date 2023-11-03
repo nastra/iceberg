@@ -20,6 +20,7 @@
 package org.apache.iceberg.spark.extensions
 
 import org.apache.spark.sql.SparkSessionExtensions
+import org.apache.spark.sql.catalyst.analysis.CreateViewAnalysis
 import org.apache.spark.sql.catalyst.analysis.ProcedureArgumentCoercion
 import org.apache.spark.sql.catalyst.analysis.ResolveProcedures
 import org.apache.spark.sql.catalyst.optimizer.ReplaceStaticInvoke
@@ -35,6 +36,7 @@ class IcebergSparkSessionExtensions extends (SparkSessionExtensions => Unit) {
     // analyzer extensions
     extensions.injectResolutionRule { spark => ResolveProcedures(spark) }
     extensions.injectResolutionRule { _ => ProcedureArgumentCoercion }
+    extensions.injectResolutionRule { spark => CreateViewAnalysis(spark) }
 
     // optimizer extensions
     extensions.injectOptimizerRule { _ => ReplaceStaticInvoke }
