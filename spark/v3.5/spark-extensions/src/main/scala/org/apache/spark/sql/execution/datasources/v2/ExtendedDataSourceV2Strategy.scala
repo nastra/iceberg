@@ -25,6 +25,7 @@ import org.apache.iceberg.spark.SparkSessionCatalog
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.Strategy
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.analysis.ResolvedNamespace
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.catalyst.expressions.PredicateHelper
@@ -45,6 +46,7 @@ import org.apache.spark.sql.catalyst.plans.logical.RenameV2View
 import org.apache.spark.sql.catalyst.plans.logical.ReplacePartitionField
 import org.apache.spark.sql.catalyst.plans.logical.SetIdentifierFields
 import org.apache.spark.sql.catalyst.plans.logical.SetWriteDistributionAndOrdering
+import org.apache.spark.sql.catalyst.plans.logical.ShowViews
 import org.apache.spark.sql.connector.catalog.CatalogManager
 import org.apache.spark.sql.connector.catalog.Identifier
 import org.apache.spark.sql.connector.catalog.TableCatalog
@@ -114,6 +116,10 @@ case class ExtendedDataSourceV2Strategy(spark: SparkSession) extends Strategy wi
     case AlterV2View(
     IcebergViewCatalogAndIdentifier(catalog, ident), changes) =>
       AlterV2ViewExec(catalog, ident, changes) :: Nil
+
+    case ShowViews(ns: ResolvedNamespace, pattern, output) =>
+      val x = 23
+      Nil
 
     case _ => Nil
   }
