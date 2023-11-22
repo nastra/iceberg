@@ -837,8 +837,12 @@ public class SparkCatalog extends BaseCatalog {
   @Override
   public View loadView(Identifier ident) throws NoSuchViewException {
     if (null != asViewCatalog) {
-      org.apache.iceberg.view.View view = asViewCatalog.loadView(buildIdentifier(ident));
-      return new SparkView(view);
+      try {
+        org.apache.iceberg.view.View view = asViewCatalog.loadView(buildIdentifier(ident));
+        return new SparkView(view);
+      } catch (org.apache.iceberg.exceptions.NoSuchViewException e) {
+        throw new NoSuchViewException(ident);
+      }
     }
 
     throw new NoSuchViewException(ident);
@@ -932,9 +936,9 @@ public class SparkCatalog extends BaseCatalog {
       } catch (org.apache.iceberg.exceptions.AlreadyExistsException e) {
         throw new ViewAlreadyExistsException(toIdentifier);
       }
+    } else {
+      throw new UnsupportedOperationException(
+          "Renaming view is not supported by catalog: " + catalogName);
     }
-
-    throw new UnsupportedOperationException(
-        "Renaming view is not supported by catalog: " + catalogName);
   }
 }

@@ -18,7 +18,6 @@
  */
 package org.apache.iceberg.spark.source;
 
-import static org.apache.iceberg.TableProperties.CURRENT_SNAPSHOT_ID;
 import static org.apache.iceberg.TableProperties.FORMAT_VERSION;
 
 import java.util.Map;
@@ -26,8 +25,11 @@ import java.util.Optional;
 import java.util.Set;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableSet;
+import org.apache.iceberg.spark.SparkSchemaUtil;
+import org.apache.iceberg.view.BaseView;
 import org.apache.iceberg.view.SQLViewRepresentation;
 import org.apache.iceberg.view.View;
+import org.apache.iceberg.view.ViewOperations;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
@@ -38,14 +40,7 @@ public class SparkView implements org.apache.spark.sql.connector.catalog.View {
   private static final Logger LOG = LoggerFactory.getLogger(SparkView.class);
 
   private static final Set<String> RESERVED_PROPERTIES =
-      ImmutableSet.of(
-          "provider",
-          "format",
-          CURRENT_SNAPSHOT_ID,
-          "location",
-          FORMAT_VERSION,
-          "sort-order",
-          "identifier-fields");
+      ImmutableSet.of("provider", "location", FORMAT_VERSION);
 
   private final View icebergView;
   private SparkSession lazySpark = null;
@@ -80,7 +75,9 @@ public class SparkView implements org.apache.spark.sql.connector.catalog.View {
             .filter(r -> r.dialect().equalsIgnoreCase("spark"))
             .findFirst();
 
-    return query.get().sql();
+    return query
+        .orElseThrow(() -> new IllegalStateException("No SQL query found for view " + name()))
+        .sql();
   }
 
   @Override
@@ -95,7 +92,7 @@ public class SparkView implements org.apache.spark.sql.connector.catalog.View {
 
   @Override
   public StructType schema() {
-    return null;
+    return SparkSchemaUtil.convert(icebergView.schema());
   }
 
   @Override
@@ -118,6 +115,12 @@ public class SparkView implements org.apache.spark.sql.connector.catalog.View {
     ImmutableMap.Builder<String, String> propsBuilder = ImmutableMap.builder();
 
     propsBuilder.put("provider", "iceberg");
+    propsBuilder.put("location", icebergView.location());
+
+    if (icebergView instanceof BaseView) {
+      ViewOperations ops = ((BaseView) icebergView).operations();
+      propsBuilder.put(FORMAT_VERSION, String.valueOf(ops.current().formatVersion()));
+    }
 
     icebergView.properties().entrySet().stream()
         .filter(entry -> !RESERVED_PROPERTIES.contains(entry.getKey()))
