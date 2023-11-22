@@ -25,28 +25,22 @@ import org.apache.iceberg.spark.SparkSessionCatalog
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.Strategy
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.analysis.ResolvedNamespace
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.sql.catalyst.expressions.PredicateHelper
 import org.apache.spark.sql.catalyst.plans.logical.AddPartitionField
-import org.apache.spark.sql.catalyst.plans.logical.AlterV2View
 import org.apache.spark.sql.catalyst.plans.logical.Call
 import org.apache.spark.sql.catalyst.plans.logical.CreateOrReplaceBranch
 import org.apache.spark.sql.catalyst.plans.logical.CreateOrReplaceTag
-import org.apache.spark.sql.catalyst.plans.logical.CreateOrReplaceV2View
 import org.apache.spark.sql.catalyst.plans.logical.DropBranch
 import org.apache.spark.sql.catalyst.plans.logical.DropIdentifierFields
 import org.apache.spark.sql.catalyst.plans.logical.DropPartitionField
 import org.apache.spark.sql.catalyst.plans.logical.DropTag
-import org.apache.spark.sql.catalyst.plans.logical.DropV2View
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.plans.logical.OrderAwareCoalesce
-import org.apache.spark.sql.catalyst.plans.logical.RenameV2View
 import org.apache.spark.sql.catalyst.plans.logical.ReplacePartitionField
 import org.apache.spark.sql.catalyst.plans.logical.SetIdentifierFields
 import org.apache.spark.sql.catalyst.plans.logical.SetWriteDistributionAndOrdering
-import org.apache.spark.sql.catalyst.plans.logical.ShowViews
 import org.apache.spark.sql.connector.catalog.CatalogManager
 import org.apache.spark.sql.connector.catalog.Identifier
 import org.apache.spark.sql.connector.catalog.TableCatalog
@@ -98,28 +92,6 @@ case class ExtendedDataSourceV2Strategy(spark: SparkSession) extends Strategy wi
 
     case OrderAwareCoalesce(numPartitions, coalescer, child) =>
       OrderAwareCoalesceExec(numPartitions, coalescer, planLater(child)) :: Nil
-
-    case CreateOrReplaceV2View(
-      IcebergViewCatalogAndIdentifier(catalog, ident), sql, comment, viewSchema, queryColumnNames,
-    columnAliases, columnComments, properties, allowExisting, replace) =>
-      CreateOrReplaceV2ViewExec(catalog, ident, sql, catalogManager.currentCatalog.name,
-        catalogManager.currentNamespace, comment, viewSchema, queryColumnNames,
-        columnAliases, columnComments, properties, allowExisting, replace) :: Nil
-
-    case DropV2View(IcebergViewCatalogAndIdentifier(catalog, ident)) =>
-      DropV2ViewExec(catalog, ident) :: Nil
-
-    case RenameV2View(
-      IcebergViewCatalogAndIdentifier(catalog, oldIdent), IcebergViewCatalogAndIdentifier(_, newIdent)) =>
-      RenameV2ViewExec(catalog, oldIdent, newIdent) :: Nil
-
-    case AlterV2View(
-    IcebergViewCatalogAndIdentifier(catalog, ident), changes) =>
-      AlterV2ViewExec(catalog, ident, changes) :: Nil
-
-    case ShowViews(ns: ResolvedNamespace, pattern, output) =>
-      val x = 23
-      Nil
 
     case _ => Nil
   }
