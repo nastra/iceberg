@@ -142,7 +142,7 @@ public interface ViewMetadata extends Serializable {
   }
 
   class Builder {
-    private static final int INITIAL_SCHEMA_ID = 0;
+    static final int INITIAL_SCHEMA_ID = 0;
     private static final int LAST_ADDED = -1;
     private final List<ViewVersion> versions;
     private final List<Schema> schemas;
