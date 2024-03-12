@@ -28,6 +28,11 @@ info:
   description:
     Defines the specification for the first version of the REST Catalog API.
     Implementations should ideally support both Iceberg table specs v1 and v2, with priority given to v2.
+
+
+    This API uses capability tags to describe optional functionality.
+    In order to support a particular capability, a server is required to implement all endpoints grouped under a particular tag.
+    Servers can indicate supported capabilities via the /v1/config endpoint.
 servers:
   - url: "{scheme}://{host}/{basePath}"
     description: Server URL when the port can be inferred from the scheme
@@ -61,6 +66,16 @@ security:
   - OAuth2: [catalog]
   - BearerAuth: []
 
+# Capability tags describe optional functionality and are used to group endpoints together.
+# In order to support a particular capability, a server is required to implement all endpoints grouped under a particular tag.
+tags:
+  - name: views
+    description: Required as part of view support
+  - name: remote-signing
+    description: Required as part of remote signing support
+  - name: multi-table-commit
+    description: Required as part of multi-table commit support
+
 paths:
   /v1/config:
 
@@ -80,11 +95,13 @@ paths:
         "
         All REST clients should first call this route to get catalog configuration
         properties from the server to configure the catalog and its HTTP client.
-        Configuration from the server consists of two sets of key/value pairs.
+        Configuration from the server consists of:
 
         - defaults -  properties that should be used as default configuration; applied before client configuration
 
         - overrides - properties that should be used to override client configuration; applied after defaults and client configuration
+
+        - capabilities - list of capabilities that are supported by the server
 
 
         Catalog configuration is constructed by setting the defaults, then client-
@@ -114,7 +131,8 @@ paths:
                 },
                 "defaults": {
                   "clients": "4"
-                }
+                },
+                "capabilities": ["views", "remote_signing"]
               }
         400:
           $ref: '#/components/responses/BadRequestErrorResponse'
@@ -957,6 +975,7 @@ paths:
     post:
       tags:
         - Catalog API
+        - multi-table-commit
       summary: Commit updates to multiple tables in an atomic operation
       operationId: commitTransaction
       requestBody:
@@ -1072,6 +1091,7 @@ paths:
     get:
       tags:
         - Catalog API
+        - views
       summary: List all view identifiers underneath a given namespace
       description: Return all view identifiers under this namespace
       operationId: listViews
@@ -1106,6 +1126,7 @@ paths:
     post:
       tags:
         - Catalog API
+        - views
       summary: Create a view in the given namespace
       description:
         Create a view in the given namespace.
@@ -1158,6 +1179,7 @@ paths:
     get:
       tags:
         - Catalog API
+        - views
       summary: Load a view from the catalog
       operationId: loadView
       description:
@@ -1204,6 +1226,7 @@ paths:
     post:
       tags:
         - Catalog API
+        - views
       summary: Replace a view
       operationId: replaceView
       description:
@@ -1303,6 +1326,7 @@ paths:
     delete:
       tags:
         - Catalog API
+        - views
       summary: Drop a view from the catalog
       operationId: dropView
       description: Remove a view from the catalog
@@ -1335,6 +1359,7 @@ paths:
     head:
       tags:
         - Catalog API
+        - views
       summary: Check if a view exists
       operationId: viewExists
       description:
@@ -1362,6 +1387,7 @@ paths:
     post:
       tags:
         - Catalog API
+        - views
       summary: Rename a view from its current name to a new name
       description:
         Rename a view from one identifier to another. It's valid to move a view
@@ -1417,6 +1443,35 @@ paths:
         5XX:
           $ref: '#/components/responses/ServerErrorResponse'
 
+  /v1/aws/s3/sign:
+    post:
+      tags:
+        - S3 Signer API
+        - remote-signing
+      summary: Remotely signs S3 requests
+      operationId: signS3Request
+      requestBody:
+        description: The request containing the headers to be signed
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/S3SignRequest'
+        required: true
+      responses:
+        200:
+          $ref: '#/components/responses/S3SignResponse'
+        400:
+          $ref: '#/components/responses/BadRequestErrorResponse'
+        401:
+          $ref: '#/components/responses/UnauthorizedResponse'
+        403:
+          $ref: '#/components/responses/ForbiddenResponse'
+        419:
+          $ref: '#/components/responses/AuthenticationTimeoutResponse'
+        503:
+          $ref: '#/components/responses/ServiceUnavailableResponse'
+        5XX:
+          $ref: '#/components/responses/ServerErrorResponse'
 
 components:
   #######################################################
@@ -1478,7 +1533,7 @@ components:
         
         
         The protocol and specification for `remote-signing` is documented in 
-        the `s3-signer-open-api.yaml` OpenApi spec in the `aws` module.
+        the `S3SignRequest` / `S3SignResponse` schema section of this spec document.
 
       required: false
       schema:
@@ -1559,6 +1614,19 @@ components:
             type: string
           description:
             Properties that should be used as default configuration; applied before client configuration.
+        capabilities:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+              - views
+              - vended-credentials
+              - remote-signing
+              - multi-table-commit
+          description: Capabilities supported by the server
+          example: ["views", "remote-signing"]
+
 
     CreateNamespaceRequest:
       type: object
@@ -2768,7 +2836,7 @@ components:
          - `s3.access-key-id`: id for for credentials that provide access to the data in S3
          - `s3.secret-access-key`: secret for credentials that provide access to data in S3 
          - `s3.session-token`: if present, this value should be used for as the session token 
-         - `s3.remote-signing-enabled`: if `true` remote signing should be performed as described in the `s3-signer-open-api.yaml` specification
+         - `s3.remote-signing-enabled`: if `true` remote signing should be performed as described in the `S3SignRequest` / `S3SignResponse` schema section of this spec document
       type: object
       required:
         - metadata
@@ -3656,6 +3724,39 @@ components:
             type: integer
           description: "List of equality field IDs"
 
+    S3Headers:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+
+    S3SignRequest:
+      required:
+        - region
+        - uri
+        - method
+        - headers
+      properties:
+        region:
+          type: string
+        uri:
+          type: string
+        method:
+          type: string
+          enum: ["PUT", "GET", "HEAD", "POST", "DELETE", "PATCH", "OPTIONS"]
+        headers:
+          $ref: '#/components/schemas/S3Headers'
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+        body:
+          type: string
+          description: Optional body of the S3 request to send to the signing API. This should only be populated
+            for S3 requests which do not have the relevant data in the URI itself (e.g. DeleteObjects requests)
+
+
   #############################
   # Reusable Response Objects #
   #############################
@@ -3895,6 +3996,23 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/CommitTableResponse'
+
+    S3SignResponse:
+      description: The response containing signed & unsigned headers. The server will also send
+        a Cache-Control header, indicating whether the response can be cached (Cache-Control = ["private"])
+        or not (Cache-Control = ["no-cache"]).
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - uri
+              - headers
+            properties:
+              uri:
+                type: string
+              headers:
+                $ref: '#/components/schemas/S3Headers'
 
   #######################################
   # Common examples of different values #

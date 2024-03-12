@@ -54,6 +54,18 @@ class CatalogConfig(BaseModel):
         ...,
         description='Properties that should be used as default configuration; applied before client configuration.',
     )
+    capabilities: Optional[
+        List[
+            Literal[
+                'views', 'vended-credentials', 'remote-signing', 'multi-table-commit'
+            ]
+        ]
+    ] = Field(
+        None,
+        description='Capabilities supported by the server',
+        example=['views', 'remote-signing'],
+        unique_items=True,
+    )
 
 
 class UpdateNamespacePropertiesRequest(BaseModel):
@@ -817,6 +829,22 @@ class EqualityDeleteFile(ContentFile):
     )
 
 
+class S3Headers(BaseModel):
+    __root__: Optional[Dict[str, List[str]]] = None
+
+
+class S3SignRequest(BaseModel):
+    region: str
+    uri: str
+    method: Literal['PUT', 'GET', 'HEAD', 'POST', 'DELETE', 'PATCH', 'OPTIONS']
+    headers: S3Headers
+    properties: Optional[Dict[str, str]] = None
+    body: Optional[str] = Field(
+        None,
+        description='Optional body of the S3 request to send to the signing API. This should only be populated for S3 requests which do not have the relevant data in the URI itself (e.g. DeleteObjects requests)',
+    )
+
+
 class CreateNamespaceRequest(BaseModel):
     namespace: Namespace
     properties: Optional[Dict[str, str]] = Field(
@@ -1090,7 +1118,7 @@ class LoadTableResult(BaseModel):
      - `s3.access-key-id`: id for for credentials that provide access to the data in S3
      - `s3.secret-access-key`: secret for credentials that provide access to data in S3
      - `s3.session-token`: if present, this value should be used for as the session token
-     - `s3.remote-signing-enabled`: if `true` remote signing should be performed as described in the `s3-signer-open-api.yaml` specification
+     - `s3.remote-signing-enabled`: if `true` remote signing should be performed as described in the `S3SignRequest` / `S3SignResponse` schema section of this spec document
 
     """
 
