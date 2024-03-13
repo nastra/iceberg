@@ -18,13 +18,17 @@
  */
 package org.apache.iceberg.rest.responses;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.iceberg.relocated.com.google.common.base.MoreObjects;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
+import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.rest.RESTResponse;
+import org.apache.iceberg.rest.ServerCapability;
 
 /**
  * Represents a response to requesting server-side provided configuration for the REST catalog. This
@@ -39,20 +43,26 @@ import org.apache.iceberg.rest.RESTResponse;
  * <ul>
  *   <li>defaults - properties that should be used as default configuration
  *   <li>overrides - properties that should be used to override client configuration
+ *   <li>capabilities - list of capabilities supported by the server
  * </ul>
  */
 public class ConfigResponse implements RESTResponse {
 
   private Map<String, String> defaults;
   private Map<String, String> overrides;
+  private List<ServerCapability> capabilities;
 
   public ConfigResponse() {
     // Required for Jackson deserialization
   }
 
-  private ConfigResponse(Map<String, String> defaults, Map<String, String> overrides) {
+  private ConfigResponse(
+      Map<String, String> defaults,
+      Map<String, String> overrides,
+      List<ServerCapability> capabilities) {
     this.defaults = defaults;
     this.overrides = overrides;
+    this.capabilities = capabilities;
     validate();
   }
 
@@ -78,6 +88,10 @@ public class ConfigResponse implements RESTResponse {
    */
   public Map<String, String> overrides() {
     return overrides != null ? overrides : ImmutableMap.of();
+  }
+
+  public List<ServerCapability> capabilities() {
+    return capabilities != null ? capabilities : ImmutableList.of();
   }
 
   /**
@@ -107,6 +121,7 @@ public class ConfigResponse implements RESTResponse {
     return MoreObjects.toStringHelper(this)
         .add("defaults", defaults)
         .add("overrides", overrides)
+        .add("capabilities", capabilities)
         .toString();
   }
 
@@ -117,10 +132,12 @@ public class ConfigResponse implements RESTResponse {
   public static class Builder {
     private final Map<String, String> defaults;
     private final Map<String, String> overrides;
+    private final List<ServerCapability> capabilities;
 
     private Builder() {
       this.defaults = Maps.newHashMap();
       this.overrides = Maps.newHashMap();
+      this.capabilities = Lists.newArrayList();
     }
 
     public Builder withDefault(String key, String value) {
@@ -153,8 +170,14 @@ public class ConfigResponse implements RESTResponse {
       return this;
     }
 
+    public Builder withCapabilities(List<ServerCapability> capabilities) {
+      Preconditions.checkArgument(null != capabilities, "Invalid capabilities: null");
+      this.capabilities.addAll(capabilities);
+      return this;
+    }
+
     public ConfigResponse build() {
-      return new ConfigResponse(defaults, overrides);
+      return new ConfigResponse(defaults, overrides, capabilities);
     }
   }
 }

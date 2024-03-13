@@ -21,13 +21,17 @@ package org.apache.iceberg.rest.responses;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
+import org.apache.iceberg.rest.ServerCapability;
 import org.apache.iceberg.util.JsonUtil;
 
 public class ConfigResponseParser {
 
   private static final String DEFAULTS = "defaults";
   private static final String OVERRIDES = "overrides";
+  private static final String CAPABILITIES = "capabilities";
 
   private ConfigResponseParser() {}
 
@@ -47,6 +51,15 @@ public class ConfigResponseParser {
     JsonUtil.writeStringMap(DEFAULTS, response.defaults(), gen);
     JsonUtil.writeStringMap(OVERRIDES, response.overrides(), gen);
 
+    if (!response.capabilities().isEmpty()) {
+      JsonUtil.writeStringArray(
+          CAPABILITIES,
+          response.capabilities().stream()
+              .map(ServerCapability::value)
+              .collect(Collectors.toList()),
+          gen);
+    }
+
     gen.writeEndObject();
   }
 
@@ -65,6 +78,13 @@ public class ConfigResponseParser {
 
     if (json.hasNonNull(OVERRIDES)) {
       builder.withOverrides(JsonUtil.getStringMapNullableValues(OVERRIDES, json));
+    }
+
+    if (json.hasNonNull(CAPABILITIES)) {
+      builder.withCapabilities(
+          JsonUtil.getStringList(CAPABILITIES, json).stream()
+              .map(ServerCapability::fromValue)
+              .collect(Collectors.toList()));
     }
 
     return builder.build();
