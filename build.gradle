@@ -370,6 +370,8 @@ project(':iceberg-core') {
     testImplementation libs.esotericsoftware.kryo
     testImplementation libs.guava.testlib
     testImplementation libs.awaitility
+    testImplementation libs.testcontainers.mysql
+    testImplementation libs.mysql.java
   }
 }
 
