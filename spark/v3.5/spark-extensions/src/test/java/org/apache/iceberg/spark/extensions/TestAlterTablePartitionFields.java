@@ -552,6 +552,38 @@ public class TestAlterTablePartitionFields extends ExtensionsTestBase {
     sql("ALTER TABLE %s DROP COLUMN day_of_ts", tableName);
   }
 
+  @TestTemplate
+  public void dropColumnOfOldPartitionFieldBucketedWithData() {
+    sql(
+        "CREATE TABLE %s (id bigint NOT NULL, trip_id int, distance int) USING iceberg PARTITIONED BY (bucket(8, trip_id))",
+        tableName);
+
+    sql("INSERT INTO TABLE %s VALUES (1, 10, 100)", tableName);
+
+    sql(
+        "ALTER TABLE %s REPLACE PARTITION FIELD trip_id_bucket WITH bucket(8, distance)",
+        tableName);
+
+    sql("ALTER TABLE %s DROP COLUMN trip_id", tableName);
+
+    sql("SELECT * FROM %s", tableName);
+  }
+
+  @TestTemplate
+  public void dropColumnOfOldPartitionFieldWithData() {
+    sql(
+        "CREATE TABLE %s (id bigint NOT NULL, trip_id int, distance int) USING iceberg PARTITIONED BY (trip_id)",
+        tableName);
+
+    sql("INSERT INTO TABLE %s VALUES (1, 10, 100)", tableName);
+
+    sql("ALTER TABLE %s REPLACE PARTITION FIELD trip_id WITH bucket(8, distance)", tableName);
+
+    sql("ALTER TABLE %s DROP COLUMN trip_id", tableName);
+
+    sql("SELECT * FROM %s", tableName);
+  }
+
   private void assertPartitioningEquals(SparkTable table, int len, String transform) {
     assertThat(table.partitioning()).as("spark table partition should be " + len).hasSize(len);
     assertThat(table.partitioning()[len - 1].toString())
