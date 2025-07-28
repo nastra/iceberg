@@ -495,6 +495,7 @@ public class RewriteTablePathUtil {
                 .copy(file)
                 .withPath(targetDeleteFilePath)
                 .withMetrics(metricsWithTargetPath)
+                .withContentStats(MetricsUtil.fromMetrics(metricsWithTargetPath))
                 .build();
         appendEntryWithFile(entry, writer, movedFile);
         // keep the following entries in metadata but exclude them from copyPlan

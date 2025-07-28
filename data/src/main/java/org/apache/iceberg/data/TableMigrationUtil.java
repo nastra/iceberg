@@ -35,6 +35,7 @@ import org.apache.iceberg.DataFile;
 import org.apache.iceberg.DataFiles;
 import org.apache.iceberg.Metrics;
 import org.apache.iceberg.MetricsConfig;
+import org.apache.iceberg.MetricsUtil;
 import org.apache.iceberg.PartitionField;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.avro.Avro;
@@ -251,6 +252,7 @@ public class TableMigrationUtil {
         .withFormat(format)
         .withFileSizeInBytes(stat.getLen())
         .withMetrics(metrics)
+        .withContentStats(MetricsUtil.fromMetrics(metrics))
         .withPartitionValues(partitionValues)
         .build();
   }

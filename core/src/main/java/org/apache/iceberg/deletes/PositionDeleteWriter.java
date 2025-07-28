@@ -90,6 +90,7 @@ public class PositionDeleteWriter<T> implements FileWriter<PositionDelete<T>, De
   public void close() throws IOException {
     if (deleteFile == null) {
       appender.close();
+      Metrics metrics = metrics();
       this.deleteFile =
           FileMetadata.deleteFileBuilder(spec)
               .ofPositionDeletes()
@@ -99,7 +100,8 @@ public class PositionDeleteWriter<T> implements FileWriter<PositionDelete<T>, De
               .withEncryptionKeyMetadata(keyMetadata)
               .withSplitOffsets(appender.splitOffsets())
               .withFileSizeInBytes(appender.length())
-              .withMetrics(metrics())
+              .withMetrics(metrics)
+              .withContentStats(MetricsUtil.fromMetrics(metrics))
               .build();
     }
   }

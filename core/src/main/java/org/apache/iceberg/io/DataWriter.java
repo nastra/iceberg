@@ -23,6 +23,8 @@ import java.nio.ByteBuffer;
 import org.apache.iceberg.DataFile;
 import org.apache.iceberg.DataFiles;
 import org.apache.iceberg.FileFormat;
+import org.apache.iceberg.Metrics;
+import org.apache.iceberg.MetricsUtil;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.SortOrder;
 import org.apache.iceberg.StructLike;
@@ -80,6 +82,7 @@ public class DataWriter<T> implements FileWriter<T, DataWriteResult> {
   public void close() throws IOException {
     if (dataFile == null) {
       appender.close();
+      Metrics metrics = appender.metrics();
       this.dataFile =
           DataFiles.builder(spec)
               .withFormat(format)
@@ -87,7 +90,8 @@ public class DataWriter<T> implements FileWriter<T, DataWriteResult> {
               .withPartition(partition)
               .withEncryptionKeyMetadata(keyMetadata)
               .withFileSizeInBytes(appender.length())
-              .withMetrics(appender.metrics())
+              .withMetrics(metrics)
+              .withContentStats(MetricsUtil.fromMetrics(metrics))
               .withSplitOffsets(appender.splitOffsets())
               .withSortOrder(sortOrder)
               .build();
