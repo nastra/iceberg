@@ -44,6 +44,8 @@ import org.apache.iceberg.io.OutputFile;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
+import org.apache.iceberg.stats.ContentStats;
+import org.apache.iceberg.stats.Statistic;
 import org.apache.iceberg.types.Type;
 import org.apache.iceberg.types.Types;
 import org.apache.iceberg.types.Types.BinaryType;
@@ -811,18 +813,53 @@ public abstract class TestMetrics {
   }
 
   protected void assertCounts(int fieldId, Long valueCount, Long nullValueCount, Metrics metrics) {
-    assertCounts(fieldId, valueCount, nullValueCount, null, metrics);
+    assertCounts(
+        fieldId, valueCount, nullValueCount, null, metrics, MetricsUtil.fromMetrics(metrics));
   }
 
   protected void assertCounts(
       int fieldId, Long valueCount, Long nullValueCount, Long nanValueCount, Metrics metrics) {
+    assertCounts(
+        fieldId,
+        valueCount,
+        nullValueCount,
+        nanValueCount,
+        metrics,
+        MetricsUtil.fromMetrics(metrics));
+  }
+
+  protected void assertCounts(
+      int fieldId,
+      Long valueCount,
+      Long nullValueCount,
+      Long nanValueCount,
+      Metrics metrics,
+      ContentStats stats) {
     assertThat(metrics.valueCounts().get(fieldId)).isEqualTo(valueCount);
     assertThat(metrics.nullValueCounts().get(fieldId)).isEqualTo(nullValueCount);
     assertThat(metrics.nanValueCounts().get(fieldId)).isEqualTo(nanValueCount);
+    if (null != stats) {
+      Statistic stat = stats.statsFor(fieldId);
+      if (null == stat) {
+        // stat is only null when metrics mode is set to none
+        assertThat(valueCount).isNull();
+        assertThat(nullValueCount).isNull();
+        assertThat(nanValueCount).isNull();
+      } else {
+        assertThat(stat.valueCount()).isEqualTo(valueCount);
+        assertThat(stat.nullValueCount()).isEqualTo(nullValueCount);
+        assertThat(stat.nanValueCount()).isEqualTo(nanValueCount);
+      }
+    }
   }
 
   protected <T> void assertBounds(
       int fieldId, Type type, T lowerBound, T upperBound, Metrics metrics) {
+    assertBounds(fieldId, type, lowerBound, upperBound, metrics, null);
+  }
+
+  protected <T> void assertBounds(
+      int fieldId, Type type, T lowerBound, T upperBound, Metrics metrics, ContentStats stats) {
     Map<Integer, ByteBuffer> lowerBounds = metrics.lowerBounds();
     Map<Integer, ByteBuffer> upperBounds = metrics.upperBounds();
     if (null != lowerBound || null != upperBound) {
@@ -840,6 +877,20 @@ public abstract class TestMetrics {
       assertThat((Object) fromByteBuffer(type, upperBounds.get(fieldId))).isEqualTo(upperBound);
     } else {
       assertThat(upperBound).isNull();
+    }
+
+    if (null != stats) {
+      Statistic stat = stats.statsFor(fieldId);
+      if (null == stat) {
+        // stat is only null when metrics mode is set to none
+        assertThat(lowerBound).isNull();
+        assertThat(upperBound).isNull();
+      } else {
+        assertThat(stat).isNotNull();
+        assertThat(stat.type()).isEqualTo(type);
+        assertThat(stat.lowerBound()).isEqualTo(lowerBound);
+        assertThat(stat.upperBound()).isEqualTo(upperBound);
+      }
     }
   }
 }

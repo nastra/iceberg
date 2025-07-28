@@ -32,6 +32,9 @@ import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.relocated.com.google.common.collect.Sets;
+import org.apache.iceberg.stats.BaseContentStats;
+import org.apache.iceberg.stats.BaseStatistic;
+import org.apache.iceberg.stats.ContentStats;
 import org.apache.iceberg.types.Conversions;
 import org.apache.iceberg.types.Type;
 import org.apache.iceberg.types.TypeUtil;
@@ -483,5 +486,102 @@ public class MetricsUtil {
     public <T> void set(int pos, T value) {
       throw new UnsupportedOperationException("StructWithReadableMetrics is read only");
     }
+  }
+
+  public static ContentStats fromMetrics(Metrics metrics) {
+    if (null == metrics) {
+      return null;
+    }
+
+    BaseContentStats.Builder builder = BaseContentStats.builder();
+    Map<Integer, BaseStatistic> map = Maps.newHashMap();
+
+    builder.recordCount(null == metrics.recordCount() ? -1L : metrics.recordCount());
+
+    if (null != metrics.columnSizes()) {
+      metrics
+          .columnSizes()
+          .forEach(
+              (id, value) ->
+                  map.merge(
+                      id,
+                      BaseStatistic.builder().columnId(id).columnSize(value).build(),
+                      (oldVal, newVal) ->
+                          BaseStatistic.buildFrom(oldVal).columnSize(value).build()));
+    }
+
+    if (null != metrics.nullValueCounts()) {
+      metrics
+          .nullValueCounts()
+          .forEach(
+              (id, value) ->
+                  map.merge(
+                      id,
+                      BaseStatistic.builder().columnId(id).nullValueCount(value).build(),
+                      (oldVal, newVal) ->
+                          BaseStatistic.buildFrom(oldVal).nullValueCount(value).build()));
+    }
+
+    if (null != metrics.nanValueCounts()) {
+      metrics
+          .nanValueCounts()
+          .forEach(
+              (id, value) ->
+                  map.merge(
+                      id,
+                      BaseStatistic.builder().columnId(id).nanValueCount(value).build(),
+                      (oldVal, newVal) ->
+                          BaseStatistic.buildFrom(oldVal).nanValueCount(value).build()));
+    }
+
+    if (null != metrics.valueCounts()) {
+      metrics
+          .valueCounts()
+          .forEach(
+              (id, value) ->
+                  map.merge(
+                      id,
+                      BaseStatistic.builder().columnId(id).valueCount(value).build(),
+                      (oldVal, newVal) ->
+                          BaseStatistic.buildFrom(oldVal).valueCount(value).build()));
+    }
+
+    // only convert lower bound if original type is known
+    if (null != metrics.lowerBounds() && null != metrics.originalTypes()) {
+      metrics.lowerBounds().entrySet().stream()
+          .filter(entry -> null != metrics.originalTypes().get(entry.getKey()))
+          .forEach(
+              entry -> {
+                Integer id = entry.getKey();
+                Type type = metrics.originalTypes().get(id);
+                Object lowerBound = Conversions.fromByteBuffer(type, entry.getValue());
+                map.merge(
+                    id,
+                    BaseStatistic.builder().columnId(id).type(type).lowerBound(lowerBound).build(),
+                    (oldVal, newVal) ->
+                        BaseStatistic.buildFrom(oldVal).type(type).lowerBound(lowerBound).build());
+              });
+    }
+
+    // only convert upper bound if original type is known
+    if (null != metrics.upperBounds() && null != metrics.originalTypes()) {
+      metrics.upperBounds().entrySet().stream()
+          .filter(entry -> null != metrics.originalTypes().get(entry.getKey()))
+          .forEach(
+              entry -> {
+                Integer id = entry.getKey();
+                Type type = metrics.originalTypes().get(id);
+                Object upperBound = Conversions.fromByteBuffer(type, entry.getValue());
+                map.merge(
+                    id,
+                    BaseStatistic.builder().columnId(id).type(type).upperBound(upperBound).build(),
+                    (oldVal, newVal) ->
+                        BaseStatistic.buildFrom(oldVal).type(type).upperBound(upperBound).build());
+              });
+    }
+
+    map.values().forEach(builder::withStatistic);
+
+    return builder.build();
   }
 }
