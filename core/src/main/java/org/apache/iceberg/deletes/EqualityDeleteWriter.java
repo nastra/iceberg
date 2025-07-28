@@ -23,6 +23,8 @@ import java.nio.ByteBuffer;
 import org.apache.iceberg.DeleteFile;
 import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.FileMetadata;
+import org.apache.iceberg.Metrics;
+import org.apache.iceberg.MetricsUtil;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.SortOrder;
 import org.apache.iceberg.StructLike;
@@ -76,6 +78,7 @@ public class EqualityDeleteWriter<T> implements FileWriter<T, DeleteWriteResult>
   public void close() throws IOException {
     if (deleteFile == null) {
       appender.close();
+      Metrics metrics = appender.metrics();
       this.deleteFile =
           FileMetadata.deleteFileBuilder(spec)
               .ofEqualityDeletes(equalityFieldIds)
@@ -84,7 +87,8 @@ public class EqualityDeleteWriter<T> implements FileWriter<T, DeleteWriteResult>
               .withPartition(partition)
               .withEncryptionKeyMetadata(keyMetadata)
               .withFileSizeInBytes(appender.length())
-              .withMetrics(appender.metrics())
+              .withMetrics(metrics)
+              .withContentStats(MetricsUtil.fromMetrics(metrics))
               .withSplitOffsets(appender.splitOffsets())
               .withSortOrder(sortOrder)
               .build();

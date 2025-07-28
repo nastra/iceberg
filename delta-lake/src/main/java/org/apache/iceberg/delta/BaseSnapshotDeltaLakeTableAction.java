@@ -42,6 +42,7 @@ import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.ManageSnapshots;
 import org.apache.iceberg.Metrics;
 import org.apache.iceberg.MetricsConfig;
+import org.apache.iceberg.MetricsUtil;
 import org.apache.iceberg.OverwriteFiles;
 import org.apache.iceberg.PartitionField;
 import org.apache.iceberg.PartitionSpec;
@@ -396,6 +397,7 @@ class BaseSnapshotDeltaLakeTableAction implements SnapshotDeltaLakeTable {
         .withFormat(format)
         .withFileSizeInBytes(fileSize)
         .withMetrics(metrics)
+        .withContentStats(MetricsUtil.fromMetrics(metrics))
         .withPartitionValues(partitionValueList)
         .build();
   }
