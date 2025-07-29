@@ -1,0 +1,197 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.apache.iceberg;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import org.apache.commons.io.FileUtils;
+import org.apache.iceberg.io.OutputFile;
+import org.apache.iceberg.relocated.com.google.common.collect.Lists;
+import org.apache.iceberg.relocated.com.google.common.collect.Maps;
+import org.apache.iceberg.stats.ContentStats;
+import org.apache.iceberg.types.Conversions;
+import org.apache.iceberg.types.Type;
+import org.apache.iceberg.types.Types;
+import org.apache.iceberg.util.DataFileSet;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.annotations.Threads;
+import org.openjdk.jmh.annotations.Timeout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * A benchmark that evaluates the performance of writing manifest files with either metrics or
+ * content stats
+ *
+ * <p>To run this benchmark: <code>
+ *   ./gradlew :iceberg-core:jmh -PjmhIncludeRegex=ManifestWriteStatsBenchmark -PjmhOutputPath=benchmark/manifest-write-stats.txt
+ * </code>
+ */
+@Fork(1)
+@State(Scope.Benchmark)
+@Measurement(iterations = 5)
+@BenchmarkMode(Mode.SingleShotTime)
+@Timeout(time = 5, timeUnit = TimeUnit.MINUTES)
+public class ManifestWriteStatsBenchmark {
+  private static final Logger LOG = LoggerFactory.getLogger(ManifestWriteStatsBenchmark.class);
+
+  private static final int NUM_ROWS = 100000;
+
+  private String baseDir;
+  private String manifestListFile;
+  private PartitionSpec spec;
+  private DataFileSet dataFiles;
+
+  private Metrics metrics;
+  private ContentStats stats;
+
+  @Param({"50", "100", "500", "1000", "2500"})
+  private int numberOfColumns;
+
+  @Param({"3", "4"})
+  private int formatVersion;
+
+  @Setup
+  public void before() {
+    Random random = new Random(System.currentTimeMillis());
+    // Pre-create the metrics to avoid doing this in the benchmark itself
+    metrics = randomMetrics(random);
+    stats = MetricsUtil.fromMetrics(metrics);
+
+    List<Types.NestedField> fields = Lists.newArrayList();
+    for (int j = 0; j < numberOfColumns; j++) {
+      fields.add(Types.NestedField.optional(j, "id" + j, Types.LongType.get()));
+    }
+
+    Schema schema = new Schema(fields);
+    this.spec = PartitionSpec.builderFor(schema).build();
+    this.dataFiles = DataFileSet.create();
+
+    for (int j = 0; j < NUM_ROWS; j++) {
+      DataFiles.Builder builder =
+          DataFiles.builder(spec)
+              .withFormat(FileFormat.PARQUET)
+              .withPath(String.format("/path/to/data-%s.parquet", j))
+              .withFileSizeInBytes(j)
+              .withRecordCount(j);
+
+      if (formatVersion < 4) {
+        builder.withMetrics(metrics);
+      } else {
+        builder.withContentStats(stats);
+      }
+
+      DataFile dataFile = builder.build();
+      dataFiles.add(dataFile);
+    }
+  }
+
+  @TearDown
+  public void after() {
+    if (baseDir != null) {
+      FileUtils.deleteQuietly(new File(baseDir));
+      baseDir = null;
+    }
+
+    manifestListFile = null;
+  }
+
+  @Benchmark
+  @Threads(1)
+  public void writeSingleManifestFile() throws IOException {
+    this.baseDir =
+        java.nio.file.Files.createTempDirectory("benchmark-").toAbsolutePath().toString();
+    this.manifestListFile = String.format("%s/%s.avro", baseDir, UUID.randomUUID());
+    List<Long> manifestSizes = Lists.newArrayList();
+
+    try (ManifestListWriter listWriter =
+        ManifestLists.write(formatVersion, Files.localOutput(manifestListFile), 1, 1L, 0, 0L)) {
+      OutputFile manifestFile =
+          Files.localOutput(String.format("%s/%s.avro", baseDir, UUID.randomUUID()));
+
+      ManifestWriter<DataFile> writer = ManifestFiles.write(formatVersion, spec, manifestFile, 1L);
+      try (ManifestWriter<DataFile> finalWriter = writer) {
+        dataFiles.forEach(finalWriter::add);
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+
+      ManifestFile file = writer.toManifestFile();
+      manifestSizes.add(file.length());
+
+      listWriter.add(file);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+
+    LOG.info(
+        "Manifest sizes (in bytes) for format-version {} with stats/metrics for {} columns: {}",
+        formatVersion,
+        numberOfColumns,
+        manifestSizes);
+  }
+
+  private Metrics randomMetrics(Random random) {
+    long rowCount = 100000L + random.nextInt(1000);
+    Map<Integer, Long> columnSizes = Maps.newHashMap();
+    Map<Integer, Long> valueCounts = Maps.newHashMap();
+    Map<Integer, Long> nullValueCounts = Maps.newHashMap();
+    Map<Integer, Long> nanValueCounts = Maps.newHashMap();
+    Map<Integer, ByteBuffer> lowerBounds = Maps.newHashMap();
+    Map<Integer, ByteBuffer> upperBounds = Maps.newHashMap();
+    Map<Integer, Type> originalTypes = Maps.newHashMap();
+    for (int i = 0; i < numberOfColumns; i++) {
+      columnSizes.put(i, 1000000L + random.nextInt(100000));
+      valueCounts.put(i, 100000L + random.nextInt(100));
+      nullValueCounts.put(i, (long) random.nextInt(5));
+      nanValueCounts.put(i, (long) random.nextInt(5));
+
+      long bound = random.nextLong();
+      lowerBounds.put(i, Conversions.toByteBuffer(Types.LongType.get(), bound));
+      upperBounds.put(i, Conversions.toByteBuffer(Types.LongType.get(), bound));
+      originalTypes.put(i, Types.LongType.get());
+    }
+
+    return new Metrics(
+        rowCount,
+        columnSizes,
+        valueCounts,
+        nullValueCounts,
+        nanValueCounts,
+        lowerBounds,
+        upperBounds,
+        originalTypes);
+  }
+}
