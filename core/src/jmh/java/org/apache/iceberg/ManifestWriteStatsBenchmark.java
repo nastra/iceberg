@@ -67,7 +67,7 @@ import org.slf4j.LoggerFactory;
 public class ManifestWriteStatsBenchmark {
   private static final Logger LOG = LoggerFactory.getLogger(ManifestWriteStatsBenchmark.class);
 
-  private static final int NUM_ROWS = 100000;
+  private static final int NUM_ROWS = 1_000_000;
 
   private String baseDir;
   private String manifestListFile;
@@ -77,7 +77,7 @@ public class ManifestWriteStatsBenchmark {
   private Metrics metrics;
   private ContentStats stats;
 
-  @Param({"50", "100", "500", "1000", "2500"})
+  @Param({"32", "64", "100"})
   private int numberOfColumns;
 
   @Param({"3", "4"})

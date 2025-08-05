@@ -68,7 +68,7 @@ import org.openjdk.jmh.infra.Blackhole;
 @BenchmarkMode(Mode.SingleShotTime)
 @Timeout(time = 5, timeUnit = TimeUnit.MINUTES)
 public class ManifestReadStatsBenchmark {
-  private static final int NUM_ROWS = 100_000;
+  private static final int NUM_ROWS = 1_000_000;
 
   private String baseDir;
   private String manifestListFile;
@@ -78,7 +78,7 @@ public class ManifestReadStatsBenchmark {
   private Metrics metrics;
   private ContentStats stats;
 
-  @Param({"50", "100", "1000"})
+  @Param({"32", "64", "100"})
   private int numberOfColumns;
 
   @Param({"3", "4"})
