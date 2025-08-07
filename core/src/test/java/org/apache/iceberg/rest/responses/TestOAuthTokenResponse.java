@@ -90,6 +90,15 @@ public class TestOAuthTokenResponse extends RequestResponseTestBase<OAuthTokenRe
             .build());
 
     assertRoundTripSerializesEquallyFrom(
+        "{\"access_token\":\"bearer-token\",\"token_type\":\"bearer\",\"expires_in\":600,\"refresh_token\":\"refresh-token\"}",
+        OAuthTokenResponse.builder()
+            .withToken("bearer-token")
+            .withTokenType("bearer")
+            .setExpirationInSeconds(600)
+            .withRefreshToken("refresh-token")
+            .build());
+
+    assertRoundTripSerializesEquallyFrom(
         "{\"access_token\":\"bearer-token\",\"token_type\":\"bearer\",\"scope\":\"a b\"}",
         OAuthTokenResponse.builder()
             .withToken("bearer-token")

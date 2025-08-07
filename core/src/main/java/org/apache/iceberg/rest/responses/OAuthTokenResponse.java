@@ -31,18 +31,21 @@ public class OAuthTokenResponse implements RESTResponse {
   private final String tokenType;
   private final Integer expiresIn;
   private final String scope;
+  private final String refreshToken;
 
   private OAuthTokenResponse(
       String accessToken,
       String issuedTokenType,
       String tokenType,
       Integer expiresIn,
-      String scope) {
+      String scope,
+      String refreshToken) {
     this.accessToken = accessToken;
     this.issuedTokenType = issuedTokenType;
     this.tokenType = tokenType;
     this.expiresIn = expiresIn;
     this.scope = scope;
+    this.refreshToken = refreshToken;
   }
 
   @Override
@@ -74,6 +77,10 @@ public class OAuthTokenResponse implements RESTResponse {
     return scope != null ? OAuth2Util.parseScope(scope) : ImmutableList.of();
   }
 
+  public String refreshToken() {
+    return refreshToken;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -84,6 +91,7 @@ public class OAuthTokenResponse implements RESTResponse {
     private String tokenType;
     private Integer expiresInSeconds;
     private final List<String> scopes = Lists.newArrayList();
+    private String refreshToken;
 
     private Builder() {}
 
@@ -118,10 +126,15 @@ public class OAuthTokenResponse implements RESTResponse {
       return this;
     }
 
+    public Builder withRefreshToken(String token) {
+      this.refreshToken = token;
+      return this;
+    }
+
     public OAuthTokenResponse build() {
       String scope = scopes.isEmpty() ? null : OAuth2Util.toScope(scopes);
       return new OAuthTokenResponse(
-          accessToken, issuedTokenType, tokenType, expiresInSeconds, scope);
+          accessToken, issuedTokenType, tokenType, expiresInSeconds, scope, refreshToken);
     }
   }
 }

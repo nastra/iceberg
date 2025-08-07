@@ -41,6 +41,10 @@ public interface AuthConfig {
 
   @Nullable
   @Value.Redacted
+  String refreshToken();
+
+  @Nullable
+  @Value.Redacted
   String credential();
 
   @Value.Default

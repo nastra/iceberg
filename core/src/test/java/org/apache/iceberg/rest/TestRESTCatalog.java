@@ -2698,6 +2698,148 @@ public class TestRESTCatalog extends CatalogTests<RESTCatalog> {
     verifyTableExistsFallbackToGETRequest(ConfigResponse.builder().build());
   }
 
+  @Test
+  public void testCatalogExpiredBearerTokenIsRefreshedUsingRefreshTokenFlow() {
+    // expires at epoch second = 1
+    String token =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjF9.gQADTbdEv-rpDWKSkGLbmafyB5UUjTdm9B_1izpuZ6E";
+    String refreshToken = "token-to-be-used-for-refresh";
+    Map<String, String> emptyHeaders = ImmutableMap.of();
+    Map<String, String> catalogHeaders =
+        ImmutableMap.of("Authorization", "Bearer client-credentials-token:sub=catalog");
+
+    RESTCatalogAdapter adapter =
+        Mockito.spy(
+            new RESTCatalogAdapter(backendCatalog) {
+              @SuppressWarnings("unchecked")
+              @Override
+              public <T extends RESTResponse> T execute(
+                  HTTPRequest request,
+                  Class<T> responseType,
+                  Consumer<ErrorResponse> errorHandler,
+                  Consumer<Map<String, String>> responseHeaders) {
+                if (ResourcePaths.tokens().equals(request.path())) {
+                  Map<String, String> map =
+                      (Map<String, String>) castRequest(Map.class, request.body());
+                  String grantType = map.get("grant_type");
+                  switch (grantType) {
+                    case "urn:ietf:params:oauth:grant-type:token-exchange":
+                      String actor = map.get("actor_token");
+                      String token =
+                          String.format(
+                              "token-exchange-token:sub=%s%s",
+                              map.get("subject_token"), actor != null ? ",act=" + actor : "");
+                      return (T)
+                          castResponse(
+                              OAuthTokenResponse.class,
+                              OAuthTokenResponse.builder()
+                                  .withToken(token)
+                                  .withIssuedTokenType(
+                                      "urn:ietf:params:oauth:token-type:access_token")
+                                  .withTokenType("Bearer")
+                                  .setExpirationInSeconds(10000)
+                                  .withRefreshToken(refreshToken)
+                                  .build());
+
+                    case "refresh_token":
+                      assertThat(map.get("refresh_token")).isEqualTo(refreshToken);
+                    default:
+                      break;
+                  }
+                }
+
+                return super.execute(request, responseType, errorHandler, responseHeaders);
+              }
+            });
+
+    String credential = "catalog:12345";
+    Map<String, String> contextCredentials = ImmutableMap.of("token", token);
+    SessionCatalog.SessionContext context =
+        new SessionCatalog.SessionContext(
+            UUID.randomUUID().toString(), "user", contextCredentials, ImmutableMap.of());
+
+    RESTCatalog catalog = new RESTCatalog(context, (config) -> adapter);
+    // the init token at the catalog level is a valid token
+    catalog.initialize(
+        "prod", ImmutableMap.of(CatalogProperties.URI, "ignored", "credential", credential));
+
+    assertThat(catalog.tableExists(TBL)).isFalse();
+
+    // call client credentials with no initial auth
+    Map<String, String> clientCredentialsRequest =
+        ImmutableMap.of(
+            "grant_type", "client_credentials",
+            "client_id", "catalog",
+            "client_secret", "12345",
+            "scope", "catalog");
+    Mockito.verify(adapter)
+        .execute(
+            reqMatcher(
+                HTTPMethod.POST,
+                ResourcePaths.tokens(),
+                emptyHeaders,
+                Map.of(),
+                clientCredentialsRequest),
+            eq(OAuthTokenResponse.class),
+            any(),
+            any());
+
+    Mockito.verify(adapter)
+        .execute(
+            reqMatcher(HTTPMethod.GET, ResourcePaths.config(), catalogHeaders),
+            eq(ConfigResponse.class),
+            any(),
+            any());
+
+    // verify that the first token exchange occurred, which will contain a refresh token in the
+    // response
+    Map<String, String> firstRefreshRequest =
+        ImmutableMap.of(
+            "grant_type", "urn:ietf:params:oauth:grant-type:token-exchange",
+            "subject_token", token,
+            "subject_token_type", "urn:ietf:params:oauth:token-type:access_token",
+            "scope", "catalog");
+    Mockito.verify(adapter)
+        .execute(
+            reqMatcher(
+                HTTPMethod.POST,
+                ResourcePaths.tokens(),
+                OAuth2Util.basicAuthHeaders(credential),
+                Map.of(),
+                firstRefreshRequest),
+            eq(OAuthTokenResponse.class),
+            any(),
+            any());
+
+    // verify that a token refresh flow occurs if the token expired
+    Map<String, String> secondRefreshRequest =
+        ImmutableMap.of(
+            "grant_type", "refresh_token",
+            "refresh_token", refreshToken,
+            "scope", "catalog");
+    Mockito.verify(adapter)
+        .execute(
+            reqMatcher(
+                HTTPMethod.POST,
+                ResourcePaths.tokens(),
+                OAuth2Util.basicAuthHeaders(credential),
+                Map.of(),
+                secondRefreshRequest),
+            eq(OAuthTokenResponse.class),
+            any(),
+            any());
+
+    Mockito.verify(adapter)
+        .execute(
+            reqMatcher(
+                HTTPMethod.HEAD,
+                RESOURCE_PATHS.table(TBL),
+                Map.of("Authorization", "Bearer token-exchange-token:sub=" + token)),
+            any(),
+            any(),
+            any());
+  }
+
   private RESTCatalog catalog(RESTCatalogAdapter adapter) {
     RESTCatalog catalog =
         new RESTCatalog(SessionCatalog.SessionContext.createEmpty(), (config) -> adapter);

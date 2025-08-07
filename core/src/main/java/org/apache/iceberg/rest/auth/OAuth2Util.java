@@ -99,6 +99,7 @@ public class OAuth2Util {
   private static final String TOKEN_TYPE = "token_type";
   private static final String EXPIRES_IN = "expires_in";
   private static final String ISSUED_TOKEN_TYPE = "issued_token_type";
+  private static final String REFRESH_TOKEN = "refresh_token";
 
   public static Map<String, String> authHeaders(String token) {
     if (token != null) {
@@ -167,6 +168,31 @@ public class OAuth2Util {
         tokenExchangeRequest(
             subjectToken,
             subjectTokenType,
+            scope != null ? ImmutableList.of(scope) : ImmutableList.of(),
+            optionalOAuthParams);
+
+    OAuthTokenResponse response =
+        client.postForm(
+            oauth2ServerUri,
+            request,
+            OAuthTokenResponse.class,
+            headers,
+            ErrorHandlers.oauthErrorHandler());
+    response.validate();
+
+    return response;
+  }
+
+  private static OAuthTokenResponse refreshToken(
+      RESTClient client,
+      Map<String, String> headers,
+      String refreshToken,
+      String scope,
+      String oauth2ServerUri,
+      Map<String, String> optionalOAuthParams) {
+    Map<String, String> request =
+        refreshTokenRequest(
+            refreshToken,
             scope != null ? ImmutableList.of(scope) : ImmutableList.of(),
             optionalOAuthParams);
 
@@ -333,6 +359,19 @@ public class OAuth2Util {
     return formData.buildKeepingLast();
   }
 
+  private static Map<String, String> refreshTokenRequest(
+      String refreshToken, List<String> scopes, Map<String, String> optionalParams) {
+    Preconditions.checkArgument(null != refreshToken, "Invalid refresh token: null");
+
+    ImmutableMap.Builder<String, String> formData = ImmutableMap.builder();
+    formData.put(GRANT_TYPE, REFRESH_TOKEN);
+    formData.put(SCOPE, toScope(scopes));
+    formData.put(REFRESH_TOKEN, refreshToken);
+    formData.putAll(optionalParams);
+
+    return formData.buildKeepingLast();
+  }
+
   private static Pair<String, String> parseCredential(String credential) {
     Preconditions.checkNotNull(credential, "Invalid credential: null");
     List<String> parts = CREDENTIAL_SPLITTER.splitToList(credential);
@@ -398,6 +437,10 @@ public class OAuth2Util {
       gen.writeStringField(SCOPE, toScope(response.scopes()));
     }
 
+    if (response.refreshToken() != null) {
+      gen.writeStringField(REFRESH_TOKEN, response.refreshToken());
+    }
+
     gen.writeEndObject();
   }
 
@@ -421,6 +464,10 @@ public class OAuth2Util {
 
     if (json.has(SCOPE)) {
       builder.addScopes(parseScope(JsonUtil.getString(SCOPE, json)));
+    }
+
+    if (json.has(REFRESH_TOKEN)) {
+      builder.withRefreshToken(JsonUtil.getString(REFRESH_TOKEN, json));
     }
 
     return builder.build();
@@ -552,7 +599,8 @@ public class OAuth2Util {
                 .retry(tokenRefreshNumRetries)
                 .onFailure(
                     (holder, err) -> {
-                      // attempt to refresh using the client credential instead of the parent token
+                      // attempt to refresh using the refresh_token or client credential instead of
+                      // the parent token
                       holder.set(refreshExpiredToken(client));
                       if (holder.get() == null) {
                         LOG.warn("Failed to refresh token", err);
@@ -575,6 +623,7 @@ public class OAuth2Util {
                 .from(config())
                 .token(response.token())
                 .tokenType(response.issuedTokenType())
+                .refreshToken(response.refreshToken())
                 .build();
         Map<String, String> currentHeaders = this.headers;
         this.headers = RESTUtil.merge(currentHeaders, authHeaders(config.token()));
@@ -589,7 +638,7 @@ public class OAuth2Util {
 
     private OAuthTokenResponse refreshCurrentToken(RESTClient client) {
       if (null != expiresAtMillis() && expiresAtMillis() <= System.currentTimeMillis()) {
-        // the token has already expired, attempt to refresh using the credential
+        // the token has already expired, attempt to refresh using the refresh token or credential
         return refreshExpiredToken(client);
       } else {
         // attempt a normal refresh
@@ -608,6 +657,19 @@ public class OAuth2Util {
       if (credential() != null) {
         Map<String, String> basicHeaders =
             RESTUtil.merge(headers(), basicAuthHeaders(credential()));
+
+        if (null != config().refreshToken()) {
+          // use refreshToken + token refresh flow to fetch a new access token
+          return refreshToken(
+              client,
+              basicHeaders,
+              config().refreshToken(),
+              scope(),
+              oauth2ServerUri(),
+              optionalOAuthParams());
+        }
+
+        // use token exchange flow to fetch a new access token
         return refreshToken(
             client,
             basicHeaders,
