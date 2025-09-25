@@ -26,5 +26,5 @@ public interface ContentStats extends StructLike {
   /** A list of all the {@link FieldStats} */
   List<FieldStats<?>> fieldStats();
 
-  FieldStats statsFor(int columnId);
+  <T> FieldStats<T> statsFor(int columnId);
 }

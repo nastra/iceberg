@@ -35,7 +35,7 @@ import org.apache.iceberg.types.Types;
 public class BaseContentStats implements ContentStats, Serializable {
 
   private final List<FieldStats<?>> fieldStats;
-  private final Map<Integer, FieldStats> fieldStatsById;
+  private final Map<Integer, FieldStats<?>> fieldStatsById;
 
   /** Used by Avro reflection to instantiate this class when reading manifest files. */
   public BaseContentStats(Types.StructType projection) {
@@ -71,15 +71,16 @@ public class BaseContentStats implements ContentStats, Serializable {
     return fieldStats;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public FieldStats statsFor(int columnId) {
+  public <T> FieldStats<T> statsFor(int columnId) {
     if (fieldStatsById.isEmpty() && !fieldStats.isEmpty()) {
       fieldStats.stream()
           .filter(Objects::nonNull)
           .forEach(stat -> fieldStatsById.put(stat.fieldId(), stat));
     }
 
-    return fieldStatsById.get(columnId);
+    return (FieldStats<T>) fieldStatsById.get(columnId);
   }
 
   @Override
