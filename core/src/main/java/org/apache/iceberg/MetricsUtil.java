@@ -473,18 +473,6 @@ public class MetricsUtil {
     BaseContentStats.Builder builder = BaseContentStats.builder();
     Map<Integer, BaseFieldStats<?>> map = Maps.newHashMap();
 
-    if (null != metrics.columnSizes()) {
-      metrics
-          .columnSizes()
-          .forEach(
-              (id, value) ->
-                  map.merge(
-                      id,
-                      BaseFieldStats.builder().fieldId(id).columnSize(value).build(),
-                      (oldVal, newVal) ->
-                          BaseFieldStats.buildFrom(oldVal).columnSize(value).build()));
-    }
-
     if (null != metrics.nullValueCounts()) {
       metrics
           .nullValueCounts()

@@ -222,10 +222,6 @@ public class StatsUtil {
   }
 
   public static Long columnSize(ContentFile<?> file, int fieldId) {
-    if (null != file.contentStats() && null != file.contentStats().statsFor(fieldId)) {
-      return file.contentStats().statsFor(fieldId).columnSize();
-    }
-
     return null != file.columnSizes() ? file.columnSizes().getOrDefault(fieldId, null) : null;
   }
 
