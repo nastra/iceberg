@@ -259,13 +259,11 @@ public class ManifestReadStatsBenchmark {
       DataFile dataFile = reader.iterator().next();
       FieldStats<?> stat = dataFile.contentStats().statsFor(10);
       assertThat(stat).isNotNull();
-      assertThat(stat.columnSize()).isNotNull();
       assertThat(stat.valueCount()).isNotNull();
       assertThat(stat.nullValueCount()).isNotNull();
       assertThat(stat.nanValueCount()).isNotNull();
       assertThat(stat.lowerBound()).isNotNull();
       assertThat(stat.upperBound()).isNotNull();
-      blackhole.consume(stat.columnSize());
       blackhole.consume(stat.valueCount());
       blackhole.consume(stat.nullValueCount());
       blackhole.consume(stat.nanValueCount());

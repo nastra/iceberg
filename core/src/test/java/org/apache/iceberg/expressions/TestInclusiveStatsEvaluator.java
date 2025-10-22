@@ -175,6 +175,7 @@ public class TestInclusiveStatsEvaluator extends TestInclusiveMetricsEvaluator {
         Row.of(),
         50,
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(NESTED_SCHEMA).type().asStructType())
             .withFieldStats(
                 BaseFieldStats.builder().fieldId(100).valueCount(5L).nullValueCount(0L).build())
             .withFieldStats(

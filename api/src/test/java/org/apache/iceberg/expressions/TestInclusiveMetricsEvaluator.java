@@ -73,7 +73,7 @@ public class TestInclusiveMetricsEvaluator {
           optional(13, "no_nan_stats", Types.DoubleType.get()),
           optional(14, "some_empty", Types.StringType.get()));
 
-  private static final Schema NESTED_SCHEMA =
+  protected static final Schema NESTED_SCHEMA =
       new Schema(
           required(
               100,
