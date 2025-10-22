@@ -178,7 +178,7 @@ public class BaseContentStats
       fieldStatsById.put(newStat.fieldId(), newStat);
     } else {
       // TODO: why is this set to null?
-      //      fieldStats.set(pos, (FieldStats<?>) value);
+      fieldStats.set(pos, (FieldStats<?>) value);
     }
   }
 

@@ -204,7 +204,7 @@ public class TestManifestReaderStats extends TestBase {
                                       10200,
                                       "1",
                                       Types.StructType.of(
-                                          optional(10202, "value_count", Types.LongType.get())))),
+                                          optional(10201, "value_count", Types.LongType.get())))),
                               "Column statistics"))))) {
         DataFile entry = reader.iterator().next();
 
