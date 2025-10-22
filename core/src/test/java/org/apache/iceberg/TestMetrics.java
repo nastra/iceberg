@@ -43,6 +43,7 @@ import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.stats.ContentStats;
 import org.apache.iceberg.stats.FieldStats;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.types.Type;
 import org.apache.iceberg.types.Types;
 import org.apache.iceberg.types.Types.BinaryType;
@@ -168,20 +169,23 @@ public abstract class TestMetrics {
     record.setField("timestampColBelowEpoch", DateTimeUtil.timestampFromMicros(0L));
 
     Metrics metrics = getMetrics(SIMPLE_SCHEMA, record, record);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(SIMPLE_SCHEMA).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(2L);
-    assertCounts(1, 2L, 0L, metrics);
-    assertCounts(2, 2L, 0L, metrics);
-    assertCounts(3, 2L, 2L, metrics);
-    assertCounts(4, 2L, 0L, 2L, metrics);
-    assertCounts(5, 2L, 0L, 0L, metrics);
-    assertCounts(6, 2L, 0L, metrics);
-    assertCounts(7, 2L, 0L, metrics);
-    assertCounts(8, 2L, 0L, metrics);
-    assertCounts(9, 2L, 0L, metrics);
-    assertCounts(10, 2L, 0L, metrics);
-    assertCounts(11, 2L, 0L, metrics);
-    assertCounts(12, 2L, 0L, metrics);
-    assertCounts(13, 2L, 0L, metrics);
+    assertCounts(1, 2L, 0L, metrics, stats);
+    assertCounts(2, 2L, 0L, metrics, stats);
+    assertCounts(3, 2L, 2L, metrics, stats);
+    assertCounts(4, 2L, 0L, 2L, metrics, stats);
+    assertCounts(5, 2L, 0L, 0L, metrics, stats);
+    assertCounts(6, 2L, 0L, metrics, stats);
+    assertCounts(7, 2L, 0L, metrics, stats);
+    assertCounts(8, 2L, 0L, metrics, stats);
+    assertCounts(9, 2L, 0L, metrics, stats);
+    assertCounts(10, 2L, 0L, metrics, stats);
+    assertCounts(11, 2L, 0L, metrics, stats);
+    assertCounts(12, 2L, 0L, metrics, stats);
+    assertCounts(13, 2L, 0L, metrics, stats);
   }
 
   @TestTemplate
@@ -216,31 +220,34 @@ public abstract class TestMetrics {
     secondRecord.setField("timestampColBelowEpoch", DateTimeUtil.timestampFromMicros(-7_000L));
 
     Metrics metrics = getMetrics(SIMPLE_SCHEMA, firstRecord, secondRecord);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(SIMPLE_SCHEMA).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(2L);
-    assertCounts(1, 2L, 0L, metrics);
-    assertBounds(1, BooleanType.get(), false, true, metrics);
-    assertCounts(2, 2L, 0L, metrics);
-    assertBounds(2, IntegerType.get(), Integer.MIN_VALUE, 3, metrics);
-    assertCounts(3, 2L, 1L, metrics);
+    assertCounts(1, 2L, 0L, metrics, stats);
+    assertBounds(1, BooleanType.get(), false, true, metrics, stats);
+    assertCounts(2, 2L, 0L, metrics, stats);
+    assertBounds(2, IntegerType.get(), Integer.MIN_VALUE, 3, metrics, stats);
+    assertCounts(3, 2L, 1L, metrics, stats);
     assertBounds(3, LongType.get(), 5L, 5L, metrics);
-    assertCounts(4, 2L, 0L, 0L, metrics);
+    assertCounts(4, 2L, 0L, 0L, metrics, stats);
     assertBounds(4, FloatType.get(), 1.0F, 2.0F, metrics);
-    assertCounts(5, 2L, 1L, 0L, metrics);
+    assertCounts(5, 2L, 1L, 0L, metrics, stats);
     assertBounds(5, DoubleType.get(), 2.0D, 2.0D, metrics);
-    assertCounts(6, 2L, 1L, metrics);
+    assertCounts(6, 2L, 1L, metrics, stats);
     assertBounds(6, DecimalType.of(10, 2), new BigDecimal("3.50"), new BigDecimal("3.50"), metrics);
-    assertCounts(7, 2L, 0L, metrics);
+    assertCounts(7, 2L, 0L, metrics, stats);
     assertBounds(7, StringType.get(), CharBuffer.wrap("AAA"), CharBuffer.wrap("ZZZ"), metrics);
-    assertCounts(8, 2L, 1L, metrics);
+    assertCounts(8, 2L, 1L, metrics, stats);
     assertBounds(8, DateType.get(), 1500, 1500, metrics);
-    assertCounts(9, 2L, 0L, metrics);
+    assertCounts(9, 2L, 0L, metrics, stats);
     assertBounds(9, TimeType.get(), 2000L, 3000L, metrics);
-    assertCounts(10, 2L, 0L, metrics);
+    assertCounts(10, 2L, 0L, metrics, stats);
     assertBounds(10, TimestampType.withoutZone(), 0L, 900L, metrics);
-    assertCounts(11, 2L, 0L, metrics);
+    assertCounts(11, 2L, 0L, metrics, stats);
     assertBounds(
         11, FixedType.ofLength(4), ByteBuffer.wrap(fixed), ByteBuffer.wrap(fixed), metrics);
-    assertCounts(12, 2L, 0L, metrics);
+    assertCounts(12, 2L, 0L, metrics, stats);
     assertBounds(
         12,
         BinaryType.get(),
@@ -273,33 +280,38 @@ public abstract class TestMetrics {
     record.setField("decimalAsFixed", new BigDecimal("5.80"));
 
     Metrics metrics = getMetrics(schema, record);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(StatsUtil.contentStatsFor(schema).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(1);
-    assertCounts(1, 1L, 0L, metrics);
+    assertCounts(1, 1L, 0L, metrics, stats);
     assertBounds(1, DecimalType.of(4, 2), new BigDecimal("2.55"), new BigDecimal("2.55"), metrics);
-    assertCounts(2, 1L, 0L, metrics);
+    assertCounts(2, 1L, 0L, metrics, stats);
     assertBounds(2, DecimalType.of(14, 2), new BigDecimal("4.75"), new BigDecimal("4.75"), metrics);
-    assertCounts(3, 1L, 0L, metrics);
+    assertCounts(3, 1L, 0L, metrics, stats);
     assertBounds(3, DecimalType.of(22, 2), new BigDecimal("5.80"), new BigDecimal("5.80"), metrics);
   }
 
   @TestTemplate
   public void testMetricsForNestedStructFields() throws IOException {
     Metrics metrics = getMetrics(NESTED_SCHEMA, buildNestedTestRecord());
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(NESTED_SCHEMA).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(1L);
-    assertCounts(1, 1L, 0L, metrics);
+    assertCounts(1, 1L, 0L, metrics, stats);
     assertBounds(1, IntegerType.get(), Integer.MAX_VALUE, Integer.MAX_VALUE, metrics);
-    assertCounts(3, 1L, 0L, metrics);
+    assertCounts(3, 1L, 0L, metrics, stats);
     assertBounds(3, LongType.get(), 100L, 100L, metrics);
-    assertCounts(5, 1L, 0L, metrics);
+    assertCounts(5, 1L, 0L, metrics, stats);
     assertBounds(5, LongType.get(), 20L, 20L, metrics);
-    assertCounts(6, 1L, 0L, metrics);
+    assertCounts(6, 1L, 0L, metrics, stats);
     assertBounds(
         6,
         BinaryType.get(),
         ByteBuffer.wrap("A".getBytes()),
         ByteBuffer.wrap("A".getBytes()),
         metrics);
-    assertCounts(7, 1L, 0L, 1L, metrics);
+    assertCounts(7, 1L, 0L, 1L, metrics, stats);
     assertBounds(7, DoubleType.get(), null, null, metrics);
   }
 
@@ -356,11 +368,13 @@ public abstract class TestMetrics {
     record.set(1, map);
 
     Metrics metrics = getMetrics(schema, record);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(StatsUtil.contentStatsFor(schema).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(1L);
-    assertCounts(1, null, null, metrics);
-    assertCounts(2, null, null, metrics);
-    assertCounts(4, null, null, metrics);
-    assertCounts(6, null, null, metrics);
+    assertCounts(1, null, null, metrics, stats);
+    assertCounts(2, null, null, metrics, stats);
+    assertCounts(4, null, null, metrics, stats);
+    assertCounts(6, null, null, metrics, stats);
     assertBounds(1, IntegerType.get(), null, null, metrics);
     assertBounds(2, StringType.get(), null, null, metrics);
     assertBounds(4, IntegerType.get(), null, null, metrics);
@@ -377,17 +391,22 @@ public abstract class TestMetrics {
     secondRecord.setField("intCol", null);
 
     Metrics metrics = getMetrics(schema, firstRecord, secondRecord);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(StatsUtil.contentStatsFor(schema).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(2L);
-    assertCounts(1, 2L, 2L, metrics);
+    assertCounts(1, 2L, 2L, metrics, stats);
     assertBounds(1, IntegerType.get(), null, null, metrics);
   }
 
   @TestTemplate
   public void testMetricsForNaNColumns() throws IOException {
     Metrics metrics = getMetrics(FLOAT_DOUBLE_ONLY_SCHEMA, NAN_ONLY_RECORD, NAN_ONLY_RECORD);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(FLOAT_DOUBLE_ONLY_SCHEMA).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(2L);
-    assertCounts(1, 2L, 0L, 2L, metrics);
-    assertCounts(2, 2L, 0L, 2L, metrics);
+    assertCounts(1, 2L, 0L, 2L, metrics, stats);
+    assertCounts(2, 2L, 0L, 2L, metrics, stats);
 
     assertBounds(1, FloatType.get(), null, null, metrics);
     assertBounds(2, DoubleType.get(), null, null, metrics);
@@ -401,12 +420,15 @@ public abstract class TestMetrics {
             NAN_ONLY_RECORD,
             FLOAT_DOUBLE_RECORD_1,
             FLOAT_DOUBLE_RECORD_2);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(FLOAT_DOUBLE_ONLY_SCHEMA).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(3L);
-    assertCounts(1, 3L, 0L, 1L, metrics);
-    assertCounts(2, 3L, 0L, 1L, metrics);
+    assertCounts(1, 3L, 0L, 1L, metrics, stats);
+    assertCounts(2, 3L, 0L, 1L, metrics, stats);
 
-    assertBounds(1, FloatType.get(), 1.2F, 5.6F, metrics);
-    assertBounds(2, DoubleType.get(), 3.4D, 7.8D, metrics);
+    assertBounds(1, FloatType.get(), 1.2F, 5.6F, metrics, stats);
+    assertBounds(2, DoubleType.get(), 3.4D, 7.8D, metrics, stats);
   }
 
   @TestTemplate
@@ -417,12 +439,15 @@ public abstract class TestMetrics {
             FLOAT_DOUBLE_RECORD_1,
             NAN_ONLY_RECORD,
             FLOAT_DOUBLE_RECORD_2);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(FLOAT_DOUBLE_ONLY_SCHEMA).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(3L);
-    assertCounts(1, 3L, 0L, 1L, metrics);
-    assertCounts(2, 3L, 0L, 1L, metrics);
+    assertCounts(1, 3L, 0L, 1L, metrics, stats);
+    assertCounts(2, 3L, 0L, 1L, metrics, stats);
 
-    assertBounds(1, FloatType.get(), 1.2F, 5.6F, metrics);
-    assertBounds(2, DoubleType.get(), 3.4D, 7.8D, metrics);
+    assertBounds(1, FloatType.get(), 1.2F, 5.6F, metrics, stats);
+    assertBounds(2, DoubleType.get(), 3.4D, 7.8D, metrics, stats);
   }
 
   @TestTemplate
@@ -433,12 +458,15 @@ public abstract class TestMetrics {
             FLOAT_DOUBLE_RECORD_1,
             FLOAT_DOUBLE_RECORD_2,
             NAN_ONLY_RECORD);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(FLOAT_DOUBLE_ONLY_SCHEMA).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(3L);
-    assertCounts(1, 3L, 0L, 1L, metrics);
-    assertCounts(2, 3L, 0L, 1L, metrics);
+    assertCounts(1, 3L, 0L, 1L, metrics, stats);
+    assertCounts(2, 3L, 0L, 1L, metrics, stats);
 
-    assertBounds(1, FloatType.get(), 1.2F, 5.6F, metrics);
-    assertBounds(2, DoubleType.get(), 3.4D, 7.8D, metrics);
+    assertBounds(1, FloatType.get(), 1.2F, 5.6F, metrics, stats);
+    assertBounds(2, DoubleType.get(), 3.4D, 7.8D, metrics, stats);
   }
 
   @TestTemplate
@@ -475,6 +503,9 @@ public abstract class TestMetrics {
     Metrics metrics =
         getMetricsForRecordsWithSmallRowGroups(
             SIMPLE_SCHEMA, outputFile, records.toArray(new Record[0]));
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(SIMPLE_SCHEMA).type().asStructType(), metrics);
     InputFile recordsFile = outputFile.toInputFile();
 
     assertThat(recordsFile).isNotNull();
@@ -482,16 +513,16 @@ public abstract class TestMetrics {
     assertThat(splitCount(recordsFile)).isEqualTo(3);
 
     assertThat(metrics.recordCount()).isEqualTo(201L);
-    assertCounts(1, 201L, 0L, metrics);
+    assertCounts(1, 201L, 0L, metrics, stats);
     assertBounds(1, Types.BooleanType.get(), false, true, metrics);
     assertBounds(2, Types.IntegerType.get(), 1, 201, metrics);
-    assertCounts(3, 201L, 1L, metrics);
+    assertCounts(3, 201L, 1L, metrics, stats);
     assertBounds(3, Types.LongType.get(), 2L, 201L, metrics);
-    assertCounts(4, 201L, 0L, 0L, metrics);
+    assertCounts(4, 201L, 0L, 0L, metrics, stats);
     assertBounds(4, Types.FloatType.get(), 1.0F, 201.0F, metrics);
-    assertCounts(5, 201L, 1L, 0L, metrics);
+    assertCounts(5, 201L, 1L, 0L, metrics, stats);
     assertBounds(5, Types.DoubleType.get(), 2.0D, 201.0D, metrics);
-    assertCounts(6, 201L, 1L, metrics);
+    assertCounts(6, 201L, 1L, metrics, stats);
     assertBounds(
         6, Types.DecimalType.of(10, 2), new BigDecimal("2.00"), new BigDecimal("201.00"), metrics);
   }
@@ -524,6 +555,9 @@ public abstract class TestMetrics {
     Metrics metrics =
         getMetricsForRecordsWithSmallRowGroups(
             NESTED_SCHEMA, outputFile, records.toArray(new Record[0]));
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(NESTED_SCHEMA).type().asStructType(), metrics);
     InputFile recordsFile = outputFile.toInputFile();
 
     assertThat(recordsFile).isNotNull();
@@ -531,20 +565,20 @@ public abstract class TestMetrics {
     assertThat(splitCount(recordsFile)).isEqualTo(3);
 
     assertThat(metrics.recordCount()).isEqualTo(201L);
-    assertCounts(1, 201L, 0L, metrics);
+    assertCounts(1, 201L, 0L, metrics, stats);
     assertBounds(1, IntegerType.get(), 1, 201, metrics);
-    assertCounts(3, 201L, 0L, metrics);
+    assertCounts(3, 201L, 0L, metrics, stats);
     assertBounds(3, LongType.get(), 1L, 201L, metrics);
-    assertCounts(5, 201L, 0L, metrics);
+    assertCounts(5, 201L, 0L, metrics, stats);
     assertBounds(5, LongType.get(), 1L, 201L, metrics);
-    assertCounts(6, 201L, 0L, metrics);
+    assertCounts(6, 201L, 0L, metrics, stats);
     assertBounds(
         6,
         BinaryType.get(),
         ByteBuffer.wrap("A".getBytes()),
         ByteBuffer.wrap("A".getBytes()),
         metrics);
-    assertCounts(7, 201L, 0L, 201L, metrics);
+    assertCounts(7, 201L, 0L, 201L, metrics, stats);
     assertBounds(7, DoubleType.get(), null, null, metrics);
   }
 
@@ -555,17 +589,20 @@ public abstract class TestMetrics {
             NESTED_SCHEMA,
             MetricsConfig.fromProperties(ImmutableMap.of("write.metadata.metrics.default", "none")),
             buildNestedTestRecord());
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(NESTED_SCHEMA).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(1L);
     assertThat(metrics.columnSizes()).isEmpty();
-    assertCounts(1, null, null, metrics);
+    assertCounts(1, null, null, metrics, stats);
     assertBounds(1, Types.IntegerType.get(), null, null, metrics);
-    assertCounts(3, null, null, metrics);
+    assertCounts(3, null, null, metrics, stats);
     assertBounds(3, Types.LongType.get(), null, null, metrics);
-    assertCounts(5, null, null, metrics);
+    assertCounts(5, null, null, metrics, stats);
     assertBounds(5, Types.LongType.get(), null, null, metrics);
-    assertCounts(6, null, null, metrics);
+    assertCounts(6, null, null, metrics, stats);
     assertBounds(6, Types.BinaryType.get(), null, null, metrics);
-    assertCounts(7, null, null, metrics);
+    assertCounts(7, null, null, metrics, stats);
     assertBounds(7, Types.DoubleType.get(), null, null, metrics);
   }
 
@@ -577,18 +614,21 @@ public abstract class TestMetrics {
             MetricsConfig.fromProperties(
                 ImmutableMap.of("write.metadata.metrics.default", "counts")),
             buildNestedTestRecord());
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(NESTED_SCHEMA).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(1L);
     assertThat(metrics.columnSizes()).doesNotContainValue(null);
     assertThat(metrics.columnSizes()).isNotEmpty();
-    assertCounts(1, 1L, 0L, metrics);
+    assertCounts(1, 1L, 0L, metrics, stats);
     assertBounds(1, Types.IntegerType.get(), null, null, metrics);
-    assertCounts(3, 1L, 0L, metrics);
+    assertCounts(3, 1L, 0L, metrics, stats);
     assertBounds(3, Types.LongType.get(), null, null, metrics);
-    assertCounts(5, 1L, 0L, metrics);
+    assertCounts(5, 1L, 0L, metrics, stats);
     assertBounds(5, Types.LongType.get(), null, null, metrics);
-    assertCounts(6, 1L, 0L, metrics);
+    assertCounts(6, 1L, 0L, metrics, stats);
     assertBounds(6, Types.BinaryType.get(), null, null, metrics);
-    assertCounts(7, 1L, 0L, 1L, metrics);
+    assertCounts(7, 1L, 0L, 1L, metrics, stats);
     assertBounds(7, Types.DoubleType.get(), null, null, metrics);
   }
 
@@ -599,23 +639,26 @@ public abstract class TestMetrics {
             NESTED_SCHEMA,
             MetricsConfig.fromProperties(ImmutableMap.of("write.metadata.metrics.default", "full")),
             buildNestedTestRecord());
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(NESTED_SCHEMA).type().asStructType(), metrics);
     assertThat(metrics.recordCount()).isEqualTo(1L);
     assertThat(metrics.columnSizes()).doesNotContainValue(null);
     assertThat(metrics.columnSizes()).isNotEmpty();
-    assertCounts(1, 1L, 0L, metrics);
+    assertCounts(1, 1L, 0L, metrics, stats);
     assertBounds(1, Types.IntegerType.get(), Integer.MAX_VALUE, Integer.MAX_VALUE, metrics);
-    assertCounts(3, 1L, 0L, metrics);
+    assertCounts(3, 1L, 0L, metrics, stats);
     assertBounds(3, Types.LongType.get(), 100L, 100L, metrics);
-    assertCounts(5, 1L, 0L, metrics);
+    assertCounts(5, 1L, 0L, metrics, stats);
     assertBounds(5, Types.LongType.get(), 20L, 20L, metrics);
-    assertCounts(6, 1L, 0L, metrics);
+    assertCounts(6, 1L, 0L, metrics, stats);
     assertBounds(
         6,
         Types.BinaryType.get(),
         ByteBuffer.wrap("A".getBytes()),
         ByteBuffer.wrap("A".getBytes()),
         metrics);
-    assertCounts(7, 1L, 0L, 1L, metrics);
+    assertCounts(7, 1L, 0L, 1L, metrics, stats);
     assertBounds(7, Types.DoubleType.get(), null, null, metrics);
   }
 
@@ -634,13 +677,16 @@ public abstract class TestMetrics {
             MetricsConfig.fromProperties(
                 ImmutableMap.of("write.metadata.metrics.default", "truncate(10)")),
             record);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(singleStringColSchema).type().asStructType(), metrics);
 
     CharBuffer expectedMinBound = CharBuffer.wrap("Lorem ipsu");
     CharBuffer expectedMaxBound = CharBuffer.wrap("Lorem ipsv");
     assertThat(metrics.recordCount()).isEqualTo(1L);
     assertThat(metrics.columnSizes()).doesNotContainValue(null);
     assertThat(metrics.columnSizes()).isNotEmpty();
-    assertCounts(1, 1L, 0L, metrics);
+    assertCounts(1, 1L, 0L, metrics, stats);
     assertBounds(1, Types.StringType.get(), expectedMinBound, expectedMaxBound, metrics);
   }
 
@@ -659,13 +705,16 @@ public abstract class TestMetrics {
             MetricsConfig.fromProperties(
                 ImmutableMap.of("write.metadata.metrics.default", "truncate(5)")),
             record);
+    ContentStats stats =
+        MetricsUtil.fromMetrics(
+            StatsUtil.contentStatsFor(singleBinaryColSchema).type().asStructType(), metrics);
 
     ByteBuffer expectedMinBounds = ByteBuffer.wrap(new byte[] {0x1, 0x2, 0x3, 0x4, 0x5});
     ByteBuffer expectedMaxBounds = ByteBuffer.wrap(new byte[] {0x1, 0x2, 0x3, 0x4, 0x6});
     assertThat(metrics.recordCount()).isEqualTo(1L);
     assertThat(metrics.columnSizes()).doesNotContainValue(null);
     assertThat(metrics.columnSizes()).isNotEmpty();
-    assertCounts(1, 1L, 0L, metrics);
+    assertCounts(1, 1L, 0L, metrics, stats);
     assertBounds(1, Types.BinaryType.get(), expectedMinBounds, expectedMaxBounds, metrics);
   }
 
@@ -757,20 +806,9 @@ public abstract class TestMetrics {
     assertBounds(5, LongType.get(), Long.MAX_VALUE, Long.MAX_VALUE, metrics);
   }
 
-  protected void assertCounts(int fieldId, Long valueCount, Long nullValueCount, Metrics metrics) {
-    assertCounts(
-        fieldId, valueCount, nullValueCount, null, metrics, MetricsUtil.fromMetrics(metrics));
-  }
-
   protected void assertCounts(
-      int fieldId, Long valueCount, Long nullValueCount, Long nanValueCount, Metrics metrics) {
-    assertCounts(
-        fieldId,
-        valueCount,
-        nullValueCount,
-        nanValueCount,
-        metrics,
-        MetricsUtil.fromMetrics(metrics));
+      int fieldId, Long valueCount, Long nullValueCount, Metrics metrics, ContentStats stats) {
+    assertCounts(fieldId, valueCount, nullValueCount, null, metrics, stats);
   }
 
   protected void assertCounts(

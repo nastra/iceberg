@@ -32,6 +32,7 @@ import org.apache.iceberg.io.OutputFile;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.stats.ContentStats;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.types.Conversions;
 import org.apache.iceberg.types.Type;
 import org.apache.iceberg.types.Types;
@@ -88,7 +89,6 @@ public class ManifestWriteStatsBenchmark {
     Random random = new Random(System.currentTimeMillis());
     // Pre-create the metrics to avoid doing this in the benchmark itself
     metrics = randomMetrics(random);
-    stats = MetricsUtil.fromMetrics(metrics);
 
     List<Types.NestedField> fields = Lists.newArrayList();
     for (int j = 0; j < numberOfColumns; j++) {
@@ -96,6 +96,8 @@ public class ManifestWriteStatsBenchmark {
     }
 
     Schema schema = new Schema(fields);
+    stats =
+        MetricsUtil.fromMetrics(StatsUtil.contentStatsFor(schema).type().asStructType(), metrics);
     this.spec = PartitionSpec.builderFor(schema).build();
     this.dataFiles = DataFileSet.create();
 

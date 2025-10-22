@@ -20,6 +20,7 @@ package org.apache.iceberg;
 
 import static org.apache.iceberg.types.Types.NestedField.optional;
 
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -465,7 +466,7 @@ public class MetricsUtil {
     }
   }
 
-  public static ContentStats fromMetrics(Metrics metrics) {
+  public static ContentStats fromMetrics(Types.StructType statsStruct, Metrics metrics) {
     if (null == metrics) {
       return null;
     }
@@ -522,12 +523,12 @@ public class MetricsUtil {
                     BaseFieldStats.builder()
                         .fieldId(id)
                         .type(type)
-                        .lowerBound(Conversions.fromByteBuffer(type, entry.getValue()))
+                        .lowerBound(fromByteBufferToStats(type, entry.getValue()))
                         .build(),
                     (oldVal, newVal) ->
                         BaseFieldStats.buildFrom(oldVal)
                             .type(type)
-                            .lowerBound(Conversions.fromByteBuffer(type, entry.getValue()))
+                            .lowerBound(fromByteBufferToStats(type, entry.getValue()))
                             .build());
               });
     }
@@ -545,18 +546,28 @@ public class MetricsUtil {
                     BaseFieldStats.builder()
                         .fieldId(id)
                         .type(type)
-                        .upperBound(Conversions.fromByteBuffer(type, entry.getValue()))
+                        .upperBound(fromByteBufferToStats(type, entry.getValue()))
                         .build(),
                     (oldVal, newVal) ->
                         BaseFieldStats.buildFrom(oldVal)
                             .type(type)
-                            .upperBound(Conversions.fromByteBuffer(type, entry.getValue()))
+                            .upperBound(fromByteBufferToStats(type, entry.getValue()))
                             .build());
               });
     }
 
     map.values().forEach(builder::withFieldStats);
 
-    return builder.build();
+    return builder.withStatsStruct(statsStruct).build();
+  }
+
+  private static <T> T fromByteBufferToStats(Type type, ByteBuffer buffer) {
+    Object result = Conversions.fromByteBuffer(type, buffer);
+    if (Types.StringType.get() == type) {
+      // use String instead of CharBuffer
+      return (T) result.toString();
+    }
+
+    return (T) result;
   }
 }

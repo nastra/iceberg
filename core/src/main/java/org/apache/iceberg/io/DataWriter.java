@@ -30,6 +30,7 @@ import org.apache.iceberg.SortOrder;
 import org.apache.iceberg.StructLike;
 import org.apache.iceberg.encryption.EncryptionKeyMetadata;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
+import org.apache.iceberg.stats.StatsUtil;
 
 public class DataWriter<T> implements FileWriter<T, DataWriteResult> {
   private final FileAppender<T> appender;
@@ -91,7 +92,9 @@ public class DataWriter<T> implements FileWriter<T, DataWriteResult> {
               .withEncryptionKeyMetadata(keyMetadata)
               .withFileSizeInBytes(appender.length())
               .withMetrics(metrics)
-              .withContentStats(MetricsUtil.fromMetrics(metrics))
+              .withContentStats(
+                  MetricsUtil.fromMetrics(
+                      StatsUtil.contentStatsFor(spec.schema()).type().asStructType(), metrics))
               .withSplitOffsets(appender.splitOffsets())
               .withSortOrder(sortOrder)
               .build();

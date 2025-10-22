@@ -37,6 +37,7 @@ import org.apache.iceberg.io.FileAppender;
 import org.apache.iceberg.io.FileWriter;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableSet;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.util.CharSequenceSet;
 
 /**
@@ -101,7 +102,9 @@ public class PositionDeleteWriter<T> implements FileWriter<PositionDelete<T>, De
               .withSplitOffsets(appender.splitOffsets())
               .withFileSizeInBytes(appender.length())
               .withMetrics(metrics)
-              .withContentStats(MetricsUtil.fromMetrics(metrics))
+              .withContentStats(
+                  MetricsUtil.fromMetrics(
+                      StatsUtil.contentStatsFor(spec.schema()).type().asStructType(), metrics))
               .build();
     }
   }

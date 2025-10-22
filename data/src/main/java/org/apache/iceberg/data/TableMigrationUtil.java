@@ -44,6 +44,7 @@ import org.apache.iceberg.io.InputFile;
 import org.apache.iceberg.mapping.NameMapping;
 import org.apache.iceberg.orc.OrcMetrics;
 import org.apache.iceberg.parquet.ParquetUtil;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.util.Tasks;
 import org.apache.iceberg.util.ThreadPools;
 
@@ -252,7 +253,9 @@ public class TableMigrationUtil {
         .withFormat(format)
         .withFileSizeInBytes(stat.getLen())
         .withMetrics(metrics)
-        .withContentStats(MetricsUtil.fromMetrics(metrics))
+        .withContentStats(
+            MetricsUtil.fromMetrics(
+                StatsUtil.contentStatsFor(spec.schema()).type().asStructType(), metrics))
         .withPartitionValues(partitionValues)
         .build();
   }

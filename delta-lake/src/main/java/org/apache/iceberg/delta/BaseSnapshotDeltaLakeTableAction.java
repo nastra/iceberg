@@ -64,6 +64,7 @@ import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableSet;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.types.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -397,7 +398,9 @@ class BaseSnapshotDeltaLakeTableAction implements SnapshotDeltaLakeTable {
         .withFormat(format)
         .withFileSizeInBytes(fileSize)
         .withMetrics(metrics)
-        .withContentStats(MetricsUtil.fromMetrics(metrics))
+        .withContentStats(
+            MetricsUtil.fromMetrics(
+                StatsUtil.contentStatsFor(spec.schema()).type().asStructType(), metrics))
         .withPartitionValues(partitionValueList)
         .build();
   }

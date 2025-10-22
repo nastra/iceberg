@@ -33,6 +33,7 @@ import org.apache.iceberg.io.DeleteWriteResult;
 import org.apache.iceberg.io.FileAppender;
 import org.apache.iceberg.io.FileWriter;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
+import org.apache.iceberg.stats.StatsUtil;
 
 public class EqualityDeleteWriter<T> implements FileWriter<T, DeleteWriteResult> {
   private final FileAppender<T> appender;
@@ -88,7 +89,9 @@ public class EqualityDeleteWriter<T> implements FileWriter<T, DeleteWriteResult>
               .withEncryptionKeyMetadata(keyMetadata)
               .withFileSizeInBytes(appender.length())
               .withMetrics(metrics)
-              .withContentStats(MetricsUtil.fromMetrics(metrics))
+              .withContentStats(
+                  MetricsUtil.fromMetrics(
+                      StatsUtil.contentStatsFor(spec.schema()).type().asStructType(), metrics))
               .withSplitOffsets(appender.splitOffsets())
               .withSortOrder(sortOrder)
               .build();

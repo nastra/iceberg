@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.avro.Schema;
+import org.apache.avro.specific.SpecificData;
 import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.relocated.com.google.common.base.MoreObjects;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
@@ -32,13 +34,22 @@ import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.apache.iceberg.types.Type;
 import org.apache.iceberg.types.Types;
 
-public class BaseContentStats implements ContentStats, Serializable {
+public class BaseContentStats
+    implements ContentStats, Serializable, SpecificData.SchemaConstructable {
 
   private final List<FieldStats<?>> fieldStats;
   private final Map<Integer, FieldStats<?>> fieldStatsById;
+  private final Types.StructType statsStruct;
+
+  /** Used by Avro reflection to instantiate this class when reading manifest files. */
+  BaseContentStats(Schema schema) {
+    this((Types.StructType) null);
+    throw new IllegalArgumentException("BOOOM");
+  }
 
   /** Used by Avro reflection to instantiate this class when reading manifest files. */
   public BaseContentStats(Types.StructType projection) {
+    this.statsStruct = projection;
     this.fieldStats = Lists.newArrayListWithCapacity(projection.fields().size());
     this.fieldStatsById = Maps.newLinkedHashMapWithExpectedSize(projection.fields().size());
     for (int i = 0; i < projection.fields().size(); i++) {
@@ -61,7 +72,8 @@ public class BaseContentStats implements ContentStats, Serializable {
     }
   }
 
-  private BaseContentStats(List<FieldStats<?>> fieldStats) {
+  private BaseContentStats(Types.StructType struct, List<FieldStats<?>> fieldStats) {
+    this.statsStruct = struct;
     this.fieldStats = Lists.newArrayList(fieldStats);
     this.fieldStatsById = Maps.newLinkedHashMapWithExpectedSize(fieldStats.size());
   }
@@ -69,6 +81,11 @@ public class BaseContentStats implements ContentStats, Serializable {
   @Override
   public List<FieldStats<?>> fieldStats() {
     return fieldStats;
+  }
+
+  @Override
+  public Types.StructType statsStruct() {
+    return statsStruct;
   }
 
   @SuppressWarnings("unchecked")
@@ -90,13 +107,14 @@ public class BaseContentStats implements ContentStats, Serializable {
 
   @Override
   public <T> T get(int pos, Class<T> javaClass) {
-    if (pos > fieldStats().size() - 1) {
+    if (pos > statsStruct.fields().size() - 1) {
       // return null in case there are more stats schemas than actual stats available as Avro calls
       // get() for all available stats schemas of a given table
       return null;
     }
 
-    FieldStats<?> value = fieldStats.get(pos);
+    int statsFieldId = statsStruct.fields().get(pos).fieldId();
+    FieldStats<?> value = statsFor(StatsUtil.fieldIdForStatsField(statsFieldId));
     if (value == null || javaClass.isInstance(value)) {
       return javaClass.cast(value);
     }
@@ -159,7 +177,8 @@ public class BaseContentStats implements ContentStats, Serializable {
       fieldStats.set(pos, newStat);
       fieldStatsById.put(newStat.fieldId(), newStat);
     } else {
-      fieldStats.set(pos, (FieldStats<?>) value);
+      // TODO: why is this set to null?
+      //      fieldStats.set(pos, (FieldStats<?>) value);
     }
   }
 
@@ -188,7 +207,7 @@ public class BaseContentStats implements ContentStats, Serializable {
   }
 
   public static Builder buildFrom(ContentStats stats) {
-    return builder().withFieldStats(stats.fieldStats());
+    return builder().withStatsStruct(stats.statsStruct()).withFieldStats(stats.fieldStats());
   }
 
   public static Builder buildFrom(ContentStats stats, Set<Integer> requestedColumnIds) {
@@ -197,6 +216,7 @@ public class BaseContentStats implements ContentStats, Serializable {
     }
 
     return builder()
+        .withStatsStruct(stats.statsStruct())
         .withFieldStats(
             stats.fieldStats().stream()
                 .filter(stat -> requestedColumnIds.contains(stat.fieldId()))
@@ -205,8 +225,14 @@ public class BaseContentStats implements ContentStats, Serializable {
 
   public static class Builder {
     private final List<FieldStats<?>> stats = Lists.newArrayList();
+    private Types.StructType statsStruct;
 
     private Builder() {}
+
+    public Builder withStatsStruct(Types.StructType struct) {
+      statsStruct = struct;
+      return this;
+    }
 
     public Builder withFieldStats(FieldStats<?> fieldStats) {
       stats.add(fieldStats);
@@ -219,7 +245,7 @@ public class BaseContentStats implements ContentStats, Serializable {
     }
 
     public BaseContentStats build() {
-      return new BaseContentStats(stats);
+      return new BaseContentStats(statsStruct, stats);
     }
   }
 }

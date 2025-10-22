@@ -33,6 +33,7 @@ import org.apache.iceberg.stats.BaseContentStats;
 import org.apache.iceberg.stats.BaseFieldStats;
 import org.apache.iceberg.stats.ContentStats;
 import org.apache.iceberg.stats.FieldStats;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.types.Conversions;
 import org.apache.iceberg.types.Types;
 import org.junit.jupiter.api.TestTemplate;
@@ -62,7 +63,11 @@ public class TestManifestReaderStats extends TestBase {
           .lowerBound(2)
           .upperBound(4)
           .build();
-  private static final ContentStats STATS = BaseContentStats.builder().withFieldStats(STAT).build();
+  private static final ContentStats STATS =
+      BaseContentStats.builder()
+          .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
+          .withFieldStats(STAT)
+          .build();
 
   private DataFile dataFile() {
     DataFiles.Builder builder =

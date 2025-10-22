@@ -18,11 +18,16 @@
  */
 package org.apache.iceberg.stats;
 
+import java.io.ObjectStreamException;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.util.Objects;
 import org.apache.iceberg.relocated.com.google.common.base.MoreObjects;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.types.Type;
+import org.apache.iceberg.types.Types;
+import org.apache.iceberg.util.ByteBuffers;
 
 public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
   private final transient int fieldId;
@@ -257,25 +262,27 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
     }
 
     public BaseFieldStats<T> build() {
-      if (null != lowerBound) {
-        Preconditions.checkArgument(
-            null != type, "Invalid type (required when lower bound is set): null");
-        Preconditions.checkArgument(
-            type.typeId().javaClass().isInstance(lowerBound),
-            "Invalid lower bound type, expected a subtype of %s: %s",
-            type.typeId().javaClass().getName(),
-            lowerBound.getClass().getName());
-      }
-
-      if (null != upperBound) {
-        Preconditions.checkArgument(
-            null != type, "Invalid type (required when lower bound is set): null");
-        Preconditions.checkArgument(
-            type.typeId().javaClass().isInstance(upperBound),
-            "Invalid upper bound type, expected a subtype of %s: %s",
-            type.typeId().javaClass().getName(),
-            upperBound.getClass().getName());
-      }
+      // FIXME: instead of removing these checks it's probably better to have a
+      // SerializableByteBuffer class
+      //      if (null != lowerBound) {
+      //        Preconditions.checkArgument(
+      //            null != type, "Invalid type (required when lower bound is set): null");
+      //        Preconditions.checkArgument(
+      //            type.typeId().javaClass().isInstance(lowerBound),
+      //            "Invalid lower bound type, expected a subtype of %s: %s",
+      //            type.typeId().javaClass().getName(),
+      //            lowerBound.getClass().getName());
+      //      }
+      //
+      //      if (null != upperBound) {
+      //        Preconditions.checkArgument(
+      //            null != type, "Invalid type (required when lower bound is set): null");
+      //        Preconditions.checkArgument(
+      //            type.typeId().javaClass().isInstance(upperBound),
+      //            "Invalid upper bound type, expected a subtype of %s: %s",
+      //            type.typeId().javaClass().getName(),
+      //            upperBound.getClass().getName());
+      //      }
 
       return new BaseFieldStats<>(
           fieldId,
@@ -288,5 +295,59 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
           lowerBound,
           upperBound);
     }
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  Object writeReplace() throws ObjectStreamException {
+    BaseFieldStats fieldStats = this;
+    if (null != type) {
+      if (Types.StringType.get() == type) {
+        // store this as a String because CharBuffer isn't serializable
+        if (null != lowerBound && lowerBound instanceof CharBuffer) {
+          fieldStats =
+              BaseFieldStats.buildFrom(fieldStats).lowerBound(lowerBound.toString()).build();
+        }
+        if (null != upperBound && upperBound instanceof CharBuffer) {
+          fieldStats =
+              BaseFieldStats.buildFrom(fieldStats).upperBound(upperBound.toString()).build();
+        }
+      } else if (type.typeId().javaClass().equals(ByteBuffer.class)) {
+        // store the raw bytes because ByteBuffer isn't serializable
+        if (null != lowerBound && lowerBound instanceof ByteBuffer) {
+          fieldStats =
+              BaseFieldStats.buildFrom(fieldStats)
+                  .lowerBound(ByteBuffers.toByteArray((ByteBuffer) lowerBound))
+                  .build();
+        }
+        if (null != upperBound && upperBound instanceof ByteBuffer) {
+          fieldStats =
+              BaseFieldStats.buildFrom(fieldStats)
+                  .upperBound(ByteBuffers.toByteArray((ByteBuffer) upperBound))
+                  .build();
+        }
+      }
+    }
+
+    return fieldStats;
+  }
+
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  Object readResolve() throws ObjectStreamException {
+    BaseFieldStats fieldStats = this;
+    if (null != lowerBound && lowerBound instanceof byte[]) {
+      fieldStats =
+          BaseFieldStats.buildFrom(fieldStats)
+              .lowerBound(ByteBuffer.wrap((byte[]) lowerBound))
+              .build();
+    }
+
+    if (null != upperBound && upperBound instanceof byte[]) {
+      fieldStats =
+          BaseFieldStats.buildFrom(fieldStats)
+              .upperBound(ByteBuffer.wrap((byte[]) upperBound))
+              .build();
+    }
+
+    return fieldStats;
   }
 }

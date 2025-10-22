@@ -20,11 +20,14 @@ package org.apache.iceberg.stats;
 
 import java.util.List;
 import org.apache.iceberg.StructLike;
+import org.apache.iceberg.types.Types;
 
 public interface ContentStats extends StructLike {
 
   /** A list of all the {@link FieldStats} */
   List<FieldStats<?>> fieldStats();
+
+  Types.StructType statsStruct();
 
   <T> FieldStats<T> statsFor(int columnId);
 }
