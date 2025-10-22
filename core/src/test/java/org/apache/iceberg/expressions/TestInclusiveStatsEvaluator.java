@@ -23,6 +23,7 @@ import org.apache.iceberg.TestHelpers.Row;
 import org.apache.iceberg.TestHelpers.TestDataFile;
 import org.apache.iceberg.stats.BaseContentStats;
 import org.apache.iceberg.stats.BaseFieldStats;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.types.Types;
 import org.apache.iceberg.types.Types.StringType;
 
@@ -34,6 +35,7 @@ public class TestInclusiveStatsEvaluator extends TestInclusiveMetricsEvaluator {
         Row.of(),
         50,
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
             .withFieldStats(
                 BaseFieldStats.<Integer>builder()
                     .fieldId(1)
@@ -93,6 +95,7 @@ public class TestInclusiveStatsEvaluator extends TestInclusiveMetricsEvaluator {
         Row.of(),
         50,
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
             .withFieldStats(
                 BaseFieldStats.<String>builder()
                     .fieldId(3)
@@ -112,6 +115,7 @@ public class TestInclusiveStatsEvaluator extends TestInclusiveMetricsEvaluator {
         Row.of(),
         50,
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
             .withFieldStats(
                 BaseFieldStats.<String>builder()
                     .fieldId(3)
@@ -131,6 +135,7 @@ public class TestInclusiveStatsEvaluator extends TestInclusiveMetricsEvaluator {
         Row.of(),
         50,
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
             .withFieldStats(
                 BaseFieldStats.<String>builder()
                     .fieldId(3)
@@ -150,6 +155,7 @@ public class TestInclusiveStatsEvaluator extends TestInclusiveMetricsEvaluator {
         Row.of(),
         50,
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
             .withFieldStats(
                 BaseFieldStats.<String>builder()
                     .fieldId(3)

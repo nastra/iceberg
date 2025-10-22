@@ -59,7 +59,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.FieldSource;
 
 public class TestInclusiveMetricsEvaluatorWithTransforms {
-  private static final Schema SCHEMA =
+  protected static final Schema SCHEMA =
       new Schema(
           required(1, "id", IntegerType.get()),
           required(2, "ts", Types.TimestampType.withZone()),

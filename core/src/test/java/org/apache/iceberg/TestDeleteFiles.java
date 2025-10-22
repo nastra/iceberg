@@ -36,6 +36,7 @@ import org.apache.iceberg.relocated.com.google.common.collect.Iterables;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.stats.BaseContentStats;
 import org.apache.iceberg.stats.BaseFieldStats;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.types.Conversions;
 import org.apache.iceberg.types.Types;
 import org.apache.iceberg.util.StructLikeWrapper;
@@ -63,6 +64,7 @@ public class TestDeleteFiles extends TestBase {
                   ))
           .withContentStats(
               BaseContentStats.builder()
+                  .withStatsStruct(StatsUtil.contentStatsFor(SPEC.schema()).type().asStructType())
                   .withFieldStats(
                       BaseFieldStats.<Integer>builder()
                           .fieldId(1)
@@ -99,6 +101,7 @@ public class TestDeleteFiles extends TestBase {
                   ))
           .withContentStats(
               BaseContentStats.builder()
+                  .withStatsStruct(StatsUtil.contentStatsFor(SPEC.schema()).type().asStructType())
                   .withFieldStats(
                       BaseFieldStats.<Integer>builder()
                           .fieldId(1)

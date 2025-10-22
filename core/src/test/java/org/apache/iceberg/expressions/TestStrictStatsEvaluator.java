@@ -23,6 +23,7 @@ import org.apache.iceberg.TestHelpers.Row;
 import org.apache.iceberg.TestHelpers.TestDataFile;
 import org.apache.iceberg.stats.BaseContentStats;
 import org.apache.iceberg.stats.BaseFieldStats;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.types.Types;
 import org.apache.iceberg.types.Types.IntegerType;
 import org.apache.iceberg.types.Types.StringType;
@@ -35,6 +36,7 @@ public class TestStrictStatsEvaluator extends TestStrictMetricsEvaluator {
         Row.of(),
         50,
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
             .withFieldStats(
                 BaseFieldStats.<Integer>builder()
                     .fieldId(1)
@@ -106,6 +108,7 @@ public class TestStrictStatsEvaluator extends TestStrictMetricsEvaluator {
         Row.of(),
         50,
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
             .withFieldStats(
                 BaseFieldStats.builder().fieldId(4).valueCount(50L).nullValueCount(50L).build())
             .withFieldStats(
@@ -130,6 +133,7 @@ public class TestStrictStatsEvaluator extends TestStrictMetricsEvaluator {
         Row.of(),
         50,
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
             .withFieldStats(
                 BaseFieldStats.builder().fieldId(4).valueCount(50L).nullValueCount(50L).build())
             .withFieldStats(

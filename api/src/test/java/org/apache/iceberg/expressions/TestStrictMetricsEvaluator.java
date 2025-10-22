@@ -51,7 +51,7 @@ import org.apache.iceberg.types.Types.StringType;
 import org.junit.jupiter.api.Test;
 
 public class TestStrictMetricsEvaluator {
-  private static final Schema SCHEMA =
+  protected static final Schema SCHEMA =
       new Schema(
           required(1, "id", IntegerType.get()),
           optional(2, "no_stats", IntegerType.get()),

@@ -42,6 +42,7 @@ import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.stats.BaseContentStats;
 import org.apache.iceberg.stats.BaseFieldStats;
 import org.apache.iceberg.stats.ContentStats;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.types.Conversions;
 import org.apache.iceberg.types.Types;
 import org.junit.jupiter.api.Test;
@@ -85,6 +86,7 @@ public class TestManifestWriterVersions {
           ImmutableMap.of(1, Conversions.toByteBuffer(Types.IntegerType.get(), 1))); // upper bounds
   private static final ContentStats CONTENT_STATS =
       BaseContentStats.builder()
+          .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
           .withFieldStats(
               BaseFieldStats.<Integer>builder()
                   .fieldId(1)

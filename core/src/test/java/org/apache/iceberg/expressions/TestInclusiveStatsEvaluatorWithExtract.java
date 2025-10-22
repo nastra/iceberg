@@ -23,6 +23,7 @@ import org.apache.iceberg.DataFile;
 import org.apache.iceberg.TestHelpers;
 import org.apache.iceberg.stats.BaseContentStats;
 import org.apache.iceberg.stats.BaseFieldStats;
+import org.apache.iceberg.stats.StatsUtil;
 import org.apache.iceberg.types.Types;
 import org.apache.iceberg.variants.Variant;
 import org.apache.iceberg.variants.VariantTestUtil;
@@ -38,6 +39,7 @@ public class TestInclusiveStatsEvaluatorWithExtract
         TestHelpers.Row.of(),
         50,
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(SCHEMA).type().asStructType())
             .withFieldStats(
                 BaseFieldStats.builder().fieldId(1).valueCount(50L).nullValueCount(0L).build())
             .withFieldStats(

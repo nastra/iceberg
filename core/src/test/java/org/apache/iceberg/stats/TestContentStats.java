@@ -18,6 +18,7 @@
  */
 package org.apache.iceberg.stats;
 
+import static org.apache.iceberg.types.Types.NestedField.optional;
 import static org.apache.iceberg.types.Types.NestedField.required;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -43,6 +44,7 @@ public class TestContentStats {
     BaseFieldStats<?> fieldStatsTwo = BaseFieldStats.builder().fieldId(2).build();
     BaseContentStats stats =
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(new Schema()).type().asStructType())
             .withFieldStats(fieldStatsOne)
             .withFieldStats(fieldStatsTwo)
             .build();
@@ -60,6 +62,7 @@ public class TestContentStats {
     BaseContentStats stats =
         BaseContentStats.buildFrom(
                 BaseContentStats.builder()
+                    .withStatsStruct(StatsUtil.contentStatsFor(new Schema()).type().asStructType())
                     .withFieldStats(fieldStatsOne)
                     .withFieldStats(fieldStatsTwo)
                     .build())
@@ -76,6 +79,7 @@ public class TestContentStats {
 
     BaseContentStats stats =
         BaseContentStats.builder()
+            .withStatsStruct(StatsUtil.contentStatsFor(new Schema()).type().asStructType())
             .withFieldStats(fieldStatsOne)
             .withFieldStats(fieldStatsTwo)
             .withFieldStats(fieldStatsThree)
@@ -99,6 +103,13 @@ public class TestContentStats {
     BaseFieldStats<?> fieldStatsTwo = BaseFieldStats.builder().fieldId(2).build();
     BaseContentStats stats =
         BaseContentStats.builder()
+            .withStatsStruct(
+                StatsUtil.contentStatsFor(
+                        new Schema(
+                            optional(1, "id", Types.IntegerType.get()),
+                            optional(2, "id2", Types.IntegerType.get())))
+                    .type()
+                    .asStructType())
             .withFieldStats(fieldStatsOne)
             .withFieldStats(fieldStatsTwo)
             .build();

@@ -56,7 +56,7 @@ import org.apache.iceberg.util.UnicodeUtil;
 import org.junit.jupiter.api.Test;
 
 public class TestInclusiveMetricsEvaluator {
-  private static final Schema SCHEMA =
+  protected static final Schema SCHEMA =
       new Schema(
           required(1, "id", IntegerType.get()),
           optional(2, "no_stats", Types.IntegerType.get()),
