@@ -269,6 +269,7 @@ public abstract class SparkContentFile<F> implements ContentFile<F> {
     }
 
     Row struct = wrapped.getStruct(contentStatsPosition);
+    // FIXME: why is this always empty?
     if (struct.size() == 0) {
       return BaseContentStats.builder().build();
     }

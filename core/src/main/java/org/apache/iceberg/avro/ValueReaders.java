@@ -1027,7 +1027,8 @@ public class ValueReaders {
       for (int i = 0; i < readers.length; i += 1) {
         if (positions[i] != null) {
           Object reusedValue = get(struct, positions[i]);
-          set(struct, positions[i], readers[i].read(decoder, reusedValue));
+          Object read = readers[i].read(decoder, reusedValue);
+          set(struct, positions[i], read);
         } else {
           // if pos is null, the value is not projected
           readers[i].skip(decoder);
@@ -1204,12 +1205,14 @@ public class ValueReaders {
       } else {
         for (int i = 0; i < readers.length; i += 1) {
           Object reusedValue = get(struct, i);
-          set(struct, i, readers[i].read(decoder, reusedValue));
+          Object read = readers[i].read(decoder, reusedValue);
+          set(struct, i, read);
         }
       }
 
       for (int i = 0; i < positions.length; i += 1) {
-        set(struct, positions[i], constants[i]);
+        Object constant = constants[i];
+        set(struct, positions[i], constant);
       }
 
       return struct;

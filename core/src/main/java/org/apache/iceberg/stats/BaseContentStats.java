@@ -245,6 +245,12 @@ public class BaseContentStats
     }
 
     public BaseContentStats build() {
+      if (null == statsStruct && stats.isEmpty()) {
+        // in case the builder is called without any field stats (FIXME: see SparkContentFile)
+        statsStruct = Types.StructType.of();
+      } else {
+        Preconditions.checkArgument(null != statsStruct, "Invalid stats struct: null");
+      }
       return new BaseContentStats(statsStruct, stats);
     }
   }

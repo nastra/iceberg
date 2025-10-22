@@ -580,7 +580,8 @@ public class ValueWriters {
     @Override
     public void write(S row, Encoder encoder) throws IOException {
       for (int i = 0; i < writers.length; i += 1) {
-        writers[i].write(get(row, i), encoder);
+        Object datum = get(row, i);
+        writers[i].write(datum, encoder);
       }
     }
   }
