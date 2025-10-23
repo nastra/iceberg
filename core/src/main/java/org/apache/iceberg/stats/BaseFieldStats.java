@@ -262,27 +262,31 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
     }
 
     public BaseFieldStats<T> build() {
-      // FIXME: instead of removing these checks it's probably better to have a
+      // FIXME: instead of instanceof checking byte[] it's probably better to have a
       // SerializableByteBuffer class
-      //      if (null != lowerBound) {
-      //        Preconditions.checkArgument(
-      //            null != type, "Invalid type (required when lower bound is set): null");
-      //        Preconditions.checkArgument(
-      //            type.typeId().javaClass().isInstance(lowerBound),
-      //            "Invalid lower bound type, expected a subtype of %s: %s",
-      //            type.typeId().javaClass().getName(),
-      //            lowerBound.getClass().getName());
-      //      }
-      //
-      //      if (null != upperBound) {
-      //        Preconditions.checkArgument(
-      //            null != type, "Invalid type (required when lower bound is set): null");
-      //        Preconditions.checkArgument(
-      //            type.typeId().javaClass().isInstance(upperBound),
-      //            "Invalid upper bound type, expected a subtype of %s: %s",
-      //            type.typeId().javaClass().getName(),
-      //            upperBound.getClass().getName());
-      //      }
+      if (null != lowerBound) {
+        Preconditions.checkArgument(
+            null != type, "Invalid type (required when lower bound is set): null");
+        Preconditions.checkArgument(
+            type.typeId().javaClass().isInstance(lowerBound)
+                || (type.typeId().javaClass().equals(ByteBuffer.class)
+                    && lowerBound instanceof byte[]),
+            "Invalid lower bound type, expected a subtype of %s: %s",
+            type.typeId().javaClass().getName(),
+            lowerBound.getClass().getName());
+      }
+
+      if (null != upperBound) {
+        Preconditions.checkArgument(
+            null != type, "Invalid type (required when lower bound is set): null");
+        Preconditions.checkArgument(
+            type.typeId().javaClass().isInstance(upperBound)
+                || (type.typeId().javaClass().equals(ByteBuffer.class)
+                    && upperBound instanceof byte[]),
+            "Invalid upper bound type, expected a subtype of %s: %s",
+            type.typeId().javaClass().getName(),
+            upperBound.getClass().getName());
+      }
 
       return new BaseFieldStats<>(
           fieldId,

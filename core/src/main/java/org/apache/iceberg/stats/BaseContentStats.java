@@ -176,9 +176,6 @@ public class BaseContentStats
       BaseFieldStats<?> newStat = builder.build();
       fieldStats.set(pos, newStat);
       fieldStatsById.put(newStat.fieldId(), newStat);
-    } else {
-      // TODO: why is this set to null?
-      fieldStats.set(pos, (FieldStats<?>) value);
     }
   }
 
