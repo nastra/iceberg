@@ -39,6 +39,7 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
   private final Integer maxValueSize;
   private final T lowerBound;
   private final T upperBound;
+  private final Types.StructType statsStruct;
 
   private BaseFieldStats(
       int fieldId,
@@ -49,7 +50,8 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
       Integer avgValueSize,
       Integer maxValueSize,
       T lowerBound,
-      T upperBound) {
+      T upperBound,
+      Types.StructType statsStruct) {
     this.fieldId = fieldId;
     this.type = type;
     this.valueCount = valueCount;
@@ -59,6 +61,7 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
     this.maxValueSize = maxValueSize;
     this.lowerBound = lowerBound;
     this.upperBound = upperBound;
+    this.statsStruct = statsStruct;
   }
 
   @Override
@@ -113,23 +116,45 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
 
   @Override
   public <X> X get(int pos, Class<X> javaClass) {
-    switch (pos) {
-      case StatsUtil.VALUE_COUNT_OFFSET:
+    if (null != statsStruct) {
+      Types.NestedField field = statsStruct.fields().get(pos);
+      Preconditions.checkArgument(null != field, "Unknown field ordinal: " + pos);
+      if ("value_count".equals(field.name())) {
         return javaClass.cast(valueCount);
-      case StatsUtil.NULL_VALUE_COUNT_OFFSET:
+      } else if ("null_value_count".equals(field.name())) {
         return javaClass.cast(nullValueCount);
-      case StatsUtil.NAN_VALUE_COUNT_OFFSET:
+      } else if ("nan_value_count".equals(field.name())) {
         return javaClass.cast(nanValueCount);
-      case StatsUtil.AVG_VALUE_SIZE_OFFSET:
+      } else if ("avg_value_size".equals(field.name())) {
         return javaClass.cast(avgValueSize);
-      case StatsUtil.MAX_VALUE_SIZE_OFFSET:
+      } else if ("max_value_size".equals(field.name())) {
         return javaClass.cast(maxValueSize);
-      case StatsUtil.LOWER_BOUND_OFFSET:
+      } else if ("lower_bound".equals(field.name())) {
         return javaClass.cast(lowerBound);
-      case StatsUtil.UPPER_BOUND_OFFSET:
+      } else if ("upper_bound".equals(field.name())) {
         return javaClass.cast(upperBound);
-      default:
+      } else {
         throw new UnsupportedOperationException("Unknown field ordinal: " + pos);
+      }
+    } else {
+      switch (pos) {
+        case StatsUtil.VALUE_COUNT_OFFSET:
+          return javaClass.cast(valueCount);
+        case StatsUtil.NULL_VALUE_COUNT_OFFSET:
+          return javaClass.cast(nullValueCount);
+        case StatsUtil.NAN_VALUE_COUNT_OFFSET:
+          return javaClass.cast(nanValueCount);
+        case StatsUtil.AVG_VALUE_SIZE_OFFSET:
+          return javaClass.cast(avgValueSize);
+        case StatsUtil.MAX_VALUE_SIZE_OFFSET:
+          return javaClass.cast(maxValueSize);
+        case StatsUtil.LOWER_BOUND_OFFSET:
+          return javaClass.cast(lowerBound);
+        case StatsUtil.UPPER_BOUND_OFFSET:
+          return javaClass.cast(upperBound);
+        default:
+          throw new UnsupportedOperationException("Unknown field ordinal: " + pos);
+      }
     }
   }
 
@@ -150,6 +175,7 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
         .add("maxValueSize", maxValueSize)
         .add("lowerBound", lowerBound)
         .add("upperBound", upperBound)
+        .add("stats", statsStruct)
         .toString();
   }
 
@@ -168,7 +194,8 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
         && Objects.equals(avgValueSize, that.avgValueSize)
         && Objects.equals(maxValueSize, that.maxValueSize)
         && Objects.equals(lowerBound, that.lowerBound)
-        && Objects.equals(upperBound, that.upperBound);
+        && Objects.equals(upperBound, that.upperBound)
+        && Objects.equals(statsStruct, that.statsStruct);
   }
 
   @Override
@@ -182,7 +209,8 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
         avgValueSize,
         maxValueSize,
         lowerBound,
-        upperBound);
+        upperBound,
+        statsStruct);
   }
 
   public static <X> Builder<X> builder() {
@@ -190,7 +218,7 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
   }
 
   public static <X> Builder<X> buildFrom(FieldStats<X> value) {
-    Preconditions.checkArgument(null != value, "Invalid column stats: null");
+    Preconditions.checkArgument(null != value, "Invalid field stats: null");
     return BaseFieldStats.<X>builder()
         .type(value.type())
         .fieldId(value.fieldId())
@@ -213,6 +241,7 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
     private Integer maxValueSize;
     private T lowerBound;
     private T upperBound;
+    private Types.StructType statsStruct;
 
     private Builder() {}
 
@@ -261,6 +290,11 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
       return this;
     }
 
+    Builder<T> statsStruct(Types.StructType newStatsStruct) {
+      this.statsStruct = newStatsStruct;
+      return this;
+    }
+
     public BaseFieldStats<T> build() {
       // FIXME: instead of instanceof checking byte[] it's probably better to have a
       // SerializableByteBuffer class
@@ -297,7 +331,8 @@ public class BaseFieldStats<T> implements FieldStats<T>, Serializable {
           avgValueSize,
           maxValueSize,
           lowerBound,
-          upperBound);
+          upperBound,
+          statsStruct);
     }
   }
 

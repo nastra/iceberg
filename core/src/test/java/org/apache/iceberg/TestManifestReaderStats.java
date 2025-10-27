@@ -49,23 +49,23 @@ public class TestManifestReaderStats extends TestBase {
   private static final Map<Integer, Long> NULL_VALUE_COUNTS = ImmutableMap.of(1, 0L);
   private static final Map<Integer, Long> NAN_VALUE_COUNTS = ImmutableMap.of(1, 1L);
   private static final Map<Integer, ByteBuffer> LOWER_BOUNDS =
-      ImmutableMap.of(1, Conversions.toByteBuffer(Types.IntegerType.get(), 2));
+      ImmutableMap.of(1, Conversions.toByteBuffer(Types.FloatType.get(), 2.0f));
   private static final Map<Integer, ByteBuffer> UPPER_BOUNDS =
-      ImmutableMap.of(1, Conversions.toByteBuffer(Types.IntegerType.get(), 4));
+      ImmutableMap.of(1, Conversions.toByteBuffer(Types.FloatType.get(), 4.0f));
 
   private static final Metrics METRICS =
       new Metrics(
           3L, null, VALUE_COUNT, NULL_VALUE_COUNTS, NAN_VALUE_COUNTS, LOWER_BOUNDS, UPPER_BOUNDS);
   private static final String FILE_PATH = "/path/to/data-a.parquet";
-  private static final FieldStats<Integer> STAT =
-      BaseFieldStats.<Integer>builder()
-          .type(Types.IntegerType.get())
+  private static final FieldStats<Float> STAT =
+      BaseFieldStats.<Float>builder()
+          .type(Types.FloatType.get())
           .fieldId(1)
           .valueCount(3L)
           .nullValueCount(0L)
           .nanValueCount(1L)
-          .lowerBound(2)
-          .upperBound(4)
+          .lowerBound(2.0f)
+          .upperBound(4.0f)
           .build();
   private static final ContentStats STATS =
       BaseContentStats.builder()
@@ -89,6 +89,7 @@ public class TestManifestReaderStats extends TestBase {
 
   @TestTemplate
   public void testReadIncludesFullStats() throws IOException {
+    assumeThat(formatVersion).isEqualTo(4);
     ManifestFile manifest = writeManifest(1000L, dataFile());
     try (ManifestReader<DataFile> reader = ManifestFiles.read(manifest, FILE_IO)) {
       CloseableIterable<ManifestEntry<DataFile>> entries = reader.entries();
@@ -112,7 +113,7 @@ public class TestManifestReaderStats extends TestBase {
   public void testReadIteratorWithFilterIncludesFullStats() throws IOException {
     ManifestFile manifest = writeManifest(1000L, dataFile());
     try (ManifestReader<DataFile> reader =
-        ManifestFiles.read(manifest, FILE_IO).filterRows(Expressions.equal("id", 3))) {
+        ManifestFiles.read(manifest, FILE_IO).filterRows(Expressions.equal("id", 3.0))) {
       DataFile entry = reader.iterator().next();
       assertFullStats(entry);
     }

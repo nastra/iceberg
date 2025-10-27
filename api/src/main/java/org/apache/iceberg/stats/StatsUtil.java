@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 import org.apache.iceberg.ContentFile;
 import org.apache.iceberg.DataFile;
 import org.apache.iceberg.Schema;
+import org.apache.iceberg.relocated.com.google.common.annotations.VisibleForTesting;
+import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.relocated.com.google.common.collect.Sets;
 import org.apache.iceberg.types.Conversions;
@@ -118,35 +120,52 @@ public class StatsUtil {
     return result;
   }
 
-  private static Types.StructType contentStatsFor(Type type, int id) {
-    return Types.StructType.of(
-        optional(
-            id + VALUE_COUNT_OFFSET,
-            "value_count",
-            Types.LongType.get(),
-            "Total value count, including null and NaN"),
-        optional(
-            id + NULL_VALUE_COUNT_OFFSET,
-            "null_value_count",
-            Types.LongType.get(),
-            "Total null value count"),
-        optional(
-            id + NAN_VALUE_COUNT_OFFSET,
-            "nan_value_count",
-            Types.LongType.get(),
-            "Total NaN value count"),
-        optional(
-            id + AVG_VALUE_SIZE_OFFSET,
-            "avg_value_size",
-            Types.IntegerType.get(),
-            "Avg value size of variable-length types (String, Binary)"),
-        optional(
-            id + MAX_VALUE_SIZE_OFFSET,
-            "max_value_size",
-            Types.IntegerType.get(),
-            "Max value size of variable-length types (String, Binary)"),
-        optional(id + LOWER_BOUND_OFFSET, "lower_bound", type, "Lower bound"),
-        optional(id + UPPER_BOUND_OFFSET, "upper_bound", type, "Upper bound"));
+  @VisibleForTesting
+  static Types.StructType contentStatsFor(Type type, int id) {
+    ImmutableList.Builder<Types.NestedField> builder =
+        ImmutableList.<Types.NestedField>builder()
+            .add(
+                optional(
+                    id + VALUE_COUNT_OFFSET,
+                    "value_count",
+                    Types.LongType.get(),
+                    "Total value count, including null and NaN"))
+            .add(
+                optional(
+                    id + NULL_VALUE_COUNT_OFFSET,
+                    "null_value_count",
+                    Types.LongType.get(),
+                    "Total null value count"));
+
+    if (Types.FloatType.get().equals(type) || Types.DoubleType.get().equals(type)) {
+      builder.add(
+          optional(
+              id + NAN_VALUE_COUNT_OFFSET,
+              "nan_value_count",
+              Types.LongType.get(),
+              "Total NaN value count"));
+    }
+
+    if (Types.StringType.get().equals(type) || Types.BinaryType.get().equals(type)) {
+      builder
+          .add(
+              optional(
+                  id + AVG_VALUE_SIZE_OFFSET,
+                  "avg_value_size",
+                  Types.IntegerType.get(),
+                  "Avg value size of variable-length types (String, Binary)"))
+          .add(
+              optional(
+                  id + MAX_VALUE_SIZE_OFFSET,
+                  "max_value_size",
+                  Types.IntegerType.get(),
+                  "Max value size of variable-length types (String, Binary)"));
+    }
+
+    builder
+        .add(optional(id + LOWER_BOUND_OFFSET, "lower_bound", type, "Lower bound"))
+        .add(optional(id + UPPER_BOUND_OFFSET, "upper_bound", type, "Upper bound"));
+    return Types.StructType.of(builder.build());
   }
 
   private static class ContentStatsSchemaVisitor extends TypeUtil.SchemaVisitor<Types.NestedField> {

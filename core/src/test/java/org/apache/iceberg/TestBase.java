@@ -59,7 +59,7 @@ public class TestBase {
   // Schema passed to create tables
   public static final Schema SCHEMA =
       new Schema(
-          required(1, "id", Types.IntegerType.get()), required(2, "data", Types.StringType.get()));
+          required(1, "id", Types.FloatType.get()), required(2, "data", Types.StringType.get()));
 
   protected static final int BUCKETS_NUMBER = 16;
 

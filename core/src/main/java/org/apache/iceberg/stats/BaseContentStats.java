@@ -105,6 +105,7 @@ public class BaseContentStats
     return fieldStats.size();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T get(int pos, Class<T> javaClass) {
     if (pos > statsStruct.fields().size() - 1) {
@@ -113,10 +114,19 @@ public class BaseContentStats
       return null;
     }
 
-    int statsFieldId = statsStruct.fields().get(pos).fieldId();
+    Types.NestedField innerStatsField = statsStruct.fields().get(pos);
+    int statsFieldId = innerStatsField.fieldId();
     FieldStats<?> value = statsFor(StatsUtil.fieldIdForStatsField(statsFieldId));
     if (value == null || javaClass.isInstance(value)) {
-      return javaClass.cast(value);
+      T result = javaClass.cast(value);
+      if (null != result) {
+        return (T)
+            BaseFieldStats.buildFrom((FieldStats<?>) result)
+                .statsStruct(innerStatsField.type().asStructType())
+                .build();
+      }
+
+      return null;
     }
 
     throw new IllegalArgumentException(
