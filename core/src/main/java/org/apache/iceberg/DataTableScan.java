@@ -21,6 +21,7 @@ package org.apache.iceberg;
 import java.util.List;
 import org.apache.iceberg.io.CloseableIterable;
 import org.apache.iceberg.io.FileIO;
+import org.apache.iceberg.io.InputFile;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 
 public class DataTableScan extends BaseTableScan {
@@ -62,6 +63,34 @@ public class DataTableScan extends BaseTableScan {
 
   @Override
   public CloseableIterable<FileScanTask> doPlanFiles() {
+    if (TableUtil.formatVersion(table()) >= TableMetadata.MIN_FORMAT_VERSION_PARQUET_MANIFESTS) {
+      return doPlanFilesV4();
+    }
+
+    return doPlanFilesV3();
+  }
+
+  private CloseableIterable<FileScanTask> doPlanFilesV4() {
+    Snapshot snapshot = snapshot();
+    InputFile rootManifest = table().io().newInputFile(snapshot.manifestListLocation());
+    ScanTaskPlanner.Builder planner =
+        ScanTaskPlanner.builder(table().io(), rootManifest, specs(), table().location())
+            .filterData(filter())
+            .caseSensitive(isCaseSensitive())
+            .scanMetrics(scanMetrics());
+
+    if (shouldIgnoreResiduals()) {
+      planner = planner.ignoreResiduals();
+    }
+
+    if (shouldPlanWithExecutor()) {
+      planner = planner.planWith(planExecutor());
+    }
+
+    return planner.build().planFiles();
+  }
+
+  private CloseableIterable<FileScanTask> doPlanFilesV3() {
     Snapshot snapshot = snapshot();
 
     FileIO io = table().io();

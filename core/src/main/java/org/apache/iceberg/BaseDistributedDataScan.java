@@ -35,6 +35,7 @@ import org.apache.iceberg.expressions.ManifestEvaluator;
 import org.apache.iceberg.expressions.Projections;
 import org.apache.iceberg.expressions.ResidualEvaluator;
 import org.apache.iceberg.io.CloseableIterable;
+import org.apache.iceberg.io.InputFile;
 import org.apache.iceberg.metrics.ScanMetricsUtil;
 import org.apache.iceberg.relocated.com.google.common.collect.Iterables;
 import org.apache.iceberg.relocated.com.google.common.collect.Maps;
@@ -144,6 +145,10 @@ abstract class BaseDistributedDataScan
 
   @Override
   protected CloseableIterable<ScanTask> doPlanFiles() {
+    if (TableUtil.formatVersion(table()) >= TableMetadata.MIN_FORMAT_VERSION_PARQUET_MANIFESTS) {
+      return doPlanFilesV4();
+    }
+
     Snapshot snapshot = snapshot();
 
     List<ManifestFile> deleteManifests = findMatchingDeleteManifests(snapshot);
@@ -185,6 +190,26 @@ abstract class BaseDistributedDataScan
     } finally {
       monitorPool.shutdown();
     }
+  }
+
+  private CloseableIterable<ScanTask> doPlanFilesV4() {
+    Snapshot snapshot = snapshot();
+    InputFile rootManifest = table().io().newInputFile(snapshot.manifestListLocation());
+    ScanTaskPlanner.Builder planner =
+        ScanTaskPlanner.builder(table().io(), rootManifest, specs(), table().location())
+            .filterData(filter())
+            .caseSensitive(isCaseSensitive())
+            .scanMetrics(scanMetrics());
+
+    if (shouldIgnoreResiduals()) {
+      planner = planner.ignoreResiduals();
+    }
+
+    if (shouldPlanWithExecutor()) {
+      planner = planner.planWith(planExecutor());
+    }
+
+    return CloseableIterable.transform(planner.build().planFiles(), task -> (ScanTask) task);
   }
 
   @Override
