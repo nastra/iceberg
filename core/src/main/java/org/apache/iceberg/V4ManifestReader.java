@@ -282,6 +282,8 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
       Preconditions.checkArgument(newColumns != null, "Invalid columns: null");
       Preconditions.checkState(
           !scanPlanning, "Cannot use select(Iterable<String>) with forScanPlanning()");
+      Preconditions.checkArgument(
+          requestedStatsFieldIds == null, "Cannot use projectStats with select");
       Preconditions.checkState(
           requestedProjection == null, "Cannot use select(Iterable<String>) with project(Schema)");
       this.requestedColumns = ImmutableSet.copyOf(newColumns);
@@ -292,6 +294,8 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
     Builder project(Schema newProjection) {
       Preconditions.checkArgument(newProjection != null, "Invalid projection: null");
       Preconditions.checkState(!scanPlanning, "Cannot use project(Schema) with forScanPlanning()");
+      Preconditions.checkArgument(
+          requestedStatsFieldIds == null, "Cannot use projectStats with project");
       Preconditions.checkState(
           requestedColumns == null, "Cannot use project(Schema) with select(Iterable<String>)");
       this.requestedProjection = newProjection;
@@ -307,6 +311,9 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
     /** Returns content stats for the given table field IDs instead of for every field. */
     Builder projectStats(Iterable<Integer> fieldIds) {
       Preconditions.checkArgument(fieldIds != null, "Invalid field IDs: null");
+      Preconditions.checkArgument(requestedColumns == null, "Cannot use projectStats with select");
+      Preconditions.checkArgument(
+          requestedProjection == null, "Cannot use projectStats with project");
       this.requestedStatsFieldIds = ImmutableSet.copyOf(fieldIds);
       return this;
     }
