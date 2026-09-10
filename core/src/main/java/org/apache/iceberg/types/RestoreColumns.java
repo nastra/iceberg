@@ -34,7 +34,7 @@ public class RestoreColumns extends SchemaWithPartnerVisitor<Type, Type> {
 
   private final Set<Integer> restoredFields;
 
-  public RestoreColumns(Set<Integer> fieldsToRestore) {
+  private RestoreColumns(Set<Integer> fieldsToRestore) {
     this.restoredFields = fieldsToRestore;
   }
 
