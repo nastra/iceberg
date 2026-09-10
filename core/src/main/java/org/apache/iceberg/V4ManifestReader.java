@@ -184,7 +184,12 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
 
   // resolves stored locations against the table location
   private TrackedFile copyResolved(TrackedFile trackedFile) {
-    TrackedFileStruct copy = (TrackedFileStruct) trackedFile.copyWithStats(requestedStatsFieldIds);
+    TrackedFileStruct copy =
+        (TrackedFileStruct)
+            (requestedStatsFieldIds != null
+                ? trackedFile.copyWithStats(requestedStatsFieldIds)
+                : trackedFile.copy());
+
     if (copy.location() != null) {
       copy.setLocation(LocationUtil.resolveLocation(tableLocation, copy.location()));
     }
@@ -215,7 +220,7 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
     private boolean scanPlanning = false;
     private Set<String> requestedColumns = null;
     private Schema requestedProjection = null;
-    private Set<Integer> requestedStatsFieldIds = ImmutableSet.of();
+    private Set<Integer> requestedStatsFieldIds = null;
     private MetricsConfig metricsConfig = null;
     private ScanMetrics scanMetrics = ScanMetrics.noop();
 
@@ -239,7 +244,7 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
       return this;
     }
 
-    /** Sets a filter; files that cannot match the expression are skipped. */
+    /** Sets a filter used to select data files that may contain rows matching the filter. */
     Builder filter(Expression expr) {
       Preconditions.checkArgument(expr != null, "Invalid filter: null");
       this.rowFilter = expr;
@@ -293,23 +298,13 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
       return this;
     }
 
-    /**
-     * Reads content stats for the given table field IDs instead of for every field. Stats for
-     * fields referenced by the {@link #filter(Expression) filter} are always read.
-     *
-     * <p>Passing no field IDs reads only the stats that the filter needs.
-     */
+    /** Returns content stats for the given table field IDs instead of for every field. */
     Builder projectStats(int... fieldIds) {
       Preconditions.checkArgument(fieldIds != null, "Invalid field IDs: null");
       return projectStats(ArrayUtil.toIntList(fieldIds));
     }
 
-    /**
-     * Reads content stats for the given table field IDs instead of for every field. Stats for
-     * fields referenced by the {@link #filter(Expression) filter} are always read.
-     *
-     * <p>Passing an empty iterable reads only the stats that the filter needs.
-     */
+    /** Returns content stats for the given table field IDs instead of for every field. */
     Builder projectStats(Iterable<Integer> fieldIds) {
       Preconditions.checkArgument(fieldIds != null, "Invalid field IDs: null");
       this.requestedStatsFieldIds = ImmutableSet.copyOf(fieldIds);
@@ -330,6 +325,11 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
     }
 
     V4ManifestReader build() {
+      if (scanPlanning && requestedStatsFieldIds == null) {
+        // only return stats that were requested
+        requestedStatsFieldIds = ImmutableSet.of();
+      }
+
       Map<Integer, Pair<Evaluator, StructProjection>> partitionFilters = projectFilters();
 
       return new V4ManifestReader(
@@ -363,7 +363,7 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
       if (scanPlanning) {
         Types.StructType statsProjection = StatsUtil.statsReadSchema(tableSchema, statsFieldIds());
         return TypeUtil.replaceFieldTypes(
-            TrackedFile.schema(unionPartitionType, statsProjection),
+            TrackedFile.readSchema(unionPartitionType, statsProjection),
             ImmutableMap.of(TrackedFile.TRACKING.fieldId(), TrackingStruct.SCAN_TYPE));
       }
 
@@ -412,7 +412,9 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
     private Set<Integer> statsFieldIds() {
       Set<Integer> filterFieldIds =
           Binder.boundReferences(tableSchema.asStruct(), rowFilter, caseSensitive);
-      return Sets.union(filterFieldIds, requestedStatsFieldIds);
+      return requestedStatsFieldIds != null
+          ? Sets.union(filterFieldIds, requestedStatsFieldIds)
+          : filterFieldIds;
     }
   }
 }

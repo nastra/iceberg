@@ -26,10 +26,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.iceberg.exceptions.ValidationException;
 import org.apache.iceberg.expressions.Expression;
 import org.apache.iceberg.expressions.Expressions;
@@ -44,7 +46,6 @@ import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.Iterables;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.transforms.Transforms;
-import org.apache.iceberg.types.Comparators;
 import org.apache.iceberg.types.TypeUtil;
 import org.apache.iceberg.types.Types;
 import org.junit.jupiter.api.Named;
@@ -90,7 +91,6 @@ class TestV4ManifestReader {
       Types.StructType.of(STATS_TYPE.field("id"));
   private static final Types.StructType DATA_ONLY_STATS_TYPE =
       Types.StructType.of(STATS_TYPE.field("data"));
-  private static final Schema MANIFEST_SCHEMA = TrackedFile.schema(ID_PARTITIONED_TYPE, STATS_TYPE);
 
   private static final FieldStatsStruct<Integer> ID_STATS =
       new FieldStatsStruct<>(
@@ -105,20 +105,10 @@ class TestV4ManifestReader {
     CONTENT_STATS.setStats(2, DATA_STATS);
   }
 
-  @SuppressWarnings("unchecked")
-  private static <T> Comparator<T> comparator(Types.StructType type) {
-    return (Comparator<T>) Comparators.forType(type);
-  }
-
-  // manifest file schema, without Tracking fields that are inherited or automatically set
-  private static final Types.StructType FILE_VALIDATION_TYPE =
-      TypeUtil.replaceFieldTypes(
-              MANIFEST_SCHEMA,
-              ImmutableMap.of(
-                  TrackedFile.TRACKING.fieldId(),
-                  Types.StructType.of(Tracking.STATUS, Tracking.SNAPSHOT_ID)))
-          .asStruct();
-  private static final Comparator<TrackedFile> FILE_COMPARATOR = comparator(FILE_VALIDATION_TYPE);
+  private static final Comparator<TrackedFile> FILE_COMPARATOR =
+      V4TestComparators.trackedFileStatusOnly(ID_PARTITIONED_TYPE);
+  private static final Comparator<TrackedFile> UNPARTITIONED_FILE_COMPARATOR =
+      V4TestComparators.trackedFileStatusOnly(UNPARTITIONED_TYPE);
 
   // shared data files: FILE_A is in partition id=1, FILE_B in partition id=2
   private static final TrackedFile UNPARTITIONED_FILE =
@@ -167,8 +157,7 @@ class TestV4ManifestReader {
 
     V4ManifestReader.Builder builder =
         V4ManifestReader.builder(manifest, TABLE_SCHEMA, ID_PARTITIONING_SPECS)
-            .metricsConfig(METRICS_CONFIG)
-            .projectStats(TypeUtil.getProjectedIds(TABLE_SCHEMA));
+            .metricsConfig(METRICS_CONFIG);
     TrackedFile actual = readOne(builder);
 
     assertThat(actual).usingComparator(FILE_COMPARATOR).isEqualTo(file);
@@ -176,7 +165,7 @@ class TestV4ManifestReader {
 
   @ParameterizedTest
   @FieldSource("MANIFEST_FORMATS")
-  public void readDoesNotCopyStats(FileFormat format) throws IOException {
+  public void readForScanPlanningDoesNotCopyStats(FileFormat format) throws IOException {
     TrackedFile file =
         new TrackedFileStruct(
             ADDED_TRACKING,
@@ -200,15 +189,18 @@ class TestV4ManifestReader {
 
     V4ManifestReader.Builder builder =
         V4ManifestReader.builder(manifest, TABLE_SCHEMA, ID_PARTITIONING_SPECS)
+            .forScanPlanning()
             .metricsConfig(METRICS_CONFIG);
     TrackedFile actual = readOne(builder);
 
-    assertThat(actual).usingComparator(FILE_COMPARATOR).isEqualTo(file.copyWithoutStats());
+    assertThat(actual)
+        .usingComparator(FILE_COMPARATOR)
+        .isEqualTo(file.copyWithoutStats());
   }
 
   @ParameterizedTest
   @FieldSource("MANIFEST_FORMATS")
-  public void readCopiesRequestedStats(FileFormat format) throws IOException {
+  public void readForScanPlanningCopiesRequestedStats(FileFormat format) throws IOException {
     int idFieldId = TABLE_SCHEMA.findField("id").fieldId();
     TrackedFile file =
         new TrackedFileStruct(
@@ -233,13 +225,13 @@ class TestV4ManifestReader {
 
     V4ManifestReader.Builder builder =
         V4ManifestReader.builder(manifest, TABLE_SCHEMA, ID_PARTITIONING_SPECS)
+            .forScanPlanning()
             .metricsConfig(METRICS_CONFIG)
             .projectStats(idFieldId);
     TrackedFile actual = readOne(builder);
 
     assertThat(actual)
-        .usingComparator(
-            comparator(TrackedFile.schema(ID_PARTITIONED_TYPE, ID_ONLY_STATS_TYPE).asStruct()))
+        .usingComparator(FILE_COMPARATOR)
         .isEqualTo(file.copyWithStats(Set.of(idFieldId)));
   }
 
@@ -269,8 +261,7 @@ class TestV4ManifestReader {
 
     V4ManifestReader.Builder builder =
         V4ManifestReader.builder(manifest, TABLE_SCHEMA, ID_PARTITIONING_SPECS)
-            .metricsConfig(METRICS_CONFIG)
-            .projectStats(TypeUtil.getProjectedIds(TABLE_SCHEMA));
+            .metricsConfig(METRICS_CONFIG);
     TrackedFile actual = readOne(builder);
 
     assertThat(actual).usingComparator(FILE_COMPARATOR).isEqualTo(delete);
@@ -302,8 +293,7 @@ class TestV4ManifestReader {
 
     V4ManifestReader.Builder builder =
         V4ManifestReader.builder(manifest, TABLE_SCHEMA, ID_PARTITIONING_SPECS)
-            .metricsConfig(METRICS_CONFIG)
-            .projectStats(TypeUtil.getProjectedIds(TABLE_SCHEMA));
+            .metricsConfig(METRICS_CONFIG);
     TrackedFile actual = readOne(builder);
 
     assertThat(actual).usingComparator(FILE_COMPARATOR).isEqualTo(manifestRef);
@@ -338,6 +328,15 @@ class TestV4ManifestReader {
     assertThat(allFiles)
         .usingComparatorForType(FILE_COMPARATOR, TrackedFile.class)
         .containsExactlyElementsOf(files);
+  }
+
+  @Test
+  public void testStringUtils() {
+    assertThat(StringUtils.join((String[]) null, ".")).isEqualTo(null);
+
+    Map<String, Object> columns = new HashMap<>();
+    columns.put(StringUtils.join((String[]) null, "."), 1);
+    assertThat(columns.get(null)).isEqualTo(1);
   }
 
   @ParameterizedTest
@@ -667,6 +666,8 @@ class TestV4ManifestReader {
             V4ManifestReader.builder(manifest, TABLE_SCHEMA, UNPARTITIONED_SPECS)
                 .metricsConfig(METRICS_CONFIG));
 
+    assertThat(actual).usingComparator(UNPARTITIONED_FILE_COMPARATOR).isEqualTo(UNPARTITIONED_FILE);
+
     assertThat(actual.specId()).isNull();
     assertThat(actual.partition()).isNull();
   }
@@ -680,6 +681,8 @@ class TestV4ManifestReader {
         readOne(
             V4ManifestReader.builder(manifest, TABLE_SCHEMA, ID_PARTITIONING_SPECS)
                 .metricsConfig(METRICS_CONFIG));
+
+    assertThat(actual).usingComparator(FILE_COMPARATOR).isEqualTo(UNPARTITIONED_FILE);
 
     assertThat(actual.specId()).isNull();
     assertThat(actual.partition()).isNull();
@@ -699,13 +702,11 @@ class TestV4ManifestReader {
     TrackedFile actualUnpartitioned = actualFiles.get(0);
     TrackedFile actualPartitioned = actualFiles.get(1);
 
+    assertThat(actualUnpartitioned).usingComparator(FILE_COMPARATOR).isEqualTo(UNPARTITIONED_FILE);
+    assertThat(actualPartitioned).usingComparator(FILE_COMPARATOR).isEqualTo(FILE_A);
+
     assertThat(actualUnpartitioned.specId()).isNull();
     assertThat(actualUnpartitioned.partition()).isNull();
-
-    assertThat(actualPartitioned.specId()).isEqualTo(ID_PARTITIONED.specId());
-    assertThat(actualPartitioned.partition())
-        .usingComparator(comparator(ID_PARTITIONED_TYPE))
-        .isEqualTo(FILE_A.partition());
   }
 
   @ParameterizedTest
