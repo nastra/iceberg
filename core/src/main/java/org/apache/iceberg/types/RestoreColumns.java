@@ -25,6 +25,14 @@ import org.apache.iceberg.relocated.com.google.common.collect.Lists;
 import org.apache.iceberg.schema.SchemaWithPartnerVisitor;
 
 public class RestoreColumns extends SchemaWithPartnerVisitor<Type, Type> {
+  /**
+   * Restores columns from a base schema in a projection that may not include them.
+   *
+   * @param base a base schema, from which the projection was produced
+   * @param projection a projection of the base schema
+   * @param fieldIds a set of field IDs to add to the projection if they are missing
+   * @return an updated projection with the fields restored
+   */
   public static Schema restore(Schema base, Schema projection, Set<Integer> fieldIds) {
     return SchemaWithPartnerVisitor.visit(
             base, projection.asStruct(), new RestoreColumns(fieldIds), FieldIdAccessors.get())
