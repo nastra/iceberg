@@ -328,15 +328,6 @@ class TestV4ManifestReader {
         .containsExactlyElementsOf(files);
   }
 
-  @Test
-  public void testStringUtils() {
-    assertThat(StringUtils.join((String[]) null, ".")).isEqualTo(null);
-
-    Map<String, Object> columns = new HashMap<>();
-    columns.put(StringUtils.join((String[]) null, "."), 1);
-    assertThat(columns.get(null)).isEqualTo(1);
-  }
-
   @ParameterizedTest
   @FieldSource("MANIFEST_FORMATS")
   public void inheritanceManifestLocationAndPosition(FileFormat format) throws IOException {
