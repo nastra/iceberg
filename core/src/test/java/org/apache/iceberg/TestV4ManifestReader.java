@@ -193,9 +193,7 @@ class TestV4ManifestReader {
             .metricsConfig(METRICS_CONFIG);
     TrackedFile actual = readOne(builder);
 
-    assertThat(actual)
-        .usingComparator(FILE_COMPARATOR)
-        .isEqualTo(file.copyWithoutStats());
+    assertThat(actual).usingComparator(FILE_COMPARATOR).isEqualTo(file.copyWithoutStats());
   }
 
   @ParameterizedTest
