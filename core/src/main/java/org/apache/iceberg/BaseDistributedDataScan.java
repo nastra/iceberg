@@ -196,7 +196,9 @@ abstract class BaseDistributedDataScan
     Snapshot snapshot = snapshot();
     InputFile rootManifest = table().io().newInputFile(snapshot.manifestListLocation());
     ScanTaskPlanner.Builder planner =
-        ScanTaskPlanner.builder(table().io(), rootManifest, specs(), table().location())
+        ScanTaskPlanner.builder(
+                table().io(), rootManifest, table().schema(), specs(), table().location())
+            .snapshot(snapshot)
             .filterData(filter())
             .caseSensitive(isCaseSensitive())
             .scanMetrics(scanMetrics());

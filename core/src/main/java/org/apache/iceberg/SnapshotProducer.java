@@ -303,7 +303,6 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
     Snapshot parentSnapshot = SnapshotUtil.latestSnapshot(base, targetBranch);
 
     long sequenceNumber = base.nextSequenceNumber();
-    Long parentSnapshotId = parentSnapshot == null ? null : parentSnapshot.snapshotId();
 
     runValidations(parentSnapshot);
 
@@ -317,14 +316,15 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
         .run(index -> manifestFiles[index] = manifestsWithMetadata.get(manifests.get(index)));
 
     if (base.formatVersion() >= TableMetadata.MIN_FORMAT_VERSION_PARQUET_MANIFESTS) {
-      return applyV4(manifestFiles, sequenceNumber, parentSnapshotId, parentSnapshot);
+      return applyV4(manifestFiles, sequenceNumber, parentSnapshot);
     }
 
-    return applyV3(manifestFiles, sequenceNumber, parentSnapshotId);
+    return applyV3(manifestFiles, sequenceNumber, parentSnapshot);
   }
 
   private Snapshot applyV3(
-      ManifestFile[] manifestFiles, long sequenceNumber, Long parentSnapshotId) {
+      ManifestFile[] manifestFiles, long sequenceNumber, Snapshot parentSnapshot) {
+    Long parentSnapshotId = parentSnapshot != null ? parentSnapshot.snapshotId() : null;
     OutputFile manifestList = manifestListPath();
 
     ManifestListWriter writer =
@@ -395,10 +395,8 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
    * forward from the parent snapshot's root manifest.
    */
   private Snapshot applyV4(
-      ManifestFile[] manifestFiles,
-      long sequenceNumber,
-      Long parentSnapshotId,
-      Snapshot parentSnapshot) {
+      ManifestFile[] manifestFiles, long sequenceNumber, Snapshot parentSnapshot) {
+    Long parentSnapshotId = parentSnapshot != null ? parentSnapshot.snapshotId() : null;
     List<TrackedFile> entries = Lists.newArrayList();
 
     for (ManifestFile manifest : manifestFiles) {
@@ -436,7 +434,7 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
         sequenceNumber,
         snapshotId(),
         parentSnapshotId,
-        System.currentTimeMillis(),
+        snapshotTimestampMillis(parentSnapshot),
         operation(),
         summary(base),
         base.currentSchemaId(),
@@ -460,7 +458,6 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
     return new TrackedFileStruct(
         tracking,
         FileContent.DATA,
-        base.formatVersion(),
         file.location(),
         file.format(),
         file.recordCount(),
@@ -472,8 +469,7 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
         null,
         null,
         file.keyMetadata(),
-        file.splitOffsets(),
-        file.equalityFieldIds());
+        file.splitOffsets());
   }
 
   private PartitionData coercePartition(StructLike partition) {
@@ -498,7 +494,19 @@ abstract class SnapshotProducer<ThisT> implements SnapshotUpdate<ThisT> {
 
     InputFile input = ops.io().newInputFile(location);
     try (CloseableIterable<TrackedFile> parentEntries =
-        V4ManifestReader.builder(input, base.specsById(), base.location()).build()) {
+        V4ManifestReader.builder(
+                V4ManifestReader.wrap(
+                    input,
+                    parentSnapshot.snapshotId(),
+                    parentSnapshot.sequenceNumber(),
+                    parentSnapshot.firstRowId()),
+                ops.io(),
+                ops.current().schema(),
+                base.specsById())
+            .tableLocation(base.location())
+            .metricsConfig(
+                MetricsConfig.from(base.properties(), ops.current().schema(), base.sortOrder()))
+            .build()) {
       for (TrackedFile entry : parentEntries) {
         if (entry.contentType() == FileContent.DATA && entry.tracking().isLive()) {
           dataEntries.add(entry.copy());

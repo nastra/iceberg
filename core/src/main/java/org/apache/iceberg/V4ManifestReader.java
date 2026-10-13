@@ -19,6 +19,7 @@
 package org.apache.iceberg;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.iceberg.expressions.Binder;
@@ -64,6 +65,10 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
   static Builder uncommitted(
       ManifestFile manifest, FileIO io, Schema tableSchema, Map<Integer, PartitionSpec> specsById) {
     return new Builder(manifest, io, tableSchema, specsById, true /* uncommitted */);
+  }
+
+  static ManifestFile wrap(InputFile file, Long snapshotId, long sequenceNumber, Long firstRowId) {
+    return new InputFileManifest(file, snapshotId, sequenceNumber, firstRowId);
   }
 
   private final ManifestFile manifest;
@@ -537,6 +542,106 @@ class V4ManifestReader extends CloseableGroup implements CloseableIterable<Track
       return requestedStatsFieldIds != null
           ? Sets.union(filterFieldIds, requestedStatsFieldIds)
           : filterFieldIds;
+    }
+  }
+
+  private static class InputFileManifest implements ManifestFile {
+    private final InputFile file;
+    private final Long snapshotId;
+    private final long sequenceNumber;
+    private final Long firstRowId;
+
+    private InputFileManifest(
+        InputFile file, Long snapshotId, long sequenceNumber, Long firstRowId) {
+      this.file = file;
+      this.snapshotId = snapshotId;
+      this.sequenceNumber = sequenceNumber;
+      this.firstRowId = firstRowId;
+    }
+
+    @Override
+    public String path() {
+      return file.location();
+    }
+
+    @Override
+    public long length() {
+      return file.getLength();
+    }
+
+    @Override
+    public int partitionSpecId() {
+      return 0;
+    }
+
+    @Override
+    public ManifestContent content() {
+      return ManifestContent.DATA;
+    }
+
+    @Override
+    public long sequenceNumber() {
+      return sequenceNumber;
+    }
+
+    @Override
+    public long minSequenceNumber() {
+      return sequenceNumber;
+    }
+
+    @Override
+    public Long snapshotId() {
+      return snapshotId;
+    }
+
+    @Override
+    public Integer addedFilesCount() {
+      return null;
+    }
+
+    @Override
+    public Long addedRowsCount() {
+      return null;
+    }
+
+    @Override
+    public Integer existingFilesCount() {
+      return null;
+    }
+
+    @Override
+    public Long existingRowsCount() {
+      return null;
+    }
+
+    @Override
+    public Integer deletedFilesCount() {
+      return null;
+    }
+
+    @Override
+    public Long deletedRowsCount() {
+      return null;
+    }
+
+    @Override
+    public List<PartitionFieldSummary> partitions() {
+      return null;
+    }
+
+    @Override
+    public Long firstRowId() {
+      return firstRowId;
+    }
+
+    @Override
+    public int formatVersion() {
+      return SUPPORTED_FORMAT_VERSION;
+    }
+
+    @Override
+    public ManifestFile copy() {
+      return this;
     }
   }
 }

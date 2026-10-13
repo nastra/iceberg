@@ -60,6 +60,7 @@ class ScanTaskPlanner {
 
   private final FileIO io;
   private final InputFile rootManifest;
+  private final Schema tableSchema;
   private final Map<Integer, PartitionSpec> specsById;
   private final String tableLocation;
   private final Expression dataFilter;
@@ -67,20 +68,28 @@ class ScanTaskPlanner {
   private final boolean caseSensitive;
   private final ScanMetrics scanMetrics;
   private final ExecutorService executorService;
+  private final long snapshotId;
+  private final long sequenceNumber;
+  private final Long firstRowId;
   private final Map<Integer, TaskContext> taskContextsBySpec = Maps.newConcurrentMap();
 
   private ScanTaskPlanner(
       FileIO io,
       InputFile rootManifest,
+      Schema tableSchema,
       Map<Integer, PartitionSpec> specsById,
       String tableLocation,
       Expression dataFilter,
       boolean ignoreResiduals,
       boolean caseSensitive,
       ScanMetrics scanMetrics,
-      ExecutorService executorService) {
+      ExecutorService executorService,
+      long snapshotId,
+      long sequenceNumber,
+      Long firstRowId) {
     this.io = io;
     this.rootManifest = rootManifest;
+    this.tableSchema = tableSchema;
     this.specsById = specsById;
     this.tableLocation = tableLocation;
     this.dataFilter = dataFilter;
@@ -88,14 +97,18 @@ class ScanTaskPlanner {
     this.caseSensitive = caseSensitive;
     this.scanMetrics = scanMetrics;
     this.executorService = executorService;
+    this.snapshotId = snapshotId;
+    this.sequenceNumber = sequenceNumber;
+    this.firstRowId = firstRowId;
   }
 
   static Builder builder(
       FileIO io,
       InputFile rootManifest,
+      Schema tableSchema,
       Map<Integer, PartitionSpec> specsById,
       String tableLocation) {
-    return new Builder(io, rootManifest, specsById, tableLocation);
+    return new Builder(io, rootManifest, tableSchema, specsById, tableLocation);
   }
 
   CloseableIterable<FileScanTask> planFiles() {
@@ -105,7 +118,6 @@ class ScanTaskPlanner {
     // root is drained into these lists. Leaf references must be buffered so they can be fanned
     // out; direct DATA entries are buffered too, bounded by how many data files a tree keeps
     // directly in the root. Leaf tasks stay lazy: createLeafTasks opens no reader until iterated.
-    scanMetrics.scannedDataManifests().increment();
     try (CloseableIterable<TrackedFile> rootEntries = open(rootManifest)) {
       for (TrackedFile entry : rootEntries) {
         switch (entry.contentType()) {
@@ -146,15 +158,17 @@ class ScanTaskPlanner {
 
   private CloseableIterable<FileScanTask> createLeafTasks(TrackedFile leaf) {
     // an upgraded tree can reference a legacy-format leaf
-    if (leaf.formatVersion() != FORMAT_VERSION) {
+    ManifestInfo manifestInfo = leaf.manifestInfo();
+    int formatVersion = manifestInfo != null ? manifestInfo.formatVersion() : FORMAT_VERSION;
+    if (formatVersion != FORMAT_VERSION) {
       throw new UnsupportedOperationException(
           "Cannot expand leaf manifest with format version "
-              + leaf.formatVersion()
+              + formatVersion
               + ": "
               + leaf.location());
     }
 
-    if (leaf.manifestInfo() != null && leaf.manifestInfo().dv() != null) {
+    if (manifestInfo != null && manifestInfo.manifestDeletionVector() != null) {
       throw new UnsupportedOperationException(
           "Cannot apply manifest deletion vector for leaf manifest: " + leaf.location());
     }
@@ -177,7 +191,6 @@ class ScanTaskPlanner {
 
     @Override
     public CloseableIterator<FileScanTask> iterator() {
-      scanMetrics.scannedDataManifests().increment();
       // pass the known leaf size so the reader sizes the read instead of stat-ing the file
       CloseableIterable<TrackedFile> entries =
           open(io.newInputFile(leaf.location(), leaf.fileSizeInBytes()));
@@ -202,7 +215,12 @@ class ScanTaskPlanner {
   }
 
   private CloseableIterable<TrackedFile> open(InputFile manifest) {
-    return V4ManifestReader.builder(manifest, specsById, tableLocation)
+    return V4ManifestReader.builder(
+            V4ManifestReader.wrap(manifest, snapshotId, sequenceNumber, firstRowId),
+            io,
+            tableSchema,
+            specsById)
+        .tableLocation(tableLocation)
         .forScanPlanning()
         .filter(dataFilter)
         .caseSensitive(caseSensitive)
@@ -253,6 +271,7 @@ class ScanTaskPlanner {
   static class Builder {
     private final FileIO io;
     private final InputFile rootManifest;
+    private final Schema tableSchema;
     private final Map<Integer, PartitionSpec> specsById;
     private final String tableLocation;
     private Expression dataFilter = Expressions.alwaysTrue();
@@ -260,18 +279,24 @@ class ScanTaskPlanner {
     private boolean caseSensitive = true;
     private ScanMetrics scanMetrics = ScanMetrics.noop();
     private ExecutorService executorService = null;
+    private long snapshotId = 0L;
+    private long sequenceNumber = 0L;
+    private Long firstRowId = null;
 
     private Builder(
         FileIO io,
         InputFile rootManifest,
+        Schema tableSchema,
         Map<Integer, PartitionSpec> specsById,
         String tableLocation) {
       Preconditions.checkArgument(io != null, "Invalid file IO: null");
       Preconditions.checkArgument(rootManifest != null, "Invalid root manifest: null");
+      Preconditions.checkArgument(tableSchema != null, "Invalid table schema: null");
       Preconditions.checkArgument(specsById != null, "Invalid specs by ID: null");
       Preconditions.checkArgument(tableLocation != null, "Invalid table location: null");
       this.io = io;
       this.rootManifest = rootManifest;
+      this.tableSchema = tableSchema;
       this.specsById = ImmutableMap.copyOf(specsById);
       this.tableLocation = tableLocation;
     }
@@ -304,17 +329,29 @@ class ScanTaskPlanner {
       return this;
     }
 
+    Builder snapshot(Snapshot snapshot) {
+      Preconditions.checkArgument(snapshot != null, "Invalid snapshot: null");
+      this.snapshotId = snapshot.snapshotId();
+      this.sequenceNumber = snapshot.sequenceNumber();
+      this.firstRowId = snapshot.firstRowId();
+      return this;
+    }
+
     ScanTaskPlanner build() {
       return new ScanTaskPlanner(
           io,
           rootManifest,
+          tableSchema,
           specsById,
           tableLocation,
           dataFilter,
           ignoreResiduals,
           caseSensitive,
           scanMetrics,
-          executorService);
+          executorService,
+          snapshotId,
+          sequenceNumber,
+          firstRowId);
     }
   }
 }

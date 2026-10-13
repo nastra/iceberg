@@ -38,6 +38,7 @@ import org.apache.iceberg.io.InputFile;
 import org.apache.iceberg.io.OutputFile;
 import org.apache.iceberg.metrics.DefaultMetricsContext;
 import org.apache.iceberg.metrics.ScanMetrics;
+import org.apache.iceberg.mumbling.MumblingTestUtil;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableList;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.Lists;
@@ -303,7 +304,7 @@ class TestScanTaskPlanner {
 
     ScanMetrics metrics = ScanMetrics.of(new DefaultMetricsContext());
     ScanTaskPlanner planner =
-        ScanTaskPlanner.builder(fileIO, root, UNPARTITIONED_SPECS, TABLE_LOCATION)
+        ScanTaskPlanner.builder(fileIO, root, TABLE_SCHEMA, UNPARTITIONED_SPECS, TABLE_LOCATION)
             .scanMetrics(metrics)
             .build();
     // the root is read eagerly to route its entries; leaf readers open lazily, so closing the plan
@@ -395,7 +396,8 @@ class TestScanTaskPlanner {
 
     // delete content is only produced by upgraded trees; that path is not yet implemented
     ScanTaskPlanner expander =
-        ScanTaskPlanner.builder(fileIO, root, UNPARTITIONED_SPECS, TABLE_LOCATION).build();
+        ScanTaskPlanner.builder(fileIO, root, TABLE_SCHEMA, UNPARTITIONED_SPECS, TABLE_LOCATION)
+            .build();
     assertThatThrownBy(() -> Lists.newArrayList(expander.planFiles()))
         .isInstanceOf(UnsupportedOperationException.class)
         .hasMessage("Cannot plan content type in root manifest: DELETE_MANIFEST");
@@ -415,7 +417,8 @@ class TestScanTaskPlanner {
         writeManifest(format, EMPTY_PARTITION, ImmutableList.of(dataManifest(leaf.location())));
 
     ScanTaskPlanner expander =
-        ScanTaskPlanner.builder(fileIO, root, UNPARTITIONED_SPECS, TABLE_LOCATION).build();
+        ScanTaskPlanner.builder(fileIO, root, TABLE_SCHEMA, UNPARTITIONED_SPECS, TABLE_LOCATION)
+            .build();
     assertThatThrownBy(() -> Lists.newArrayList(expander.planFiles()))
         .isInstanceOf(UnsupportedOperationException.class)
         .hasMessage("Cannot plan content type in leaf manifest: DELETE_MANIFEST");
@@ -432,7 +435,8 @@ class TestScanTaskPlanner {
 
     // a nested manifest is structurally impossible in a two-level tree, not merely unsupported
     ScanTaskPlanner expander =
-        ScanTaskPlanner.builder(fileIO, root, UNPARTITIONED_SPECS, TABLE_LOCATION).build();
+        ScanTaskPlanner.builder(fileIO, root, TABLE_SCHEMA, UNPARTITIONED_SPECS, TABLE_LOCATION)
+            .build();
     assertThatThrownBy(() -> Lists.newArrayList(expander.planFiles()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
@@ -455,7 +459,8 @@ class TestScanTaskPlanner {
     // applying the manifest-level DV is not built yet; expanding the leaf would resurface deleted
     // entries, so the planner rejects rather than silently corrupting
     ScanTaskPlanner expander =
-        ScanTaskPlanner.builder(fileIO, root, UNPARTITIONED_SPECS, TABLE_LOCATION).build();
+        ScanTaskPlanner.builder(fileIO, root, TABLE_SCHEMA, UNPARTITIONED_SPECS, TABLE_LOCATION)
+            .build();
     assertThatThrownBy(() -> Lists.newArrayList(expander.planFiles()))
         .isInstanceOf(UnsupportedOperationException.class)
         .hasMessage("Cannot apply manifest deletion vector for leaf manifest: " + leaf.location());
@@ -474,7 +479,8 @@ class TestScanTaskPlanner {
         writeManifest(format, EMPTY_PARTITION, ImmutableList.of(dataManifest(leaf.location(), 3)));
 
     ScanTaskPlanner expander =
-        ScanTaskPlanner.builder(fileIO, root, UNPARTITIONED_SPECS, TABLE_LOCATION).build();
+        ScanTaskPlanner.builder(fileIO, root, TABLE_SCHEMA, UNPARTITIONED_SPECS, TABLE_LOCATION)
+            .build();
     assertThatThrownBy(() -> Lists.newArrayList(expander.planFiles()))
         .isInstanceOf(UnsupportedOperationException.class)
         .hasMessage("Cannot expand leaf manifest with format version 3: " + leaf.location());
@@ -495,7 +501,8 @@ class TestScanTaskPlanner {
     // reading the leaf as a plain file would hand ciphertext to the reader; the decrypting path
     // is not built yet, so the planner rejects rather than silently corrupting
     ScanTaskPlanner expander =
-        ScanTaskPlanner.builder(fileIO, root, UNPARTITIONED_SPECS, TABLE_LOCATION).build();
+        ScanTaskPlanner.builder(fileIO, root, TABLE_SCHEMA, UNPARTITIONED_SPECS, TABLE_LOCATION)
+            .build();
     assertThatThrownBy(() -> Lists.newArrayList(expander.planFiles()))
         .isInstanceOf(UnsupportedOperationException.class)
         .hasMessage("Cannot read encrypted leaf manifest: " + leaf.location());
@@ -648,7 +655,9 @@ class TestScanTaskPlanner {
       UnaryOperator<ScanTaskPlanner.Builder> configure)
       throws IOException {
     ScanTaskPlanner expander =
-        configure.apply(ScanTaskPlanner.builder(fileIO, root, specsById, TABLE_LOCATION)).build();
+        configure
+            .apply(ScanTaskPlanner.builder(fileIO, root, TABLE_SCHEMA, specsById, TABLE_LOCATION))
+            .build();
     try (CloseableIterable<FileScanTask> tasks = expander.planFiles()) {
       return Lists.newArrayList(tasks);
     }
@@ -684,62 +693,44 @@ class TestScanTaskPlanner {
   }
 
   private static TrackedFile dataManifest(String location, int formatVersion) {
-    return new TrackedFileStruct(
-        /* tracking= */ addedTracking(),
-        /* contentType= */ FileContent.DATA_MANIFEST,
-        /* formatVersion= */ formatVersion,
-        /* location= */ location,
-        /* fileFormat= */ FileFormat.PARQUET,
-        /* recordCount= */ RECORD_COUNT,
-        /* fileSizeInBytes= */ FILE_SIZE_IN_BYTES,
-        /* specId= */ null,
-        /* partition= */ null,
-        /* contentStats= */ null,
-        /* sortOrderId= */ null,
-        /* deletionVector= */ null,
-        /* manifestInfo= */ null,
-        /* keyMetadata= */ null,
-        /* splitOffsets= */ null,
-        /* equalityIds= */ null);
+    return trackedFile(
+        addedTracking(),
+        FileContent.DATA_MANIFEST,
+        location,
+        null,
+        null,
+        null,
+        manifestInfo(formatVersion, null));
   }
 
   private static TrackedFile dataManifestWithDv(String location) {
-    ManifestInfo manifestInfo =
-        ManifestInfoStruct.builder()
-            .addedFilesCount(1)
-            .existingFilesCount(0)
-            .deletedFilesCount(0)
-            .replacedFilesCount(0)
-            .addedRowsCount(RECORD_COUNT)
-            .existingRowsCount(0)
-            .deletedRowsCount(0)
-            .replacedRowsCount(0)
-            .minSequenceNumber(0L)
-            .dv(ByteBuffer.wrap(new byte[] {1, 2, 3}))
-            .dvCardinality(1L)
-            .build();
     return trackedFile(
-        addedTracking(), FileContent.DATA_MANIFEST, location, null, null, null, manifestInfo);
+        addedTracking(),
+        FileContent.DATA_MANIFEST,
+        location,
+        null,
+        null,
+        null,
+        manifestInfo(
+            WRITER_FORMAT_VERSION, ByteBuffer.wrap(MumblingTestUtil.onlyFirstBitSetBytes())));
   }
 
   private static TrackedFile encryptedDataManifest(String location, ByteBuffer keyMetadata) {
     return new TrackedFileStruct(
-        /* tracking= */ addedTracking(),
-        /* contentType= */ FileContent.DATA_MANIFEST,
-        /* formatVersion= */ WRITER_FORMAT_VERSION,
-        /* location= */ location,
-        /* fileFormat= */ FileFormat.PARQUET,
-        /* recordCount= */ RECORD_COUNT,
-        /* fileSizeInBytes= */ FILE_SIZE_IN_BYTES,
-        /* specId= */ null,
-        /* partition= */ null,
-        /* contentStats= */ null,
-        /* sortOrderId= */ null,
-        /* deletionVector= */ null,
-        /* manifestInfo= */ null,
-        /* keyMetadata= */ keyMetadata,
-        /* splitOffsets= */ null,
-        /* equalityIds= */ null);
+        addedTracking(),
+        FileContent.DATA_MANIFEST,
+        location,
+        FileFormat.PARQUET,
+        RECORD_COUNT,
+        FILE_SIZE_IN_BYTES,
+        null,
+        null,
+        null,
+        null,
+        null,
+        manifestInfo(WRITER_FORMAT_VERSION, null),
+        keyMetadata,
+        null);
   }
 
   private static TrackedFile deleteManifest(String location) {
@@ -756,22 +747,37 @@ class TestScanTaskPlanner {
       DeletionVector dv,
       ManifestInfo manifestInfo) {
     return new TrackedFileStruct(
-        /* tracking= */ tracking,
-        /* contentType= */ contentType,
-        /* formatVersion= */ WRITER_FORMAT_VERSION,
-        /* location= */ location,
-        /* fileFormat= */ FileFormat.PARQUET,
-        /* recordCount= */ RECORD_COUNT,
-        /* fileSizeInBytes= */ FILE_SIZE_IN_BYTES,
-        /* specId= */ specId,
-        /* partition= */ partition,
-        /* contentStats= */ null,
-        /* sortOrderId= */ null,
-        /* deletionVector= */ dv,
-        /* manifestInfo= */ manifestInfo,
-        /* keyMetadata= */ null,
-        /* splitOffsets= */ null,
-        /* equalityIds= */ null);
+        tracking,
+        contentType,
+        location,
+        FileFormat.PARQUET,
+        RECORD_COUNT,
+        FILE_SIZE_IN_BYTES,
+        specId,
+        partition,
+        null,
+        null,
+        dv,
+        manifestInfo,
+        null,
+        null);
+  }
+
+  private static ManifestInfo manifestInfo(int formatVersion, ByteBuffer dv) {
+    return new ManifestInfoStruct(
+        1,
+        0,
+        0,
+        0,
+        0,
+        RECORD_COUNT,
+        0L,
+        0L,
+        0L,
+        0L,
+        0L,
+        dv != null ? dv.array() : null,
+        formatVersion);
   }
 
   private static TrackingStruct addedTracking() {
