@@ -35,6 +35,7 @@ import org.apache.orc.storage.ql.exec.vector.VectorizedRowBatch;
 
 public class GenericOrcReader implements OrcRowReader<Record> {
   private final OrcValueReader<?> reader;
+  private StructColumnVector structVector = null;
 
   public GenericOrcReader(
       Schema expectedSchema, TypeDescription readOrcSchema, Map<Integer, ?> idToConstant) {
@@ -55,7 +56,11 @@ public class GenericOrcReader implements OrcRowReader<Record> {
 
   @Override
   public Record read(VectorizedRowBatch batch, int row) {
-    return (Record) reader.read(new StructColumnVector(batch.size, batch.cols), row);
+    if (structVector == null || structVector.fields != batch.cols) {
+      this.structVector = new StructColumnVector(batch.size, batch.cols);
+    }
+
+    return (Record) reader.read(structVector, row);
   }
 
   @Override
